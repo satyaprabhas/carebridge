@@ -1,0 +1,180 @@
+<!-- Features: 05-medicine-alerts | Frontend Template -->
+<div id="alerts-module-root">
+  <div class="view-header">
+    <div class="view-title-wrap">
+      <h1>Medicine Alerts & Reminders</h1>
+      <p class="subtitle">Set automated mobile SMS reminders so you never miss a dose, even when you close the website.</p>
+    </div>
+    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+      <button type="button" id="btn-request-browser-notif" class="btn btn-outline btn-sm">
+        🔔 Enable Browser Notifications
+      </button>
+      <button type="button" id="btn-trigger-demo-alert" class="btn btn-teal btn-sm">
+        ⚡ Test Live Screen Alarm
+      </button>
+    </div>
+  </div>
+
+  <!-- Telegram Bot Connect Card (1-Click Pairing) -->
+  <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; border: none; border-radius: 12px; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25);">
+    <div class="card-body" style="padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+      <div style="display: flex; align-items: center; gap: 1rem;">
+        <div style="background: rgba(255, 255, 255, 0.2); width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0;">
+          ✈️
+        </div>
+        <div>
+          <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: #ffffff;">Connect Your Phone to CareBridge Bot</h3>
+          <p style="margin: 0.25rem 0 0; font-size: 0.88rem; color: rgba(255, 255, 255, 0.9);">
+            Receive instant, loud medicine reminder alerts on your phone even when this website is closed.
+          </p>
+          <div style="margin-top: 0.4rem; font-size: 0.8rem; color: rgba(255, 255, 255, 0.85); display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <span>1️⃣ Click the button</span>
+            <span>➔</span>
+            <span>2️⃣ Tap <strong>Start</strong> in Telegram</span>
+            <span>➔</span>
+            <span>3️⃣ Phone paired for automated reminders!</span>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+        <a href="https://t.me/carebridge_medicinealert_bot" target="_blank" rel="noopener noreferrer" class="btn" style="background: #ffffff; color: #0284c7; font-weight: 700; padding: 0.65rem 1.25rem; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+          <span>📲</span> Open @carebridge_medicinealert_bot
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SMS Reminder Configuration Card -->
+  <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--teal-600, #0d9488);">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-size: 1.25rem;">📱</span>
+        <div>
+          <h2 style="margin: 0; font-size: 1.05rem;">Registered Mobile Number for Automated Phone & SMS Alerts</h2>
+          <p style="margin: 0.15rem 0 0; font-size: 0.8rem; color: var(--slate-500);">
+            Server-side scheduler checks due times and dispatches phone alerts independently of the website being open.
+          </p>
+        </div>
+      </div>
+      <span id="sms-provider-badge" class="badge badge-secondary">Checking Alert Gateway...</span>
+    </div>
+    <div class="card-body">
+      <div style="display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap;">
+        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 240px;">
+          <label class="form-label" for="registered-phone-input">Your Mobile Number (with country code)</label>
+          <input type="tel" id="registered-phone-input" class="form-control" placeholder="+919392224765" pattern="^\+?[0-9]{10,14}$">
+        </div>
+        <button type="button" id="btn-save-phone" class="btn btn-primary" style="white-space: nowrap;">
+          💾 Save Mobile Number
+        </button>
+        <button type="button" id="btn-test-sms" class="btn btn-teal" style="white-space: nowrap;">
+          ⚡ Send Test Alert Now
+        </button>
+      </div>
+      <div id="sms-test-status" class="alert alert-info hidden" style="margin-top: 1rem; font-size: 0.85rem;" role="status"></div>
+    </div>
+  </div>
+
+  <!-- Notification Status Banner -->
+  <div id="notif-status-banner" class="alert alert-info">
+    <span aria-hidden="true">ℹ️</span>
+    <div id="notif-status-text">
+      <strong>Server-Side Background Scheduler:</strong> Alerts are triggered automatically at your prescribed medicine times. SMS messages are sent directly to your registered phone even after closing your browser tab.
+    </div>
+  </div>
+
+  <!-- Medicine Alert Cards Grid -->
+  <div class="alerts-dashboard-grid" id="alerts-cards-container">
+    <!-- Dynamically populated from active medicines -->
+  </div>
+
+  <!-- Custom Reminder Addition Form -->
+  <div class="card" style="margin-top: 2rem;">
+    <div class="card-header">
+      <h2>Add Custom Medicine Alert</h2>
+      <span class="badge badge-secondary">Personalized Schedule</span>
+    </div>
+    <div class="card-body">
+      <form id="add-alert-form" novalidate>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="alert-med-name">Medicine Name</label>
+            <input type="text" id="alert-med-name" class="form-control" placeholder="e.g. Metformin / Multivitamin" required>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="alert-med-dose">Dose & Notes</label>
+            <input type="text" id="alert-med-dose" class="form-control" placeholder="e.g. 500 mg with breakfast">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="alert-med-time">Alert Time</label>
+            <input type="time" id="alert-med-time" class="form-control" required>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" for="alert-med-phone">Mobile Number</label>
+            <input type="tel" id="alert-med-phone" class="form-control" placeholder="e.g. +919876543210">
+          </div>
+          <div class="form-group" style="margin-bottom: 0; display: flex; align-items: flex-end;">
+            <button type="submit" class="btn btn-primary" style="width: 100%;">
+              ➕ Add Reminder
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- SMS Dispatch Delivery Log & Adherence History -->
+  <div class="card" style="margin-top: 1.5rem;">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+      <h2>Server-Side SMS Reminder Delivery Log</h2>
+      <span id="sms-delivery-badge" class="badge badge-secondary">0 Dispatches Logged</span>
+    </div>
+    <div class="card-body">
+      <ul class="intake-log-list" id="sms-delivery-log-list">
+        <li style="text-align: center; color: var(--slate-400); padding: 1.5rem 0; font-size: 0.875rem;">
+          No SMS dispatches yet. Use "Send Test SMS Now" or await scheduled dose times.
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Dose Log & Adherence History -->
+  <div class="card" style="margin-top: 1.5rem;">
+    <div class="card-header">
+      <h2>Today's Medication Intake Log</h2>
+      <span id="dose-intake-badge" class="badge badge-success">0 Doses Taken Today</span>
+    </div>
+    <div class="card-body">
+      <ul class="intake-log-list" id="intake-log-list">
+        <!-- Dynamically populated -->
+      </ul>
+    </div>
+  </div>
+
+  <!-- ALARM POPUP MODAL -->
+  <div id="medicine-alarm-modal" class="alarm-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="alarm-modal-title">
+    <div class="alarm-modal-card">
+      <div class="alarm-modal-icon-wrap">
+        <span class="alarm-bell-icon">🔔</span>
+      </div>
+      <span class="badge badge-teal" style="font-size: 0.8rem; margin-bottom: 0.5rem;">Medication Reminder</span>
+      <h2 id="alarm-modal-title" style="margin: 0.25rem 0 0.5rem; color: var(--navy-900);">Time to take your medicine!</h2>
+      <div class="alarm-modal-med-box">
+        <div class="alarm-med-name" id="alarm-modal-med-name">Sample Med A</div>
+        <div class="alarm-med-dose" id="alarm-modal-med-dose">500 mg • Twice daily</div>
+        <div class="alarm-med-notes" id="alarm-modal-med-notes">Take with water after meal. Do not skip doses.</div>
+      </div>
+      <div class="alarm-modal-actions">
+        <button type="button" id="btn-alarm-take" class="btn btn-teal" style="flex: 1;">
+          ✅ Mark as Taken
+        </button>
+        <button type="button" id="btn-alarm-snooze" class="btn btn-outline" style="flex: 1;">
+          ⏰ Snooze (5 mins)
+        </button>
+        <button type="button" id="btn-alarm-dismiss" class="btn btn-text btn-sm" style="color: var(--slate-500);">
+          Dismiss
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

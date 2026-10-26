@@ -1,0 +1,55 @@
+<!-- Features: 08-followup-recovery | Frontend Template -->
+<div id="followup-module-root">
+  <div class="view-header">
+    <div class="view-title-wrap">
+      <h1>Follow-up & Recovery</h1>
+      <p class="subtitle">Documented appointment dates, physician details and home recovery steps.</p>
+    </div>
+    <span class="badge badge-demo">Sample Care Milestones</span>
+  </div>
+
+  <div class="followup-grid">
+    <!-- Appointment Card -->
+    <div class="appointment-card">
+      <div class="card-header" style="padding: 0 0 1rem; border-bottom: 1px solid var(--slate-100);">
+        <h2>Upcoming Appointment</h2>
+        <span class="badge badge-primary">Scheduled</span>
+      </div>
+
+      <div class="appointment-detail-list">
+        <div class="app-item">
+          <label>Follow-up Date & Time</label>
+          <strong id="fol-date">18 October 2026 at 10:30 AM</strong>
+        </div>
+        <div class="app-item">
+          <label>Physician</label>
+          <strong id="fol-doctor">Dr. Sarah Jenkins, MD</strong>
+        </div>
+        <div class="app-item">
+          <label>Clinic Location</label>
+          <strong id="fol-dept">Room 302, Outpatient Clinic</strong>
+        </div>
+        <div class="app-item">
+          <label>Hospital</label>
+          <strong id="fol-hosp">Metropolitan General Hospital</strong>
+        </div>
+      </div>
+
+      <div class="alert alert-info" style="margin-top: 1.25rem; margin-bottom: 0;">
+        <strong>Patient Notes:</strong> <span id="fol-notes">Bring this discharge record and daily symptom journal. (Sample Follow-up Date)</span>
+      </div>
+    </div>
+
+    <!-- Home-Care Checklist -->
+    <div class="checklist-card">
+      <div class="card-header" style="padding: 0 0 1rem; border-bottom: 1px solid var(--slate-100);">
+        <h2>Home-Care Instructions</h2>
+        <span id="checklist-progress-badge" class="badge badge-secondary">0 of 4 Completed</span>
+      </div>
+
+      <ul class="checklist-items" id="homecare-checklist-items">
+        <!-- Dynamically populated checkboxes -->
+      </ul>
+    </div>
+  </div>
+</div>

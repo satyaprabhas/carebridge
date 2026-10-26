@@ -1,0 +1,262 @@
+<!-- Features: 03-discharge-summary | Frontend Template -->
+<div id="discharge-module-root">
+  <div class="view-header">
+    <div class="view-title-wrap">
+      <h1>My Discharge Summary</h1>
+      <p class="subtitle">Upload your hospital discharge document to organise your home-care instructions.</p>
+    </div>
+    <a href="/sample/CareBridge_Sample_Discharge_Summary.pdf" download class="btn btn-outline btn-sm">
+      📥 Download Sample PDF
+    </a>
+  </div>
+
+  <!-- Status Alert Messages -->
+  <div id="upload-status-alert" class="alert alert-info hidden" role="status"></div>
+
+  <!-- Upload Layout Grid: Dropzone + Sample Button -->
+  <div class="upload-layout-grid">
+    <div class="card">
+      <div class="card-body">
+        <div id="upload-dropzone" class="upload-dropzone-box" role="region" aria-label="Discharge document upload dropzone">
+          <div class="dropzone-icon-circle" aria-hidden="true">📤</div>
+          <h3>Upload your discharge document</h3>
+          <p>Choose a PDF or image of your hospital discharge summary.</p>
+
+          <input type="file" id="discharge-file-input" class="visually-hidden" accept=".pdf,.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp,application/pdf">
+
+          <div class="dropzone-actions">
+            <button type="button" id="btn-choose-file" class="btn btn-outline-primary">
+              📁 Choose File
+            </button>
+            <button type="button" id="btn-process-file" class="btn btn-primary" disabled>
+              ⚙️ Process Document
+            </button>
+          </div>
+
+          <div class="file-formats-hint" style="margin-top: 1rem; font-size: 0.775rem; color: var(--slate-400);">
+            Supported formats: PDF, JPG, JPEG, PNG, and WebP (Max file size: 10MB)
+          </div>
+
+          <!-- Selected File Banner -->
+          <div id="selected-file-banner" class="selected-file-banner hidden">
+            <div class="file-pill-left">
+              <span aria-hidden="true">📄</span>
+              <div>
+                <div class="name" id="selected-filename">document.pdf</div>
+                <div class="size" id="selected-filesize">0 KB</div>
+              </div>
+            </div>
+            <button type="button" id="btn-remove-selected-file" class="btn btn-text btn-sm" title="Remove file">
+              ✕ Remove
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Instant Sample Tester Card -->
+    <div class="sample-tester-card">
+      <div>
+        <span class="badge badge-success" style="margin-bottom: 0.75rem;">Verified Demo</span>
+        <h3>Try with Sample Discharge Summary</h3>
+        <p>Test the full CareBridge experience immediately with our realistic, bundled fictional patient summary for <strong>Suresh</strong>.</p>
+
+        <ul class="sample-features-list">
+          <li>Fictional patient profile (CB-DEMO-001)</li>
+          <li>3 sample medications with dosing & caution notes</li>
+          <li>Reviewed post-discharge diet guidelines</li>
+          <li>Appointment with Dr. Sarah Jenkins (18 Oct 2026)</li>
+          <li>Emergency red-flag warning criteria</li>
+        </ul>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+        <button type="button" id="btn-load-sample" class="btn btn-teal">
+          🚀 Try with Sample Discharge Summary
+        </button>
+        <a href="/sample/CareBridge_Sample_Discharge_Summary.pdf" target="_blank" class="btn btn-outline btn-sm" style="text-align: center;">
+          👁️ Preview Sample PDF
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Extracted Data Review Card (Shown upon processing) -->
+  <div id="extracted-review-section" class="extracted-review-container hidden">
+    <div class="review-header-bar">
+      <div>
+        <h2 id="review-title">Document OCR & Certificate Verification</h2>
+        <p style="font-size: 0.85rem; color: var(--slate-500); margin-top: 0.2rem;">
+          Compare the original document against extracted values side-by-side. You can edit any field before confirming.
+        </p>
+      </div>
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <span id="review-doc-type-badge" class="badge badge-teal">Document Type</span>
+        <span id="review-mode-badge" class="badge badge-success">Live OCR</span>
+      </div>
+    </div>
+
+    <!-- OCR Meta Summary Banner -->
+    <div id="ocr-meta-banner" class="ocr-meta-banner" style="margin-bottom: 1rem;">
+      <div>
+        <strong>Detected: </strong><span id="ocr-doc-title">Hospital Discharge Summary</span>
+      </div>
+      <div style="display: flex; gap: 1rem; font-size: 0.825rem;">
+        <span>Accuracy Confidence: <strong id="ocr-overall-conf">--%</strong></span>
+        <span>Verified Fields: <strong id="ocr-verified-count" class="text-success">0</strong></span>
+        <span>Missing / Uncertain: <strong id="ocr-missing-count" class="text-warning">0</strong></span>
+      </div>
+    </div>
+
+    <!-- Side-by-Side Split View: Document Preview (Left) vs Extracted Fields (Right) -->
+    <div class="ocr-split-container">
+      <!-- Left: Uploaded Document Viewer -->
+      <div class="ocr-document-pane">
+        <div class="ocr-document-toolbar">
+          <span>📄 Original Document Preview</span>
+          <div style="display: flex; gap: 0.35rem;">
+            <button type="button" id="btn-zoom-in" class="btn btn-xs btn-outline" style="color: white; border-color: rgba(255,255,255,0.3); padding: 2px 8px;">🔍+</button>
+            <button type="button" id="btn-zoom-out" class="btn btn-xs btn-outline" style="color: white; border-color: rgba(255,255,255,0.3); padding: 2px 8px;">🔍-</button>
+            <button type="button" id="btn-zoom-reset" class="btn btn-xs btn-outline" style="color: white; border-color: rgba(255,255,255,0.3); padding: 2px 8px;">100%</button>
+          </div>
+        </div>
+        <div class="ocr-document-viewer" id="ocr-viewer-container">
+          <img id="ocr-preview-img" src="" alt="Uploaded Document Preview" class="hidden">
+          <iframe id="ocr-preview-iframe" src="" class="hidden" title="PDF Preview"></iframe>
+          <div id="ocr-preview-placeholder" style="color: #94a3b8; margin: auto; text-align: center;">
+            <p>No document preview available</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Structured Extracted Fields -->
+      <div class="ocr-fields-pane" id="extracted-fields-list">
+        <!-- Dynamically rendered editable cards with confidence badges -->
+      </div>
+    </div>
+
+    <!-- Raw OCR Text Toggle for Transparency -->
+    <div style="margin-top: 1.25rem;">
+      <details style="cursor: pointer; font-size: 0.825rem; background: var(--slate-50); padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--slate-200);">
+        <summary style="font-weight: 600; color: var(--navy-800);">📄 View Full Raw Text Stream Extracted from Document</summary>
+        <pre id="ocr-raw-text-dump" style="white-space: pre-wrap; font-family: var(--font-mono); font-size: 0.775rem; margin-top: 0.5rem; color: var(--slate-700); max-height: 250px; overflow-y: auto; background: white; padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--slate-200);"></pre>
+      </details>
+    </div>
+
+    <div class="review-footer-actions">
+      <button type="button" id="btn-discard-extracted" class="btn btn-outline">
+        ✕ Discard
+      </button>
+      <button type="button" id="btn-confirm-extracted" class="btn btn-teal">
+        ✓ Confirm Verified Details & Apply to Care Plan
+      </button>
+    </div>
+  </div>
+
+  <!-- Current Discharge Summary Details Card -->
+  <div class="card" id="active-record-card" style="margin-top: 1.5rem;">
+    <div class="card-header">
+      <h2>Current Active Discharge Record</h2>
+      <span class="badge badge-secondary" id="rec-status-badge">Awaiting Document Upload</span>
+    </div>
+    <div class="card-body">
+      <div class="extracted-fields-grid">
+        <!-- 1. Patient Profile -->
+        <div class="extracted-field-block">
+          <h4><span aria-hidden="true">👤</span> Patient Profile & Ward</h4>
+          <div class="field-content-body">
+            <p><strong id="rec-patient-name">No Document Uploaded</strong> (ID: <span id="rec-patient-id">Pending Upload</span>)</p>
+            <div class="field-meta-row">
+              <span>Age: <strong id="rec-patient-age">--</strong></span> &nbsp;•&nbsp; 
+              <span>Sex: <strong id="rec-patient-gender">--</strong></span> &nbsp;•&nbsp; 
+              <span>Ward & Bed: <strong id="rec-patient-ward">--</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Stay Timeline -->
+        <div class="extracted-field-block">
+          <h4><span aria-hidden="true">🗓️</span> Stay Timeline & Hospital Location</h4>
+          <div class="field-content-body">
+            <p>Admission: <strong id="rec-adm-date">--</strong> &nbsp;|&nbsp; Discharge: <strong id="rec-dis-date">--</strong></p>
+            <div class="field-meta-row">
+              <span>Address: <span id="rec-hospital-address">--</span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Primary Diagnosis -->
+        <div class="extracted-field-block" style="grid-column: 1 / -1;">
+          <h4><span aria-hidden="true">🩺</span> Primary Diagnosis</h4>
+          <div class="field-content-body">
+            <p id="rec-diagnosis" style="color: var(--slate-500); font-style: italic;">No active discharge summary uploaded. Please choose and process an image or document above to populate clinical details.</p>
+          </div>
+        </div>
+
+        <!-- 4. Hospital & Attending Care Team -->
+        <div class="extracted-field-block">
+          <h4><span aria-hidden="true">🏥</span> Hospital & Attending Doctors</h4>
+          <div class="field-content-body">
+            <p id="rec-doctor" style="color: var(--slate-400);">--</p>
+          </div>
+        </div>
+
+        <!-- 5. Reason for Admission -->
+        <div class="extracted-field-block">
+          <h4><span aria-hidden="true">📋</span> Reason for Admission & Complaints</h4>
+          <div class="field-content-body">
+            <p id="rec-complaints" style="color: var(--slate-400);">Awaiting document processing...</p>
+          </div>
+        </div>
+
+        <!-- 6. Surgical Procedure & Intraoperative Course -->
+        <div class="extracted-field-block" style="grid-column: 1 / -1;">
+          <h4><span aria-hidden="true">🔬</span> Surgical Procedure & Course</h4>
+          <div class="field-content-body">
+            <p id="rec-surgery" style="color: var(--slate-400);">--</p>
+          </div>
+        </div>
+
+        <!-- 7. Discharge Condition & Clinical Vitals -->
+        <div class="extracted-field-block" style="grid-column: 1 / -1;">
+          <h4><span aria-hidden="true">💖</span> Discharge Condition & Clinical Vitals</h4>
+          <div class="field-content-body">
+            <p id="rec-vitals" style="color: var(--slate-400);">--</p>
+          </div>
+        </div>
+
+        <!-- 8. Dietary Guidance -->
+        <div class="extracted-field-block">
+          <h4><span aria-hidden="true">🥗</span> Dietary Guidance & Nutrition</h4>
+          <div class="field-content-body">
+            <p id="rec-diet" style="color: var(--slate-400);">--</p>
+          </div>
+        </div>
+
+        <!-- 9. Activity & Recovery Lifestyle -->
+        <div class="extracted-field-block">
+          <h4><span aria-hidden="true">🏃</span> Activity & Recovery Lifestyle</h4>
+          <div class="field-content-body">
+            <p id="rec-activity" style="color: var(--slate-400);">--</p>
+          </div>
+        </div>
+
+        <!-- 10. Follow-Up Schedule -->
+        <div class="extracted-field-block">
+          <h4><span aria-hidden="true">📅</span> Follow-Up Appointments</h4>
+          <div class="field-content-body">
+            <p id="rec-followup" style="color: var(--slate-400);">--</p>
+          </div>
+        </div>
+
+        <!-- 11. Warning Signs -->
+        <div class="extracted-field-block">
+          <h4><span aria-hidden="true">🚨</span> Signs of Concern & Emergency Criteria</h4>
+          <div class="field-content-body">
+            <p id="rec-warnings" style="color: var(--slate-400);">--</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

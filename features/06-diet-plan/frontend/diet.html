@@ -1,0 +1,84 @@
+<!-- Features: 06-diet-plan | Frontend Template -->
+<div id="diet-module-root">
+  <div class="view-header">
+    <div class="view-title-wrap">
+      <h1>My Personalised Diet Plan</h1>
+      <p class="subtitle" id="diet-plan-subtitle">Clinical nutrition plan tailored to your diagnosis and prescribed medications.</p>
+    </div>
+    <span class="badge badge-teal" id="diet-plan-condition-badge">Cardiovascular Recovery</span>
+  </div>
+
+  <!-- Dynamic Condition Banner -->
+  <div id="diet-condition-card" class="card" style="border-left: 4px solid var(--primary-600, #0284c7); margin-bottom: 1.5rem;">
+    <div class="card-body">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+        <div>
+          <span class="badge badge-primary" style="margin-bottom: 0.5rem;" id="diet-condition-tag">📋 Condition Protocol</span>
+          <h3 id="diet-condition-title" style="margin: 0.25rem 0 0.5rem 0; font-size: 1.15rem; color: var(--slate-800);">Cardiovascular Recovery & Post-Cardiac Surgery Protocol</h3>
+          <p id="diet-condition-desc" style="font-size: 0.9rem; color: var(--slate-600); margin: 0;">Low-sodium, heart-healthy fats, high soluble fiber, and vascular anti-inflammatory nutrition designed to protect bypass grafts and coronary arteries.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Medication Side-Effects & Food Remedies Card -->
+  <div id="diet-med-remedies-card" class="card" style="margin-bottom: 1.5rem; border-left: 4px solid #f59e0b;">
+    <div class="card-header" style="background: rgba(245, 158, 11, 0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+      <div>
+        <h2 style="font-size: 1.1rem; color: #b45309; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+          💊 Medication Side-Effect Defenses & Drug-Food Remedies
+        </h2>
+        <p style="font-size: 0.825rem; color: var(--slate-600); margin: 0.2rem 0 0 0;">
+          Targeted dietary remedies to soothe tablet side-effects (stomach irritation, muscle cramps, potassium retention) and avoid dangerous food interactions.
+        </p>
+      </div>
+      <span class="badge badge-warning" id="diet-med-count-badge">Active Medication Remedies</span>
+    </div>
+    <div class="card-body" id="diet-med-remedies-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; padding: 1.25rem;">
+      <!-- Dynamically populated from active medicines -->
+    </div>
+  </div>
+
+  <!-- 3 Columns: Eat, Limit, Avoid -->
+  <div class="diet-grid">
+    <!-- Foods to Eat -->
+    <div class="diet-col-card col-eat">
+      <div class="diet-col-header">
+        <span aria-hidden="true">✅</span>
+        <h2>Foods to Eat</h2>
+      </div>
+      <ul class="diet-list" id="diet-list-eat">
+        <!-- Dynamically rendered -->
+      </ul>
+    </div>
+
+    <!-- Foods to Limit -->
+    <div class="diet-col-card col-limit">
+      <div class="diet-col-header">
+        <span aria-hidden="true">⚠️</span>
+        <h2>Foods to Limit</h2>
+      </div>
+      <ul class="diet-list" id="diet-list-limit">
+        <!-- Dynamically rendered -->
+      </ul>
+    </div>
+
+    <!-- Foods to Avoid -->
+    <div class="diet-col-card col-avoid">
+      <div class="diet-col-header">
+        <span aria-hidden="true">🚫</span>
+        <h2>Foods to Avoid & Drug Warnings</h2>
+      </div>
+      <ul class="diet-list" id="diet-list-avoid">
+        <!-- Dynamically rendered -->
+      </ul>
+    </div>
+  </div>
+
+  <div class="alert alert-info" style="margin-top: 1.5rem;">
+    <span aria-hidden="true">ℹ️</span>
+    <div>
+      <strong>Dietary Decision Support:</strong> These recommendations are based on your documented recovery instructions and tested demo rules. Always consult your doctor or dietitian before making major dietary changes.
+    </div>
+  </div>
+</div>

@@ -1,0 +1,34 @@
+<!-- Features: 04-medicine-schedule | Frontend Template -->
+<div id="medicines-module-root">
+  <div class="view-header">
+    <div class="view-title-wrap">
+      <h1>My Medicine Schedule</h1>
+      <p class="subtitle">Prescribed medicines, dosages, administration timings, and doctor caution notes.</p>
+    </div>
+    <span class="badge badge-demo">DEMO ONLY — NOT A REAL PRESCRIPTION</span>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="med-table" aria-label="Prescribed Medicine Schedule Table">
+      <thead>
+        <tr>
+          <th>Medicine Name</th>
+          <th>Prescribed Dose</th>
+          <th>Timing</th>
+          <th>Duration</th>
+          <th>Additional Instructions</th>
+        </tr>
+      </thead>
+      <tbody id="medicine-table-rows">
+        <!-- Dynamically rendered -->
+      </tbody>
+    </table>
+  </div>
+
+  <div class="alert alert-warning" style="margin-top: 1.5rem;">
+    <span aria-hidden="true">⚠️</span>
+    <div>
+      <strong>Original Discharge Source of Truth:</strong> If any dose, timing or duration is missing or unclear, please confirm with your healthcare professional before taking the medication.
+    </div>
+  </div>
+</div>

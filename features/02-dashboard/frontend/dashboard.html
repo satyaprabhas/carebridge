@@ -1,0 +1,161 @@
+<!-- Features: 02-dashboard | Frontend Template -->
+<div id="dashboard-module-root">
+  <div class="view-header">
+    <div class="view-title-wrap">
+      <h1>Welcome to CareBridge</h1>
+      <p class="subtitle">Your discharge instructions, organised for recovery at home.</p>
+    </div>
+    <span class="badge badge-demo">Fictional Demo Patient</span>
+  </div>
+
+  <!-- Patient Hero Card -->
+  <div class="patient-hero-card">
+    <div class="patient-hero-grid">
+      <div class="hero-avatar" aria-hidden="true">👤</div>
+      <div class="hero-details">
+        <h2 id="dash-patient-name">Suresh</h2>
+        <div class="hero-meta">
+          <span>ID: <strong id="dash-patient-id">CB-DEMO-001</strong></span>
+          <span>•</span>
+          <span>Age: <strong id="dash-patient-age">55 Yrs</strong></span>
+          <span>•</span>
+          <span>Discharged: <strong id="dash-discharge-date">10 October 2026</strong></span>
+          <span>•</span>
+          <span>Allergies: <strong id="dash-allergies">Not provided in this fictional sample</strong></span>
+        </div>
+        <div class="hero-diagnosis-bar">
+          <span>Diagnosis:</span>
+          <span id="dash-diagnosis" class="diag-tag">Recovery following uncomplicated admission (Software testing demo)</span>
+        </div>
+      </div>
+      <div class="hero-actions">
+        <button type="button" id="dash-btn-caresheet" class="btn btn-teal btn-sm">
+          📄 Printable Care Sheet
+        </button>
+        <button type="button" class="btn btn-outline btn-sm" data-page="discharge">
+          View Document →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 Core Summary Cards -->
+  <div class="dashboard-summary-grid">
+    <div class="summary-card" data-page="discharge" role="button" tabindex="0">
+      <div class="summary-card-header">
+        <div class="summary-card-icon icon-blue">📋</div>
+        <span class="summary-card-title">Discharge Summary</span>
+      </div>
+      <div class="summary-card-value" id="dash-sum-discharge">Verified Document</div>
+      <div class="summary-card-desc">Sample summary loaded from Metropolitan General Hospital.</div>
+    </div>
+
+    <div class="summary-card" data-page="medicines" role="button" tabindex="0">
+      <div class="summary-card-header">
+        <div class="summary-card-icon icon-teal">💊</div>
+        <span class="summary-card-title">Medicine Schedule</span>
+      </div>
+      <div class="summary-card-value" id="dash-sum-medicine">Sample Med A (500mg)</div>
+      <div class="summary-card-desc">Twice daily with meals • 3 prescribed demo medications.</div>
+    </div>
+
+    <div class="summary-card" data-page="diet" role="button" tabindex="0">
+      <div class="summary-card-header">
+        <div class="summary-card-icon icon-amber">🥗</div>
+        <span class="summary-card-title">Diet Plan</span>
+      </div>
+      <div class="summary-card-value" id="dash-sum-diet">Light Digestible Recovery</div>
+      <div class="summary-card-desc">Steamed rice, clear soups, avoid fried & spicy foods.</div>
+    </div>
+
+    <div class="summary-card" data-page="followup" role="button" tabindex="0">
+      <div class="summary-card-header">
+        <div class="summary-card-icon icon-navy">📅</div>
+        <span class="summary-card-title">Next Follow-up</span>
+      </div>
+      <div class="summary-card-value" id="dash-sum-followup">18 October 2026 (10:30 AM)</div>
+      <div class="summary-card-desc">Dr. Sarah Jenkins, MD • Room 302 Outpatient Clinic.</div>
+    </div>
+  </div>
+
+  <!-- Feature Navigation Grid -->
+  <section class="care-plan-section">
+    <div class="section-label-bar">
+      <h2>Your Care Plan</h2>
+      <span class="badge badge-secondary">Complete Modules</span>
+    </div>
+
+    <div class="care-plan-grid">
+      <div class="feature-action-card" data-page="discharge" role="button" tabindex="0">
+        <div class="feature-card-icon">📄</div>
+        <div class="feature-card-body">
+          <h3>My Discharge Summary</h3>
+          <p>Upload a hospital document or inspect the bundled fictional sample.</p>
+        </div>
+        <span class="feature-card-arrow">→</span>
+      </div>
+
+      <div class="feature-action-card" data-page="medicines" role="button" tabindex="0">
+        <div class="feature-card-icon">💊</div>
+        <div class="feature-card-body">
+          <h3>Medicine Schedule</h3>
+          <p>View dosages, timings, durations and doctor instructions clearly.</p>
+        </div>
+        <span class="feature-card-arrow">→</span>
+      </div>
+
+      <div class="feature-action-card" data-page="alerts" role="button" tabindex="0">
+        <div class="feature-card-icon" style="background: var(--teal-50); border-color: var(--teal-100);">⏰</div>
+        <div class="feature-card-body">
+          <h3>Medicine Alerts</h3>
+          <p>Reminders & alarms for taking your prescribed medicines on time.</p>
+        </div>
+        <span class="feature-card-arrow">→</span>
+      </div>
+
+      <div class="feature-action-card" data-page="diet" role="button" tabindex="0">
+        <div class="feature-card-icon">🥗</div>
+        <div class="feature-card-body">
+          <h3>Personalised Diet Plan</h3>
+          <p>Foods to Eat, Foods to Limit, and Foods to Avoid with clear rationales.</p>
+        </div>
+        <span class="feature-card-arrow">→</span>
+      </div>
+
+      <div class="feature-action-card" data-page="food-search" role="button" tabindex="0">
+        <div class="feature-card-icon">🔍</div>
+        <div class="feature-card-body">
+          <h3>Can I Eat This?</h3>
+          <p>Instant decision support check for any specific food item.</p>
+        </div>
+        <span class="feature-card-arrow">→</span>
+      </div>
+
+      <div class="feature-action-card" data-page="followup" role="button" tabindex="0">
+        <div class="feature-card-icon">📅</div>
+        <div class="feature-card-body">
+          <h3>Follow-up & Recovery</h3>
+          <p>Doctor appointment details and home recovery checklist tracking.</p>
+        </div>
+        <span class="feature-card-arrow">→</span>
+      </div>
+
+      <div class="feature-action-card" data-page="warnings" role="button" tabindex="0">
+        <div class="feature-card-icon">⚠️</div>
+        <div class="feature-card-body">
+          <h3>Warning Signs</h3>
+          <p>Recognise urgent symptoms requiring immediate emergency care.</p>
+        </div>
+        <span class="feature-card-arrow">→</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Medical Decision Support Alert -->
+  <div class="alert alert-info">
+    <span aria-hidden="true">ℹ️</span>
+    <div>
+      <strong>Notice:</strong> CareBridge helps you understand and organise your discharge instructions. It does not replace advice from your healthcare professional.
+    </div>
+  </div>
+</div>

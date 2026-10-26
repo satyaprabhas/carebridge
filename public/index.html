@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CareBridge — Simple. Safe. Personalised.</title>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
+</head>
+<body>
+
+  <!-- ==================== 1. AUTH SCREEN (LOGIN & REGISTER) ==================== -->
+  <main id="login-page" class="login-screen">
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="brand-icon-wrap" aria-hidden="true">🏥</div>
+        <h1>CareBridge</h1>
+        <p class="tagline">Simple. Safe. Personalised.</p>
+        <p class="subtitle">Post-Discharge Care Plan & Home Recovery Companion</p>
+      </div>
+
+      <!-- Auth Mode Switcher Tabs -->
+      <div class="auth-tabs-bar" role="tablist" aria-label="Sign In or Register">
+        <button type="button" id="tab-login" class="auth-tab-btn active" role="tab" aria-selected="true" aria-controls="login-form">
+          Sign In
+        </button>
+        <button type="button" id="tab-register" class="auth-tab-btn" role="tab" aria-selected="false" aria-controls="register-form">
+          Register New Patient
+        </button>
+      </div>
+
+      <!-- Alert notifications for Auth -->
+      <div id="auth-alert" class="alert alert-danger hidden" role="alert"></div>
+
+      <!-- LOGIN FORM -->
+      <div id="login-pane">
+        <div class="demo-credentials-pill">
+          <strong>Demo Access:</strong><br>
+          Username: <code>patient</code> &nbsp;|&nbsp; Password: <code>CareBridge123</code>
+        </div>
+
+        <form id="login-form" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="login-username">Username or Patient ID</label>
+            <input 
+              type="text" 
+              id="login-username" 
+              class="form-control" 
+              placeholder="Enter 'patient'" 
+              autocomplete="username" 
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="login-password">Password</label>
+            <input 
+              type="password" 
+              id="login-password" 
+              class="form-control" 
+              placeholder="Enter 'CareBridge123'" 
+              autocomplete="current-password" 
+              required
+            >
+          </div>
+
+          <div class="login-btn-row">
+            <button type="submit" id="btn-login" class="btn btn-primary">
+              Log In
+            </button>
+            <button type="button" id="btn-demo-login" class="btn btn-teal">
+              ⚡ Use Demo Account (Instant Access)
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- REGISTRATION FORM -->
+      <div id="register-pane" class="hidden">
+        <div class="demo-credentials-pill" style="border-style: solid; border-color: var(--teal-100); background-color: var(--teal-50);">
+          <strong>Create Patient Account:</strong><br>
+          Register to personalise your post-discharge recovery plan.
+        </div>
+
+        <form id="register-form" novalidate>
+          <div class="form-group">
+            <label class="form-label" for="reg-fullname">Full Name <span class="text-danger">*</span></label>
+            <input 
+              type="text" 
+              id="reg-fullname" 
+              class="form-control" 
+              placeholder="e.g. Ramesh Varma" 
+              required
+            >
+          </div>
+
+          <div class="form-row-grid">
+            <div class="form-group">
+              <label class="form-label" for="reg-age">Age</label>
+              <input 
+                type="number" 
+                id="reg-age" 
+                class="form-control" 
+                placeholder="e.g. 52" 
+                min="1" 
+                max="120"
+              >
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reg-gender">Gender</label>
+              <select id="reg-gender" class="form-control form-select">
+                <option value="Female">Female</option>
+                <option value="Male" selected>Male</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="reg-username">Username <span class="text-danger">*</span></label>
+            <input 
+              type="text" 
+              id="reg-username" 
+              class="form-control" 
+              placeholder="Choose a username" 
+              autocomplete="username" 
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="reg-password">Password <span class="text-danger">*</span></label>
+            <input 
+              type="password" 
+              id="reg-password" 
+              class="form-control" 
+              placeholder="Create a password" 
+              autocomplete="new-password" 
+              required
+            >
+          </div>
+
+          <div class="login-btn-row">
+            <button type="submit" id="btn-register" class="btn btn-teal">
+              ✓ Register & Enter CareBridge
+            </button>
+            <button type="button" id="btn-switch-to-login" class="btn btn-outline btn-sm">
+              Already have an account? Sign In
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="login-footer-note">
+        CareBridge Clinical Portal • Healthcare Management Platform.<br>
+        No real medical information or passwords are stored insecurely.
+      </div>
+    </div>
+  </main>
+
+
+  <!-- ==================== 2. MAIN APPLICATION (AUTHENTICATED) ==================== -->
+  <div id="app-container" class="app-layout hidden">
+
+    <!-- DESKTOP / MOBILE SIDEBAR -->
+    <aside id="sidebar" class="app-sidebar" aria-label="Main Navigation">
+      <div class="sidebar-brand">
+        <div class="sidebar-logo" data-page="dashboard" role="button" tabindex="0">
+          <div class="logo-icon" aria-hidden="true">🏥</div>
+          <div>
+            <div class="logo-text">CareBridge</div>
+            <div class="logo-tagline">Care Companion</div>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-group-title">Menu</div>
+        <ul class="sidebar-menu">
+          <li class="sidebar-menu-item active" data-page="dashboard" role="button" tabindex="0">
+            <span class="menu-icon">📊</span>
+            <span>Dashboard</span>
+          </li>
+          <li class="sidebar-menu-item" data-page="discharge" role="button" tabindex="0">
+            <span class="menu-icon">📄</span>
+            <span>Discharge Summary</span>
+          </li>
+          <li class="sidebar-menu-item" data-page="medicines" role="button" tabindex="0">
+            <span class="menu-icon">💊</span>
+            <span>Medicine Schedule</span>
+          </li>
+          <li class="sidebar-menu-item" data-page="alerts" role="button" tabindex="0">
+            <span class="menu-icon">⏰</span>
+            <span>Medicine Alerts</span>
+            <span id="sidebar-alert-badge" class="badge badge-teal btn-sm" style="margin-left: auto; padding: 2px 6px; font-size: 0.7rem;">Active</span>
+          </li>
+          <li class="sidebar-menu-item" data-page="diet" role="button" tabindex="0">
+            <span class="menu-icon">🥗</span>
+            <span>Personalised Diet Plan</span>
+          </li>
+          <li class="sidebar-menu-item" data-page="food-search" role="button" tabindex="0">
+            <span class="menu-icon">🔍</span>
+            <span>Can I Eat This?</span>
+          </li>
+          <li class="sidebar-menu-item" data-page="followup" role="button" tabindex="0">
+            <span class="menu-icon">📅</span>
+            <span>Follow-up & Recovery</span>
+          </li>
+          <li class="sidebar-menu-item" data-page="warnings" role="button" tabindex="0">
+            <span class="menu-icon">⚠️</span>
+            <span>Warning Signs</span>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-footer-notice">
+          <strong>Decision Support:</strong> CareBridge organises discharge instructions and does not replace doctor advice.
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN WRAPPER -->
+    <div class="app-main">
+
+      <!-- TOP HEADER -->
+      <header class="app-header">
+        <div class="header-left">
+          <button id="mobile-sidebar-toggle" class="mobile-toggle-btn" aria-label="Toggle navigation menu">
+            ☰
+          </button>
+        </div>
+
+        <div class="header-right">
+          <!-- Language Selector -->
+          <div class="lang-selector-wrap">
+            <label for="lang-select" class="sr-only">Choose Language</label>
+            <select id="lang-select" class="form-select">
+              <option value="en" selected>English</option>
+              <option value="hi">हिन्दी (Hindi)</option>
+              <option value="te">తెలుగు (Telugu)</option>
+            </select>
+          </div>
+
+          <!-- Download Care Sheet Header Button -->
+          <button type="button" id="btn-header-care-sheet" class="btn btn-outline-primary btn-sm">
+            📥 Download Care Sheet
+          </button>
+
+          <!-- Patient Profile Chip -->
+          <div class="header-patient-chip">
+            <div class="patient-avatar-circle" aria-hidden="true" id="header-avatar-circle">?</div>
+            <div class="patient-info-names">
+              <div class="name" id="header-patient-name">No Active Record</div>
+              <div class="id" id="header-patient-id">Upload Required</div>
+            </div>
+          </div>
+
+          <!-- Logout Button -->
+          <button type="button" id="btn-logout" class="btn btn-text btn-sm" title="Log out">
+            🚪 Logout
+          </button>
+        </div>
+      </header>
+
+      <!-- PAGE CONTENT ROUTER -->
+      <main class="app-content">
+
+        <!-- ==================== VIEW 1: DASHBOARD ==================== -->
+        <section id="page-dashboard" class="page-section">
+          <div class="view-header">
+            <div class="view-title-wrap">
+              <h1>Welcome to CareBridge</h1>
+              <p class="subtitle">Your discharge instructions, organised for recovery at home.</p>
+            </div>
+            <span class="badge badge-secondary" id="dash-status-badge">Awaiting Document Upload</span>
+          </div>
+
+          <!-- Patient Hero Card -->
+          <div class="patient-hero-card">
+            <div class="patient-hero-grid">
+              <div class="hero-avatar" aria-hidden="true">👤</div>
+              <div class="hero-details">
+                <h2 id="dash-patient-name">No Active Record</h2>
+                <div class="hero-meta">
+                  <span>ID: <strong id="dash-patient-id">Pending Upload</strong></span>
+                  <span>•</span>
+                  <span>Age: <strong id="dash-patient-age">--</strong></span>
+                  <span>•</span>
+                  <span>Discharged: <strong id="dash-discharge-date">--</strong></span>
+                  <span>•</span>
+                  <span>Allergies: <strong id="dash-allergies">--</strong></span>
+                </div>
+                <div class="hero-diagnosis-bar">
+                  <span>Diagnosis:</span>
+                  <span id="dash-diagnosis" class="diag-tag">No discharge summary uploaded yet. Choose a document above to process with OCR.</span>
+                </div>
+              </div>
+              <div class="hero-actions">
+                <button type="button" id="dash-btn-caresheet" class="btn btn-teal btn-sm">
+                  📄 Printable Care Sheet
+                </button>
+                <button type="button" class="btn btn-outline btn-sm" data-page="discharge">
+                  Upload Document →
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4 Core Summary Cards -->
+          <div class="dashboard-summary-grid">
+            <div class="summary-card" data-page="discharge" role="button" tabindex="0">
+              <div class="summary-card-header">
+                <div class="summary-card-icon icon-blue">📋</div>
+                <span class="summary-card-title">Discharge Summary</span>
+              </div>
+              <div class="summary-card-value" id="dash-sum-discharge">Pending Upload</div>
+              <div class="summary-card-desc">Upload your discharge summary to extract records.</div>
+            </div>
+
+            <div class="summary-card" data-page="medicines" role="button" tabindex="0">
+              <div class="summary-card-header">
+                <div class="summary-card-icon icon-teal">💊</div>
+                <span class="summary-card-title">Medicine Schedule</span>
+              </div>
+              <div class="summary-card-value" id="dash-sum-medicine">No Prescriptions</div>
+              <div class="summary-card-desc">Medicines will populate automatically from your document.</div>
+            </div>
+
+            <div class="summary-card" data-page="diet" role="button" tabindex="0">
+              <div class="summary-card-header">
+                <div class="summary-card-icon icon-amber">🥗</div>
+                <span class="summary-card-title">Diet Plan</span>
+              </div>
+              <div class="summary-card-value" id="dash-sum-diet">Pending Diagnosis</div>
+              <div class="summary-card-desc">Diet will tailor automatically across 60+ diseases once scanned.</div>
+            </div>
+
+            <div class="summary-card" data-page="followup" role="button" tabindex="0">
+              <div class="summary-card-header">
+                <div class="summary-card-icon icon-navy">📅</div>
+                <span class="summary-card-title">Next Follow-up</span>
+              </div>
+              <div class="summary-card-value" id="dash-sum-followup">18 October 2026 (10:30 AM)</div>
+              <div class="summary-card-desc">Dr. Sarah Jenkins, MD • Room 302 Outpatient Clinic.</div>
+            </div>
+          </div>
+
+          <!-- Feature Navigation Grid -->
+          <section class="care-plan-section">
+            <div class="section-label-bar">
+              <h2>Your Care Plan</h2>
+              <span class="badge badge-secondary">Complete Modules</span>
+            </div>
+
+            <div class="care-plan-grid">
+              <div class="feature-action-card" data-page="discharge" role="button" tabindex="0">
+                <div class="feature-card-icon">📄</div>
+                <div class="feature-card-body">
+                  <h3>My Discharge Summary</h3>
+                  <p>Upload a hospital document or inspect the bundled fictional sample.</p>
+                </div>
+                <span class="feature-card-arrow">→</span>
+              </div>
+
+              <div class="feature-action-card" data-page="medicines" role="button" tabindex="0">
+                <div class="feature-card-icon">💊</div>
+                <div class="feature-card-body">
+                  <h3>Medicine Schedule</h3>
+                  <p>View dosages, timings, durations and doctor instructions clearly.</p>
+                </div>
+                <span class="feature-card-arrow">→</span>
+              </div>
+
+              <div class="feature-action-card" data-page="alerts" role="button" tabindex="0">
+                <div class="feature-card-icon" style="background: var(--teal-50); border-color: var(--teal-100);">⏰</div>
+                <div class="feature-card-body">
+                  <h3>Medicine Alerts</h3>
+                  <p>Reminders & alarms for taking your prescribed medicines on time.</p>
+                </div>
+                <span class="feature-card-arrow">→</span>
+              </div>
+
+              <div class="feature-action-card" data-page="diet" role="button" tabindex="0">
+                <div class="feature-card-icon">🥗</div>
+                <div class="feature-card-body">
+                  <h3>Personalised Diet Plan</h3>
+                  <p>Foods to Eat, Foods to Limit, and Foods to Avoid with clear rationales.</p>
+                </div>
+                <span class="feature-card-arrow">→</span>
+              </div>
+
+              <div class="feature-action-card" data-page="food-search" role="button" tabindex="0">
+                <div class="feature-card-icon">🔍</div>
+                <div class="feature-card-body">
+                  <h3>Can I Eat This?</h3>
+                  <p>Instant decision support check for any specific food item.</p>
+                </div>
+                <span class="feature-card-arrow">→</span>
+              </div>
+
+              <div class="feature-action-card" data-page="followup" role="button" tabindex="0">
+                <div class="feature-card-icon">📅</div>
+                <div class="feature-card-body">
+                  <h3>Follow-up & Recovery</h3>
+                  <p>Doctor appointment details and home recovery checklist tracking.</p>
+                </div>
+                <span class="feature-card-arrow">→</span>
+              </div>
+
+              <div class="feature-action-card" data-page="warnings" role="button" tabindex="0">
+                <div class="feature-card-icon">⚠️</div>
+                <div class="feature-card-body">
+                  <h3>Warning Signs</h3>
+                  <p>Recognise urgent symptoms requiring immediate emergency care.</p>
+                </div>
+                <span class="feature-card-arrow">→</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Disclaimer Notice -->
+          <div class="alert alert-info">
+            <span aria-hidden="true">ℹ️</span>
+            <div>
+              <strong>Notice:</strong> CareBridge helps you understand and organise your discharge instructions. It does not replace advice from your healthcare professional.
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ==================== VIEW 2: DISCHARGE SUMMARY UPLOAD ==================== -->
+        <section id="page-discharge" class="page-section hidden">
+          <div class="view-header">
+            <div class="view-title-wrap">
+              <h1>My Discharge Summary</h1>
+              <p class="subtitle">Upload your hospital discharge document to organise your home-care instructions.</p>
+            </div>
+            <a href="/sample/CareBridge_Sample_Discharge_Summary.pdf" download class="btn btn-outline btn-sm">
+              📥 Download Sample PDF
+            </a>
+          </div>
+
+          <!-- Status Alert Messages -->
+          <div id="upload-status-alert" class="alert alert-info hidden" role="status"></div>
+
+          <!-- Upload Layout Grid: Dropzone + Sample Button -->
+          <div class="upload-layout-grid">
+            <div class="card">
+              <div class="card-body">
+                <div id="upload-dropzone" class="upload-dropzone-box" role="region" aria-label="Discharge document upload dropzone">
+                  <div class="dropzone-icon-circle" aria-hidden="true">📤</div>
+                  <h3>Upload your discharge document</h3>
+                  <p>Choose a PDF or image of your hospital discharge summary.</p>
+
+                  <input type="file" id="discharge-file-input" class="visually-hidden" accept=".pdf,.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp,application/pdf">
+
+                  <div class="dropzone-actions">
+                    <button type="button" id="btn-choose-file" class="btn btn-outline-primary">
+                      📁 Choose File
+                    </button>
+                    <button type="button" id="btn-process-file" class="btn btn-primary" disabled>
+                      ⚙️ Process Document
+                    </button>
+                  </div>
+
+                  <div class="file-formats-hint" style="margin-top: 1rem; font-size: 0.775rem; color: var(--slate-400);">
+                    Supported formats: PDF, JPG, JPEG, PNG, and WebP (Max file size: 10MB)
+                  </div>
+
+                  <!-- Selected File Banner -->
+                  <div id="selected-file-banner" class="selected-file-banner hidden">
+                    <div class="file-pill-left">
+                      <span aria-hidden="true">📄</span>
+                      <div>
+                        <div class="name" id="selected-filename">document.pdf</div>
+                        <div class="size" id="selected-filesize">0 KB</div>
+                      </div>
+                    </div>
+                    <button type="button" id="btn-remove-selected-file" class="btn btn-text btn-sm" title="Remove file">
+                      ✕ Remove
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Instant Sample Tester Card -->
+            <div class="sample-tester-card">
+              <div>
+                <span class="badge badge-success" style="margin-bottom: 0.75rem;">Verified Demo</span>
+                <h3>Try with Sample Discharge Summary</h3>
+                <p>Test the full CareBridge experience immediately with our realistic, bundled fictional patient summary for <strong>Suresh</strong>.</p>
+
+                <ul class="sample-features-list">
+                  <li>Fictional patient profile (CB-DEMO-001)</li>
+                  <li>3 sample medications with dosing & caution notes</li>
+                  <li>Reviewed post-discharge diet guidelines</li>
+                  <li>Appointment with Dr. Sarah Jenkins (18 Oct 2026)</li>
+                  <li>Emergency red-flag warning criteria</li>
+                </ul>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <button type="button" id="btn-load-sample" class="btn btn-teal">
+                  🚀 Try with Sample Discharge Summary
+                </button>
+                <a href="/sample/CareBridge_Sample_Discharge_Summary.pdf" target="_blank" class="btn btn-outline btn-sm" style="text-align: center;">
+                  👁️ Preview Sample PDF
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Extracted Data Review Card (Shown upon processing) -->
+          <div id="extracted-review-section" class="extracted-review-container hidden">
+            <div class="review-header-bar">
+              <div>
+                <h2 id="review-title">Document OCR & Certificate Verification</h2>
+                <p style="font-size: 0.85rem; color: var(--slate-500); margin-top: 0.2rem;">
+                  Compare the original document against extracted values side-by-side. You can edit any field before confirming.
+                </p>
+              </div>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <span id="review-doc-type-badge" class="badge badge-teal">Document Type</span>
+                <span id="review-mode-badge" class="badge badge-success">Live OCR</span>
+              </div>
+            </div>
+
+            <!-- OCR Meta Summary Banner -->
+            <div id="ocr-meta-banner" class="ocr-meta-banner" style="margin-bottom: 1rem;">
+              <div>
+                <strong>Detected: </strong><span id="ocr-doc-title">Hospital Discharge Summary</span>
+              </div>
+              <div style="display: flex; gap: 1rem; font-size: 0.825rem;">
+                <span>Accuracy Confidence: <strong id="ocr-overall-conf">--%</strong></span>
+                <span>Verified Fields: <strong id="ocr-verified-count" class="text-success">0</strong></span>
+                <span>Missing / Uncertain: <strong id="ocr-missing-count" class="text-warning">0</strong></span>
+              </div>
+            </div>
+
+            <!-- Side-by-Side Split View: Document Preview (Left) vs Extracted Fields (Right) -->
+            <div class="ocr-split-container">
+              <!-- Left: Uploaded Document Viewer -->
+              <div class="ocr-document-pane">
+                <div class="ocr-document-toolbar">
+                  <span>📄 Original Document Preview</span>
+                  <div style="display: flex; gap: 0.35rem;">
+                    <button type="button" id="btn-zoom-in" class="btn btn-xs btn-outline" style="color: white; border-color: rgba(255,255,255,0.3); padding: 2px 8px;">🔍+</button>
+                    <button type="button" id="btn-zoom-out" class="btn btn-xs btn-outline" style="color: white; border-color: rgba(255,255,255,0.3); padding: 2px 8px;">🔍-</button>
+                    <button type="button" id="btn-zoom-reset" class="btn btn-xs btn-outline" style="color: white; border-color: rgba(255,255,255,0.3); padding: 2px 8px;">100%</button>
+                  </div>
+                </div>
+                <div class="ocr-document-viewer" id="ocr-viewer-container">
+                  <img id="ocr-preview-img" src="" alt="Uploaded Document Preview" class="hidden">
+                  <iframe id="ocr-preview-iframe" src="" class="hidden" title="PDF Preview"></iframe>
+                  <div id="ocr-preview-placeholder" style="color: #94a3b8; margin: auto; text-align: center;">
+                    <p>No document preview available</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Structured Extracted Fields -->
+              <div class="ocr-fields-pane" id="extracted-fields-list">
+                <!-- Dynamically rendered editable cards with confidence badges -->
+              </div>
+            </div>
+
+            <!-- Raw OCR Text Toggle for Transparency -->
+            <div style="margin-top: 1.25rem;">
+              <details style="cursor: pointer; font-size: 0.825rem; background: var(--slate-50); padding: 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--slate-200);">
+                <summary style="font-weight: 600; color: var(--navy-800);">📄 View Full Raw Text Stream Extracted from Document</summary>
+                <pre id="ocr-raw-text-dump" style="white-space: pre-wrap; font-family: var(--font-mono); font-size: 0.775rem; margin-top: 0.5rem; color: var(--slate-700); max-height: 250px; overflow-y: auto; background: white; padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--slate-200);"></pre>
+              </details>
+            </div>
+
+            <div class="review-footer-actions">
+              <button type="button" id="btn-discard-extracted" class="btn btn-outline">
+                ✕ Discard
+              </button>
+              <button type="button" id="btn-confirm-extracted" class="btn btn-teal">
+                ✓ Confirm Verified Details & Apply to Care Plan
+              </button>
+            </div>
+          </div>
+
+          <!-- Current Discharge Summary Details Card -->
+          <div class="card" id="active-record-card">
+            <div class="card-header">
+              <h2>Current Active Discharge Record</h2>
+              <span class="badge badge-secondary" id="rec-status-badge">Awaiting Document Upload</span>
+            </div>
+            <div class="card-body">
+              <div class="extracted-fields-grid">
+                <!-- 1. Patient Profile -->
+                <div class="extracted-field-block">
+                  <h4><span aria-hidden="true">👤</span> Patient Profile & Ward</h4>
+                  <div class="field-content-body">
+                    <p><strong id="rec-patient-name">No Document Uploaded</strong> (ID: <span id="rec-patient-id">Pending Upload</span>)</p>
+                    <div class="field-meta-row">
+                      <span>Age: <strong id="rec-patient-age">--</strong></span> &nbsp;•&nbsp; 
+                      <span>Sex: <strong id="rec-patient-gender">--</strong></span> &nbsp;•&nbsp; 
+                      <span>Ward & Bed: <strong id="rec-patient-ward">--</strong></span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 2. Stay Timeline -->
+                <div class="extracted-field-block">
+                  <h4><span aria-hidden="true">🗓️</span> Stay Timeline & Hospital Location</h4>
+                  <div class="field-content-body">
+                    <p>Admission: <strong id="rec-adm-date">--</strong> &nbsp;|&nbsp; Discharge: <strong id="rec-dis-date">--</strong></p>
+                    <div class="field-meta-row">
+                      <span>Address: <span id="rec-hospital-address">--</span></span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 3. Primary Diagnosis -->
+                <div class="extracted-field-block" style="grid-column: 1 / -1;">
+                  <h4><span aria-hidden="true">🩺</span> Primary Diagnosis</h4>
+                  <div class="field-content-body">
+                    <p id="rec-diagnosis" style="color: var(--slate-500); font-style: italic;">No active discharge summary uploaded. Please choose and process an image or document above to populate clinical details.</p>
+                  </div>
+                </div>
+
+                <!-- 4. Hospital & Attending Care Team -->
+                <div class="extracted-field-block">
+                  <h4><span aria-hidden="true">🏥</span> Hospital & Attending Doctors</h4>
+                  <div class="field-content-body">
+                    <p id="rec-doctor" style="color: var(--slate-400);">--</p>
+                  </div>
+                </div>
+
+                <!-- 5. Reason for Admission -->
+                <div class="extracted-field-block">
+                  <h4><span aria-hidden="true">📋</span> Reason for Admission & Complaints</h4>
+                  <div class="field-content-body">
+                    <p id="rec-complaints" style="color: var(--slate-400);">Awaiting document processing...</p>
+                  </div>
+                </div>
+
+                <!-- 6. Surgical Procedure & Intraoperative Course -->
+                <div class="extracted-field-block" style="grid-column: 1 / -1;">
+                  <h4><span aria-hidden="true">🔬</span> Surgical Procedure & Course</h4>
+                  <div class="field-content-body">
+                    <p id="rec-surgery" style="color: var(--slate-400);">--</p>
+                  </div>
+                </div>
+
+                <!-- 7. Discharge Condition & Clinical Vitals -->
+                <div class="extracted-field-block" style="grid-column: 1 / -1;">
+                  <h4><span aria-hidden="true">💖</span> Discharge Condition & Clinical Vitals</h4>
+                  <div class="field-content-body">
+                    <p id="rec-vitals" style="color: var(--slate-400);">--</p>
+                  </div>
+                </div>
+
+                <!-- 8. Dietary Guidance -->
+                <div class="extracted-field-block">
+                  <h4><span aria-hidden="true">🥗</span> Dietary Guidance & Nutrition</h4>
+                  <div class="field-content-body">
+                    <p id="rec-diet" style="color: var(--slate-400);">--</p>
+                  </div>
+                </div>
+
+                <!-- 9. Activity & Recovery Lifestyle -->
+                <div class="extracted-field-block">
+                  <h4><span aria-hidden="true">🏃</span> Activity & Recovery Lifestyle</h4>
+                  <div class="field-content-body">
+                    <p id="rec-activity" style="color: var(--slate-400);">--</p>
+                  </div>
+                </div>
+
+                <!-- 10. Follow-Up Schedule -->
+                <div class="extracted-field-block">
+                  <h4><span aria-hidden="true">📅</span> Follow-Up Appointments</h4>
+                  <div class="field-content-body">
+                    <p id="rec-followup" style="color: var(--slate-400);">--</p>
+                  </div>
+                </div>
+
+                <!-- 11. Warning Signs -->
+                <div class="extracted-field-block">
+                  <h4><span aria-hidden="true">🚨</span> Signs of Concern & Emergency Criteria</h4>
+                  <div class="field-content-body">
+                    <p id="rec-warnings" style="color: var(--slate-400);">--</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ==================== VIEW 3: MEDICINE SCHEDULE ==================== -->
+        <section id="page-medicines" class="page-section hidden">
+          <div class="view-header">
+            <div class="view-title-wrap">
+              <h1>My Medicine Schedule</h1>
+              <p class="subtitle">Prescribed medicines, dosages, administration timings, and doctor caution notes.</p>
+            </div>
+            <span class="badge badge-demo">DEMO ONLY — NOT A REAL PRESCRIPTION</span>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="med-table" aria-label="Prescribed Medicine Schedule Table">
+              <thead>
+                <tr>
+                  <th>Medicine Name</th>
+                  <th>Prescribed Dose</th>
+                  <th>Timing</th>
+                  <th>Duration</th>
+                  <th>Additional Instructions</th>
+                </tr>
+              </thead>
+              <tbody id="medicine-table-rows">
+                <!-- Dynamically rendered -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="alert alert-warning" style="margin-top: 1.5rem;">
+            <span aria-hidden="true">⚠️</span>
+            <div>
+              <strong>Original Discharge Source of Truth:</strong> If any dose, timing or duration is missing or unclear, please confirm with your healthcare professional before taking the medication.
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ==================== VIEW: MEDICINE ALERTS & REMINDERS ==================== -->
+        <section id="page-alerts" class="page-section hidden">
+          <div class="view-header">
+            <div class="view-title-wrap">
+              <h1>Medicine Alerts & Reminders</h1>
+              <p class="subtitle">Set automated mobile SMS reminders so you never miss a dose, even when you close the website.</p>
+            </div>
+            <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+              <button type="button" id="btn-request-browser-notif" class="btn btn-outline btn-sm">
+                🔔 Enable Browser Notifications
+              </button>
+              <button type="button" id="btn-trigger-demo-alert" class="btn btn-teal btn-sm">
+                ⚡ Test Live Screen Alarm
+              </button>
+            </div>
+          </div>
+
+          <!-- Telegram Bot Connect Card (1-Click Pairing) -->
+          <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #ffffff; border: none; border-radius: 12px; box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25);">
+            <div class="card-body" style="padding: 1.25rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="background: rgba(255, 255, 255, 0.2); width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; flex-shrink: 0;">
+                  ✈️
+                </div>
+                <div>
+                  <h3 style="margin: 0; font-size: 1.15rem; font-weight: 700; color: #ffffff;">Connect Your Phone to CareBridge Bot</h3>
+                  <p style="margin: 0.25rem 0 0; font-size: 0.88rem; color: rgba(255, 255, 255, 0.9);">
+                    Receive instant, loud medicine reminder alerts on your phone even when this website is closed.
+                  </p>
+                  <div style="margin-top: 0.4rem; font-size: 0.8rem; color: rgba(255, 255, 255, 0.85); display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                    <span>1️⃣ Click the button</span>
+                    <span>➔</span>
+                    <span>2️⃣ Tap <strong>Start</strong> in Telegram</span>
+                    <span>➔</span>
+                    <span>3️⃣ Phone paired for automated reminders!</span>
+                  </div>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                <a href="https://t.me/carebridge_medicinealert_bot" target="_blank" rel="noopener noreferrer" class="btn" style="background: #ffffff; color: #0284c7; font-weight: 700; padding: 0.65rem 1.25rem; border-radius: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+                  <span>📲</span> Open @carebridge_medicinealert_bot
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- SMS Reminder Configuration Card -->
+          <div class="card" style="margin-bottom: 1.5rem; border-left: 4px solid var(--teal-600, #0d9488);">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="font-size: 1.25rem;">📱</span>
+                <div>
+                  <h2 style="margin: 0; font-size: 1.05rem;">Registered Mobile Number for Automated Phone & SMS Alerts</h2>
+                  <p style="margin: 0.15rem 0 0; font-size: 0.8rem; color: var(--slate-500);">
+                    Server-side scheduler checks due times and dispatches phone alerts independently of the website being open.
+                  </p>
+                </div>
+              </div>
+              <span id="sms-provider-badge" class="badge badge-secondary">Checking Alert Gateway...</span>
+            </div>
+            <div class="card-body">
+              <div style="display: flex; gap: 0.75rem; align-items: flex-end; flex-wrap: wrap;">
+                <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 240px;">
+                  <label class="form-label" for="registered-phone-input">Your Mobile Number (with country code)</label>
+                  <input type="tel" id="registered-phone-input" class="form-control" placeholder="+919392224765" pattern="^\+?[0-9]{10,14}$">
+                </div>
+                <button type="button" id="btn-save-phone" class="btn btn-primary" style="white-space: nowrap;">
+                  💾 Save Mobile Number
+                </button>
+                <button type="button" id="btn-test-sms" class="btn btn-teal" style="white-space: nowrap;">
+                  ⚡ Send Test Alert Now
+                </button>
+              </div>
+              <div id="sms-test-status" class="alert alert-info hidden" style="margin-top: 1rem; font-size: 0.85rem;" role="status"></div>
+            </div>
+          </div>
+
+          <!-- Notification Status Banner -->
+          <div id="notif-status-banner" class="alert alert-info">
+            <span aria-hidden="true">ℹ️</span>
+            <div id="notif-status-text">
+              <strong>Server-Side Background Scheduler:</strong> Alerts are triggered automatically at your prescribed medicine times. SMS messages are sent directly to your registered phone even after closing your browser tab.
+            </div>
+          </div>
+
+          <!-- Medicine Alert Cards Grid -->
+          <div class="alerts-dashboard-grid" id="alerts-cards-container">
+            <!-- Dynamically populated from active medicines -->
+          </div>
+
+          <!-- Custom Reminder Addition Form -->
+          <div class="card" style="margin-top: 2rem;">
+            <div class="card-header">
+              <h2>Add Custom Medicine Alert</h2>
+              <span class="badge badge-secondary">Personalized Schedule</span>
+            </div>
+            <div class="card-body">
+              <form id="add-alert-form" novalidate>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" for="alert-med-name">Medicine Name</label>
+                    <input type="text" id="alert-med-name" class="form-control" placeholder="e.g. Metformin / Multivitamin" required>
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" for="alert-med-dose">Dose & Notes</label>
+                    <input type="text" id="alert-med-dose" class="form-control" placeholder="e.g. 500 mg with breakfast">
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" for="alert-med-time">Alert Time</label>
+                    <input type="time" id="alert-med-time" class="form-control" required>
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0;">
+                    <label class="form-label" for="alert-med-phone">Mobile Number</label>
+                    <input type="tel" id="alert-med-phone" class="form-control" placeholder="e.g. +919876543210">
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0; display: flex; align-items: flex-end;">
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                      ➕ Add Reminder
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- SMS Dispatch Delivery Log & Adherence History -->
+          <div class="card" style="margin-top: 1.5rem;">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+              <h2>Server-Side SMS Reminder Delivery Log</h2>
+              <span id="sms-delivery-badge" class="badge badge-secondary">0 Dispatches Logged</span>
+            </div>
+            <div class="card-body">
+              <ul class="intake-log-list" id="sms-delivery-log-list">
+                <li style="text-align: center; color: var(--slate-400); padding: 1.5rem 0; font-size: 0.875rem;">
+                  No SMS dispatches yet. Use "Send Test SMS Now" or await scheduled dose times.
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Dose Log & Adherence History -->
+          <div class="card" style="margin-top: 1.5rem;">
+            <div class="card-header">
+              <h2>Today's Medication Intake Log</h2>
+              <span id="dose-intake-badge" class="badge badge-success">0 Doses Taken Today</span>
+            </div>
+            <div class="card-body">
+              <ul class="intake-log-list" id="intake-log-list">
+                <!-- Dynamically populated -->
+              </ul>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ==================== VIEW 4: PERSONALISED DIET PLAN ==================== -->
+        <section id="page-diet" class="page-section hidden">
+          <div class="view-header">
+            <div class="view-title-wrap">
+              <h1>My Personalised Diet Plan</h1>
+              <p class="subtitle" id="diet-plan-subtitle">Clinical nutrition plan tailored to your diagnosis and prescribed medications.</p>
+            </div>
+            <span class="badge badge-teal" id="diet-plan-condition-badge">Cardiovascular Recovery</span>
+          </div>
+
+          <!-- Protocol Selector Bar: 150 Operations & 120 Diseases -->
+          <div class="card" style="margin-bottom: 1.25rem; background: #f8fafc; border: 1px solid var(--slate-200, #e2e8f0);">
+            <div class="card-body" style="padding: 0.85rem 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+              <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1; min-width: 280px;">
+                <label for="diet-condition-select" style="font-weight: 600; font-size: 0.9rem; color: var(--slate-700, #334155); white-space: nowrap; margin: 0;">
+                  🏥 Clinical Protocol:
+                </label>
+                <select id="diet-condition-select" class="form-select form-control" style="flex: 1; max-width: 500px; font-size: 0.875rem; padding: 0.45rem 0.75rem; border-radius: 6px; border: 1px solid var(--slate-300, #cbd5e1);">
+                  <!-- Dynamically populated from 271 conditions -->
+                </select>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span class="badge badge-primary" id="diet-total-conditions-badge">271 Protocols (150 Surgeries + 120 Diseases)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Condition Banner -->
+          <div id="diet-condition-card" class="card" style="border-left: 4px solid var(--primary-600, #0284c7); margin-bottom: 1.5rem;">
+            <div class="card-body">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
+                <div>
+                  <span class="badge badge-primary" style="margin-bottom: 0.5rem;" id="diet-condition-tag">📋 Condition Protocol</span>
+                  <h3 id="diet-condition-title" style="margin: 0.25rem 0 0.5rem 0; font-size: 1.15rem; color: var(--slate-800);">Cardiovascular Recovery & Post-Cardiac Surgery Protocol</h3>
+                  <p id="diet-condition-desc" style="font-size: 0.9rem; color: var(--slate-600); margin: 0;">Low-sodium, heart-healthy fats, high soluble fiber, and vascular anti-inflammatory nutrition designed to protect bypass grafts and coronary arteries.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Medication Side-Effects & Food Remedies Card -->
+          <div id="diet-med-remedies-card" class="card" style="margin-bottom: 1.5rem; border-left: 4px solid #f59e0b;">
+            <div class="card-header" style="background: rgba(245, 158, 11, 0.08); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+              <div>
+                <h2 style="font-size: 1.1rem; color: #b45309; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                  💊 Medication Side-Effect Defenses & Drug-Food Remedies
+                </h2>
+                <p style="font-size: 0.825rem; color: var(--slate-600); margin: 0.2rem 0 0 0;">
+                  Targeted dietary remedies to soothe tablet side-effects (stomach irritation, muscle cramps, potassium retention) and avoid dangerous food interactions.
+                </p>
+              </div>
+              <span class="badge badge-warning" id="diet-med-count-badge">Active Medication Remedies</span>
+            </div>
+            <div class="card-body" id="diet-med-remedies-list" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; padding: 1.25rem;">
+              <!-- Dynamically populated from active medicines -->
+            </div>
+          </div>
+
+          <!-- 3 Columns: Eat, Limit, Avoid -->
+          <div class="diet-grid">
+            <!-- Foods to Eat -->
+            <div class="diet-col-card col-eat">
+              <div class="diet-col-header">
+                <span aria-hidden="true">✅</span>
+                <h2>Foods to Eat</h2>
+              </div>
+              <ul class="diet-list" id="diet-list-eat">
+                <!-- Dynamically rendered -->
+              </ul>
+            </div>
+
+            <!-- Foods to Limit -->
+            <div class="diet-col-card col-limit">
+              <div class="diet-col-header">
+                <span aria-hidden="true">⚠️</span>
+                <h2>Foods to Limit</h2>
+              </div>
+              <ul class="diet-list" id="diet-list-limit">
+                <!-- Dynamically rendered -->
+              </ul>
+            </div>
+
+            <!-- Foods to Avoid -->
+            <div class="diet-col-card col-avoid">
+              <div class="diet-col-header">
+                <span aria-hidden="true">🚫</span>
+                <h2>Foods to Avoid & Drug Warnings</h2>
+              </div>
+              <ul class="diet-list" id="diet-list-avoid">
+                <!-- Dynamically rendered -->
+              </ul>
+            </div>
+          </div>
+
+          <div class="alert alert-info">
+            <span aria-hidden="true">ℹ️</span>
+            <div>
+              <strong>Dietary Decision Support:</strong> These recommendations are based on your documented recovery instructions and tested demo rules. Always consult your doctor or dietitian before making major dietary changes.
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ==================== VIEW 5: CAN I EAT THIS? (FOOD SEARCH) ==================== -->
+        <section id="page-food-search" class="page-section hidden">
+          <div class="view-header">
+            <div class="view-title-wrap">
+              <h1>Can I Eat This?</h1>
+              <p class="subtitle">Search any food, drink, or ingredient to verify suitability against 1,000+ items and 271 clinical surgical/disease protocols.</p>
+            </div>
+            <span class="badge badge-teal">1,000+ Foods & 271 Protocols Active</span>
+          </div>
+
+          <!-- Search Box Card -->
+          <div class="search-hero-box">
+            <form id="food-search-form">
+              <div class="search-input-wrap">
+                <label for="food-search-input" class="sr-only">Enter food item to verify</label>
+                <input 
+                  type="text" 
+                  id="food-search-input" 
+                  class="form-control" 
+                  placeholder="Search 1,000+ foods (e.g., paneer, chicken, coconut water, papaya, samosa, oats, fish)..." 
+                  autocomplete="off"
+                  required
+                >
+                <button type="submit" id="btn-search-food" class="btn btn-teal">
+                  🔍 Search Food
+                </button>
+              </div>
+            </form>
+
+            <div class="quick-search-tags">
+              <span class="quick-search-label">Quick test items:</span>
+              <button type="button" class="food-tag-btn" data-food="paneer">paneer</button>
+              <button type="button" class="food-tag-btn" data-food="chicken soup">chicken soup</button>
+              <button type="button" class="food-tag-btn" data-food="coconut water">coconut water</button>
+              <button type="button" class="food-tag-btn" data-food="salmon">salmon</button>
+              <button type="button" class="food-tag-btn" data-food="papaya">papaya</button>
+              <button type="button" class="food-tag-btn" data-food="makhana">makhana</button>
+              <button type="button" class="food-tag-btn" data-food="turmeric">turmeric</button>
+              <button type="button" class="food-tag-btn" data-food="samosa">samosa</button>
+              <button type="button" class="food-tag-btn" data-food="dark chocolate">dark chocolate</button>
+              <button type="button" class="food-tag-btn" data-food="green tea">green tea</button>
+              <button type="button" class="food-tag-btn" data-food="boiled egg">boiled egg</button>
+              <button type="button" class="food-tag-btn" data-food="alcohol">alcohol</button>
+            </div>
+          </div>
+
+          <!-- Search Result Card (Hidden until search) -->
+          <div id="food-search-result" class="search-verdict-card hidden">
+            <div class="verdict-header">
+              <div class="verdict-title-side">
+                <span id="verdict-icon" class="verdict-icon">✅</span>
+                <h3 id="verdict-food-name">Food Name</h3>
+              </div>
+              <span id="verdict-badge" class="badge badge-success">Suitable</span>
+            </div>
+
+            <p id="verdict-explanation" class="verdict-explanation">
+              Explanation will appear here.
+            </p>
+
+            <div id="verdict-notes-wrap" class="verdict-notes hidden">
+              <strong>Recommendation:</strong> <span id="verdict-notes-text">Preparation details</span>
+            </div>
+
+            <div class="verdict-footer-note">
+              Decision support rule for testing — not a medical prescription or clinical diagnosis.
+            </div>
+          </div>
+
+          <div class="alert alert-info">
+            <span aria-hidden="true">ℹ️</span>
+            <div>
+              <strong>Rule-Based Decision Support:</strong> Checks against your recovery guidelines, documented restrictions, and testing nutrition rules. If a food cannot be confirmed, always consult your physician or dietitian.
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ==================== VIEW 6: FOLLOW-UP AND RECOVERY ==================== -->
+        <section id="page-followup" class="page-section hidden">
+          <div class="view-header">
+            <div class="view-title-wrap">
+              <h1>Follow-up & Recovery</h1>
+              <p class="subtitle">Documented appointment dates, physician details and home recovery steps.</p>
+            </div>
+            <span class="badge badge-demo">Sample Care Milestones</span>
+          </div>
+
+          <div class="followup-grid">
+            <!-- Appointment Card -->
+            <div class="appointment-card">
+              <div class="card-header" style="padding: 0 0 1rem; border-bottom: 1px solid var(--slate-100);">
+                <h2>Upcoming Appointment</h2>
+                <span class="badge badge-primary">Scheduled</span>
+              </div>
+
+              <div class="appointment-detail-list">
+                <div class="app-item">
+                  <label>Follow-up Date & Time</label>
+                  <strong id="fol-date">18 October 2026 at 10:30 AM</strong>
+                </div>
+                <div class="app-item">
+                  <label>Physician</label>
+                  <strong id="fol-doctor">Dr. Sarah Jenkins, MD</strong>
+                </div>
+                <div class="app-item">
+                  <label>Clinic Location</label>
+                  <strong id="fol-dept">Room 302, Outpatient Clinic</strong>
+                </div>
+                <div class="app-item">
+                  <label>Hospital</label>
+                  <strong id="fol-hosp">Metropolitan General Hospital</strong>
+                </div>
+              </div>
+
+              <div class="alert alert-info" style="margin-top: 1.25rem; margin-bottom: 0;">
+                <strong>Patient Notes:</strong> <span id="fol-notes">Bring this discharge record and daily symptom journal. (Sample Follow-up Date)</span>
+              </div>
+            </div>
+
+            <!-- Home-Care Checklist -->
+            <div class="checklist-card">
+              <div class="card-header" style="padding: 0 0 1rem; border-bottom: 1px solid var(--slate-100);">
+                <h2>Home-Care Instructions</h2>
+                <span id="checklist-progress-badge" class="badge badge-secondary">0 of 4 Completed</span>
+              </div>
+
+              <ul class="checklist-items" id="homecare-checklist-items">
+                <!-- Dynamically populated checkboxes -->
+              </ul>
+            </div>
+          </div>
+        </section>
+
+
+        <!-- ==================== VIEW 7: WARNING SIGNS ==================== -->
+        <section id="page-warnings" class="page-section hidden">
+          <div class="view-header">
+            <div class="view-title-wrap">
+              <h1>Warning Signs</h1>
+              <p class="subtitle">Recognise urgent emergency symptoms versus routine follow-up indicators.</p>
+            </div>
+            <span class="badge badge-danger">Emergency Safety Protocol</span>
+          </div>
+
+          <div class="warnings-layout">
+            <!-- Urgent Signs -->
+            <div class="warning-box warning-urgent-box">
+              <h2>🚨 Seek Emergency Help Immediately</h2>
+              <p class="prompt">
+                Call emergency services (112 / 911) or visit the nearest hospital emergency room immediately if you experience:
+              </p>
+              <ul class="urgent-items-list" id="warning-urgent-list">
+                <!-- Dynamically populated -->
+              </ul>
+            </div>
+
+            <!-- Caution Signs -->
+            <div class="warning-box warning-caution-box">
+              <h2>⚠️ Contact Your Doctor Soon</h2>
+              <p class="prompt">
+                Contact Dr. Sarah Jenkins or the outpatient clinic if any of these symptoms develop:
+              </p>
+              <ul class="caution-items-list" id="warning-caution-list">
+                <!-- Dynamically populated -->
+              </ul>
+            </div>
+          </div>
+
+          <div class="alert alert-danger">
+            <span aria-hidden="true">🚨</span>
+            <div>
+              <strong>Emergency Instruction:</strong> If you experience severe, potentially life-threatening symptoms, seek immediate emergency medical care rather than relying on website instructions.
+            </div>
+          </div>
+        </section>
+
+      </main>
+
+      <!-- APPLICATION FOOTER -->
+      <footer class="app-footer-bar">
+        <div>
+          <strong>CareBridge</strong> — Simple. Safe. Personalised. (Universal Healthcare Management System)
+        </div>
+        <div>
+          This tool is for demonstration purposes and does not replace professional medical advice.
+        </div>
+      </footer>
+
+    </div>
+  </div>
+
+  <!-- ==================== MEDICINE ALARM POPUP MODAL ==================== -->
+  <div id="medicine-alarm-modal" class="alarm-modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="alarm-modal-title">
+    <div class="alarm-modal-card">
+      <div class="alarm-modal-icon-wrap">
+        <span class="alarm-bell-icon">🔔</span>
+      </div>
+      <span class="badge badge-teal" style="font-size: 0.8rem; margin-bottom: 0.5rem;">Medication Reminder</span>
+      <h2 id="alarm-modal-title" style="margin: 0.25rem 0 0.5rem; color: var(--navy-900);">Time to take your medicine!</h2>
+      <div class="alarm-modal-med-box">
+        <div class="alarm-med-name" id="alarm-modal-med-name">Sample Med A</div>
+        <div class="alarm-med-dose" id="alarm-modal-med-dose">500 mg • Twice daily</div>
+        <div class="alarm-med-notes" id="alarm-modal-med-notes">Take with water after meal. Do not skip doses.</div>
+      </div>
+      <div class="alarm-modal-actions">
+        <button type="button" id="btn-alarm-take" class="btn btn-teal" style="flex: 1;">
+          ✅ Mark as Taken
+        </button>
+        <button type="button" id="btn-alarm-snooze" class="btn btn-outline" style="flex: 1;">
+          ⏰ Snooze (5 mins)
+        </button>
+        <button type="button" id="btn-alarm-dismiss" class="btn btn-text btn-sm" style="color: var(--slate-500);">
+          Dismiss
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPLICATION SCRIPTS -->
+  <script src="/js/diseasesData.js"></script>
+  <script src="/js/foodDatabase.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

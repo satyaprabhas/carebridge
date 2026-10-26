@@ -1,0 +1,146 @@
+<!-- Features: 01-auth | Frontend Template -->
+<div id="auth-module-root">
+  <div class="login-brand">
+    <div class="brand-icon-wrap" aria-hidden="true">🏥</div>
+    <h1>CareBridge</h1>
+    <p class="tagline">Simple. Safe. Personalised.</p>
+    <p class="subtitle">Post-Discharge Care Plan & Home Recovery Companion</p>
+  </div>
+
+  <!-- Auth Mode Switcher Tabs -->
+  <div class="auth-tabs-bar" role="tablist" aria-label="Sign In or Register">
+    <button type="button" id="tab-login" class="auth-tab-btn active" role="tab" aria-selected="true" aria-controls="login-pane">
+      Sign In
+    </button>
+    <button type="button" id="tab-register" class="auth-tab-btn" role="tab" aria-selected="false" aria-controls="register-pane">
+      Register New Patient
+    </button>
+  </div>
+
+  <!-- Alert notifications for Auth -->
+  <div id="auth-alert" class="alert alert-danger hidden" role="alert"></div>
+
+  <!-- LOGIN PANE -->
+  <div id="login-pane">
+    <div class="demo-credentials-pill">
+      <strong>Demo Access:</strong><br>
+      Username: <code>patient</code> &nbsp;|&nbsp; Password: <code>CareBridge123</code>
+    </div>
+
+    <form id="login-form" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="login-username">Username or Patient ID</label>
+        <input 
+          type="text" 
+          id="login-username" 
+          class="form-control" 
+          placeholder="Enter 'patient'" 
+          autocomplete="username" 
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="login-password">Password</label>
+        <input 
+          type="password" 
+          id="login-password" 
+          class="form-control" 
+          placeholder="Enter 'CareBridge123'" 
+          autocomplete="current-password" 
+          required
+        >
+      </div>
+
+      <div class="login-btn-row">
+        <button type="submit" id="btn-login" class="btn btn-primary">
+          Log In
+        </button>
+        <button type="button" id="btn-demo-login" class="btn btn-teal">
+          ⚡ Use Demo Account (Instant Access)
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- REGISTRATION PANE -->
+  <div id="register-pane" class="hidden">
+    <div class="demo-credentials-pill" style="border-style: solid; border-color: var(--teal-100); background-color: var(--teal-50);">
+      <strong>Create Patient Account:</strong><br>
+      Register to personalise your post-discharge recovery plan.
+    </div>
+
+    <form id="register-form" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="reg-fullname">Full Name <span class="text-danger">*</span></label>
+        <input 
+          type="text" 
+          id="reg-fullname" 
+          class="form-control" 
+          placeholder="e.g. Ramesh Varma" 
+          required
+        >
+      </div>
+
+      <div class="form-row-grid">
+        <div class="form-group">
+          <label class="form-label" for="reg-age">Age</label>
+          <input 
+            type="number" 
+            id="reg-age" 
+            class="form-control" 
+            placeholder="e.g. 52" 
+            min="1" 
+            max="120"
+          >
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="reg-gender">Gender</label>
+          <select id="reg-gender" class="form-control form-select">
+            <option value="Female">Female</option>
+            <option value="Male" selected>Male</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="reg-username">Username <span class="text-danger">*</span></label>
+        <input 
+          type="text" 
+          id="reg-username" 
+          class="form-control" 
+          placeholder="Choose a username" 
+          autocomplete="username" 
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="reg-password">Password <span class="text-danger">*</span></label>
+        <input 
+          type="password" 
+          id="reg-password" 
+          class="form-control" 
+          placeholder="Create a password" 
+          autocomplete="new-password" 
+          required
+        >
+      </div>
+
+      <div class="login-btn-row">
+        <button type="submit" id="btn-register" class="btn btn-teal">
+          ✓ Register & Enter CareBridge
+        </button>
+        <button type="button" id="btn-switch-to-login" class="btn btn-outline btn-sm">
+          Already have an account? Sign In
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="login-footer-note">
+    CareBridge Hackathon Prototype • Demonstration access only.<br>
+    No real medical information or passwords are stored insecurely.
+  </div>
+</div>

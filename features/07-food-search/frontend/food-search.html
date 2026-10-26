@@ -1,0 +1,74 @@
+<!-- Features: 07-food-search | Frontend Template -->
+<div id="food-search-module-root">
+  <div class="view-header">
+    <div class="view-title-wrap">
+      <h1>Can I Eat This?</h1>
+      <p class="subtitle">Search any food item to check suitability against your recovery guidelines.</p>
+    </div>
+    <span class="badge badge-teal">Decision Support Feature</span>
+  </div>
+
+  <!-- Search Box Card -->
+  <div class="search-hero-box">
+    <form id="food-search-form">
+      <div class="search-input-wrap">
+        <label for="food-search-input" class="sr-only">Enter food item to verify</label>
+        <input 
+          type="text" 
+          id="food-search-input" 
+          class="form-control" 
+          placeholder="Search for a food, such as rice, banana, milk or eggs..." 
+          autocomplete="off"
+          required
+        >
+        <button type="submit" id="btn-search-food" class="btn btn-teal">
+          🔍 Search Food
+        </button>
+      </div>
+    </form>
+
+    <div class="quick-search-tags">
+      <span class="quick-search-label">Sample searches:</span>
+      <button type="button" class="food-tag-btn" data-food="rice">rice</button>
+      <button type="button" class="food-tag-btn" data-food="banana">banana</button>
+      <button type="button" class="food-tag-btn" data-food="milk">milk</button>
+      <button type="button" class="food-tag-btn" data-food="eggs">eggs</button>
+      <button type="button" class="food-tag-btn" data-food="oatmeal">oatmeal</button>
+      <button type="button" class="food-tag-btn" data-food="soup">soup</button>
+      <button type="button" class="food-tag-btn" data-food="chips">chips</button>
+      <button type="button" class="food-tag-btn" data-food="soda">soda</button>
+      <button type="button" class="food-tag-btn" data-food="alcohol">alcohol</button>
+      <button type="button" class="food-tag-btn" data-food="avocado">avocado</button>
+    </div>
+  </div>
+
+  <!-- Search Result Card (Hidden until search) -->
+  <div id="food-search-result" class="search-verdict-card hidden">
+    <div class="verdict-header">
+      <div class="verdict-title-side">
+        <span id="verdict-icon" class="verdict-icon">✅</span>
+        <h3 id="verdict-food-name">Food Name</h3>
+      </div>
+      <span id="verdict-badge" class="badge badge-success">Suitable</span>
+    </div>
+
+    <p id="verdict-explanation" class="verdict-explanation">
+      Explanation will appear here.
+    </p>
+
+    <div id="verdict-notes-wrap" class="verdict-notes hidden">
+      <strong>Recommendation:</strong> <span id="verdict-notes-text">Preparation details</span>
+    </div>
+
+    <div class="verdict-footer-note">
+      Decision support rule for testing — not a medical prescription or clinical diagnosis.
+    </div>
+  </div>
+
+  <div class="alert alert-info" style="margin-top: 1.5rem;">
+    <span aria-hidden="true">ℹ️</span>
+    <div>
+      <strong>Rule-Based Decision Support:</strong> Checks against your recovery guidelines, documented restrictions, and testing nutrition rules. If a food cannot be confirmed, always consult your physician or dietitian.
+    </div>
+  </div>
+</div>
