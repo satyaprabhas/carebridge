@@ -1,6 +1,18 @@
 (function() {
   'use strict';
 
+  // Smart API URL Resolver for Render Static Site + Web Service split
+  const originalFetch = window.fetch;
+  window.fetch = function(input, init) {
+    if (typeof input === 'string' && input.startsWith('/api/')) {
+      const apiBase = window.CAREBRIDGE_API_BASE || localStorage.getItem('carebridge_api_url') || '';
+      if (apiBase) {
+        input = apiBase.replace(/\/+$/, '') + input;
+      }
+    }
+    return originalFetch.call(this, input, init);
+  };
+
   // ============================================================
   // APPLICATION STATE
   // ============================================================
