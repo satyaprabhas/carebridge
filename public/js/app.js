@@ -18,6 +18,7 @@
   // ============================================================
   const state = {
     isLoggedIn: false,
+    currentUser: '',
     currentPage: 'dashboard',
     currentLang: 'en',
     patientData: null,
@@ -329,6 +330,46 @@
     } catch(e) {}
   }
 
+  function saveCurrentPatientData() {
+    if (!state.currentUser || !state.patientData) return;
+    try {
+      const u = state.currentUser.toLowerCase();
+      localStorage.setItem('carebridge_patient_' + u, JSON.stringify(state.patientData));
+      if (state.homeCareChecklist) {
+        localStorage.setItem('carebridge_checklist_' + u, JSON.stringify(state.homeCareChecklist));
+      }
+      if (state.medicineAlerts && state.medicineAlerts.length > 0) {
+        localStorage.setItem('carebridge_alerts_' + u, JSON.stringify(state.medicineAlerts));
+      }
+    } catch(e) {
+      console.warn('Could not save patient data to localStorage:', e);
+    }
+  }
+
+  function loadSavedPatientData(username) {
+    if (!username) return null;
+    try {
+      const u = username.toLowerCase();
+      const raw = localStorage.getItem('carebridge_patient_' + u);
+      if (raw) return JSON.parse(raw);
+    } catch(e) {
+      console.warn('Could not load patient data from localStorage:', e);
+    }
+    return null;
+  }
+
+  function loadSavedUserData(username) {
+    if (!username) return;
+    try {
+      const u = username.toLowerCase();
+      const chk = localStorage.getItem('carebridge_checklist_' + u);
+      if (chk) state.homeCareChecklist = JSON.parse(chk);
+      const alt = localStorage.getItem('carebridge_alerts_' + u);
+      if (alt) state.medicineAlerts = JSON.parse(alt);
+    } catch(e) {}
+  }
+
+
   function switchAuthTab(mode) {
     const tabLogin = $('tab-login');
     const tabRegister = $('tab-register');
@@ -363,7 +404,10 @@
     // Check default demo account
     if (username.toLowerCase() === 'patient' && password === 'CareBridge123') {
       state.isLoggedIn = true;
-      state.patientData = JSON.parse(JSON.stringify(SAMPLE_PATIENT));
+      state.currentUser = 'patient';
+      const saved = loadSavedPatientData('patient');
+      state.patientData = saved ? saved : JSON.parse(JSON.stringify(SAMPLE_PATIENT));
+      loadSavedUserData('patient');
       showApp();
       return;
     }
@@ -376,13 +420,20 @@
 
     if (matchedLocal) {
       state.isLoggedIn = true;
-      // Personalise patient record with registered demographics
-      const userPatient = JSON.parse(JSON.stringify(SAMPLE_PATIENT));
-      userPatient.patientName = matchedLocal.fullName;
-      userPatient.patientId = matchedLocal.patientId;
-      if (matchedLocal.age) userPatient.age = matchedLocal.age;
-      if (matchedLocal.gender) userPatient.gender = matchedLocal.gender;
-      state.patientData = userPatient;
+      state.currentUser = matchedLocal.username.toLowerCase();
+      const saved = loadSavedPatientData(state.currentUser);
+      if (saved) {
+        state.patientData = saved;
+      } else {
+        const userPatient = JSON.parse(JSON.stringify(SAMPLE_PATIENT));
+        userPatient.patientName = matchedLocal.fullName;
+        userPatient.patientId = matchedLocal.patientId;
+        if (matchedLocal.age) userPatient.age = matchedLocal.age;
+        if (matchedLocal.gender) userPatient.gender = matchedLocal.gender;
+        state.patientData = userPatient;
+        saveCurrentPatientData();
+      }
+      loadSavedUserData(state.currentUser);
       showApp();
       return;
     }
@@ -397,14 +448,22 @@
     .then(result => {
       if (result.success) {
         state.isLoggedIn = true;
-        const userPatient = JSON.parse(JSON.stringify(SAMPLE_PATIENT));
-        if (result.user) {
-          userPatient.patientName = result.user.name || userPatient.patientName;
-          userPatient.patientId = result.user.patientId || userPatient.patientId;
-          if (result.user.age) userPatient.age = result.user.age;
-          if (result.user.gender) userPatient.gender = result.user.gender;
+        state.currentUser = username.toLowerCase();
+        const saved = loadSavedPatientData(state.currentUser);
+        if (saved) {
+          state.patientData = saved;
+        } else {
+          const userPatient = JSON.parse(JSON.stringify(SAMPLE_PATIENT));
+          if (result.user) {
+            userPatient.patientName = result.user.name || userPatient.patientName;
+            userPatient.patientId = result.user.patientId || userPatient.patientId;
+            if (result.user.age) userPatient.age = result.user.age;
+            if (result.user.gender) userPatient.gender = result.user.gender;
+          }
+          state.patientData = userPatient;
+          saveCurrentPatientData();
         }
-        state.patientData = userPatient;
+        loadSavedUserData(state.currentUser);
         showApp();
       } else {
         showAuthAlert('danger', result.message || 'Invalid credentials. Please verify your details or use the demo account.');
@@ -516,8 +575,10 @@
   }
 
   function handleLogout() {
+    saveCurrentPatientData();
     state.isLoggedIn = false;
     state.patientData = null;
+    state.currentUser = '';
     state.currentPage = 'dashboard';
     state.selectedFile = null;
     state.extractedData = null;
@@ -2127,6 +2188,7 @@
           }
 
           renderAllViews();
+          saveCurrentPatientData();
         }
       } else {
         showUploadAlert('danger', result.message || 'Failed to process document.');
@@ -2376,6 +2438,7 @@
 
   function syncSingleFieldToPatientData(key, val) {
     if (!state.patientData) return;
+    setTimeout(saveCurrentPatientData, 300);
 
     if (key === 'patientName') {
       state.patientData.patientName = val;
