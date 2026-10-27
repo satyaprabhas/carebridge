@@ -2098,7 +2098,7 @@
   function processDocument() {
     if (!state.selectedFile) return;
 
-    showUploadAlert('info', '⏳ Enhancing document image & running OCR across English, Hindi, and Telugu...');
+    showUploadAlert('info', '⏳ Analyzing document with fast clinical OCR engine...');
     const procBtn = $('btn-process-file');
     if (procBtn) procBtn.disabled = true;
 
