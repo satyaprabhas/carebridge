@@ -156,6 +156,16 @@
       </div>
 
       <div class="login-footer-note">
+        <div style="margin-bottom: 8px;">
+          <a href="javascript:void(0)" id="toggle-backend-config" style="color: #0d9488; font-weight: 600; text-decoration: underline; font-size: 0.85rem;">
+            ⚙️ Connect Backend API URL (Optional)
+          </a>
+          <div id="backend-config-box" class="hidden" style="margin-top: 8px;">
+            <input type="text" id="custom-api-input" class="form-control" style="font-size: 0.8rem; padding: 6px 10px; max-width: 280px; margin: 0 auto; text-align: center;" placeholder="https://carebridge-api.onrender.com">
+            <button type="button" id="btn-save-custom-api" class="btn btn-sm btn-teal" style="font-size: 0.8rem; padding: 4px 10px; margin-top: 4px;">Save & Connect</button>
+            <div id="backend-status-msg" style="font-size: 0.75rem; color: #16a34a; margin-top: 4px;"></div>
+          </div>
+        </div>
         CareBridge Clinical Portal • Healthcare Management Platform.<br>
         No real medical information or passwords are stored insecurely.
       </div>

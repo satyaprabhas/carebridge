@@ -462,6 +462,38 @@
     showApp();
   }
 
+  function initBackendUrlConfig() {
+    const toggleBackendBtn = $('toggle-backend-config');
+    const backendBox = $('backend-config-box');
+    const customApiInput = $('custom-api-input');
+    const saveCustomApiBtn = $('btn-save-custom-api');
+    const backendStatusMsg = $('backend-status-msg');
+
+    if (customApiInput) {
+      customApiInput.value = localStorage.getItem('carebridge_api_url') || '';
+    }
+
+    if (toggleBackendBtn && backendBox) {
+      toggleBackendBtn.onclick = (e) => {
+        e.preventDefault();
+        backendBox.classList.toggle('hidden');
+      };
+    }
+
+    if (saveCustomApiBtn && customApiInput) {
+      saveCustomApiBtn.onclick = () => {
+        const val = customApiInput.value.trim().replace(/\/+$/, '');
+        if (val) {
+          localStorage.setItem('carebridge_api_url', val);
+          if (backendStatusMsg) backendStatusMsg.textContent = '✅ Connected to: ' + val;
+        } else {
+          localStorage.removeItem('carebridge_api_url');
+          if (backendStatusMsg) backendStatusMsg.textContent = 'Using default /api proxy';
+        }
+      };
+    }
+  }
+
   function handleDemoLogin() {
     const u = $('login-username');
     const p = $('login-password');
@@ -1129,6 +1161,7 @@
   function renderDietPlan(dietPlan) {
     if (!dietPlan) return;
     initDietConditionSelector();
+    initBackendUrlConfig();
 
     // Condition Banner
     const condTitle = $('diet-condition-title');
@@ -2726,9 +2759,6 @@
     renderSearchVerdict(match);
   }
 
-    renderSearchVerdict(match);
-  }
-
   function renderSearchVerdict(result) {
     const container = $('food-search-result');
     if (!container) return;
@@ -2855,6 +2885,7 @@
   // ============================================================
   document.addEventListener('DOMContentLoaded', () => {
     initDietConditionSelector();
+    initBackendUrlConfig();
 
     // 1. Auth Tabs Switcher
     $('tab-login')?.addEventListener('click', () => switchAuthTab('login'));
@@ -2902,6 +2933,7 @@
       demoBtn.addEventListener('click', (e) => {
         e.preventDefault();
         handleDemoLogin();
+        initBackendUrlConfig();
       });
     }
 
