@@ -8,8 +8,98 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/styles.css?v=3">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
+  <style>
+    /* Full-Page 50/50 Split Auth Screen */
+    #login-page.login-screen {
+      min-height: 100vh;
+      width: 100vw;
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      display: flex;
+      align-items: stretch;
+      justify-content: stretch;
+      overflow-x: hidden;
+    }
+
+    .login-split-container {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    @media (min-width: 900px) {
+      .login-split-container {
+        flex-direction: row;
+        align-items: stretch;
+      }
+
+      /* Exact 50% Left Half for the Hero Image */
+      .login-hero-pane {
+        flex: 0 0 50%;
+        width: 50vw;
+        min-height: 100vh;
+        background: #F4FBF9;
+        border-right: 1px solid #E2E8F0;
+        border-bottom: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 2.5rem;
+        position: sticky;
+        top: 0;
+      }
+
+      /* Exact 50% Right Half for the Login & Registration Form */
+      .login-card {
+        flex: 0 0 50%;
+        width: 50vw;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 4rem;
+        background: #ffffff;
+        overflow-y: auto;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        max-width: 50vw !important;
+      }
+    }
+
+    .login-hero-content {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Image fills the left half without any cropping */
+    .login-hero-img {
+      width: 100%;
+      height: auto;
+      max-width: 100%;
+      max-height: 90vh;
+      object-fit: contain; /* 100% UN-CROPPED */
+      display: block;
+    }
+
+    .login-card > * {
+      width: 100%;
+      max-width: 440px;
+    }
+  </style>
 </head>
 <body>
 
