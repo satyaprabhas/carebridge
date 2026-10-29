@@ -440,12 +440,14 @@ button, input, select, textarea {
 
 /* 50% Left Half: Hero Graphic (fills the entire left half of the screen without cropping) */
 .login-hero-pane {
-  background: #F4FBF9;
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
+  padding: 0;
+  margin: 0;
   border-bottom: 1px solid var(--slate-200);
+  overflow: hidden;
 }
 
 @media (min-width: 960px) {
@@ -454,7 +456,8 @@ button, input, select, textarea {
     min-height: 100vh;
     border-bottom: none;
     border-right: 1px solid var(--slate-200);
-    padding: 2.5rem 3rem;
+    padding: 0;
+    margin: 0;
     position: sticky;
     top: 0;
   }
@@ -466,14 +469,18 @@ button, input, select, textarea {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
+  margin: 0;
 }
 
 .login-hero-img {
   width: 100%;
-  height: auto;
-  max-height: 88vh;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100vh;
   object-fit: contain; /* 100% UN-CROPPED: completely preserves all text, badges and graphics */
   display: block;
+  margin: 0;
 }
 
 /* 50% Right Half: Login / Registration Credentials */

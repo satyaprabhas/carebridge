@@ -11,88 +11,108 @@
   <link rel="stylesheet" href="/css/styles.css?v=3">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
   <style>
-    /* Full-Page 50/50 Split Auth Screen */
-    #login-page.login-screen {
-      min-height: 100vh;
-      width: 100vw;
+    /* Full-Screen 50/50 Split Auth Layout: Image covers entire left half without cropping */
+    html, body {
       margin: 0;
       padding: 0;
+      width: 100%;
+      height: 100%;
       background: #ffffff;
-      display: flex;
-      align-items: stretch;
-      justify-content: stretch;
-      overflow-x: hidden;
+    }
+
+    #login-page.login-screen {
+      min-height: 100vh !important;
+      width: 100vw !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      background: #ffffff !important;
+      display: flex !important;
+      align-items: stretch !important;
+      justify-content: stretch !important;
+      overflow-x: hidden !important;
     }
 
     .login-split-container {
-      display: flex;
-      flex-direction: column;
-      width: 100%;
-      min-height: 100vh;
-      margin: 0;
-      padding: 0;
-      border: none;
-      border-radius: 0;
-      box-shadow: none;
+      display: flex !important;
+      flex-direction: column !important;
+      width: 100vw !important;
+      min-height: 100vh !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      background: #ffffff !important;
     }
 
     @media (min-width: 900px) {
       .login-split-container {
-        flex-direction: row;
-        align-items: stretch;
+        flex-direction: row !important;
+        align-items: stretch !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
       }
 
-      /* Exact 50% Left Half for the Hero Image */
+      /* Exact 50% Left Half: Fills entire left side of screen with zero outer margin */
       .login-hero-pane {
-        flex: 0 0 50%;
-        width: 50vw;
-        min-height: 100vh;
-        background: #F4FBF9;
-        border-right: 1px solid #E2E8F0;
-        border-bottom: none;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 2rem 2.5rem;
-        position: sticky;
-        top: 0;
+        flex: 0 0 50vw !important;
+        width: 50vw !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        background: #ffffff !important;
+        border-right: 1px solid #E2E8F0 !important;
+        border-bottom: none !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: hidden !important;
       }
 
-      /* Exact 50% Right Half for the Login & Registration Form */
+      /* Exact 50% Right Half: Credentials & Login Form */
       .login-card {
-        flex: 0 0 50%;
-        width: 50vw;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 3rem 4rem;
-        background: #ffffff;
-        overflow-y: auto;
-        border: none;
-        border-radius: 0;
-        box-shadow: none;
+        flex: 0 0 50vw !important;
+        width: 50vw !important;
+        height: 100vh !important;
+        max-height: 100vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 2.5rem 3.5rem !important;
+        background: #ffffff !important;
+        overflow-y: auto !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
         max-width: 50vw !important;
       }
     }
 
     .login-hero-content {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 100% !important;
+      height: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
     }
 
-    /* Image fills the left half without any cropping */
+    /* Image fills the entire 50% half of screen with zero cropping */
     .login-hero-img {
-      width: 100%;
-      height: auto;
-      max-width: 100%;
-      max-height: 90vh;
-      object-fit: contain; /* 100% UN-CROPPED */
-      display: block;
+      width: 100% !important;
+      height: 100% !important;
+      max-width: 100% !important;
+      max-height: 100vh !important;
+      object-fit: contain !important; /* NEVER cropped! */
+      display: block !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
     }
 
     .login-card > * {
