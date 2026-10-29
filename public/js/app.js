@@ -980,7 +980,56 @@
     [new RegExp('grapefruit\\s*(?:&|and)?\\s*grapefruit\\s*juice', 'i'), 'గ్రేప్‌ఫ్రూట్ (పంపరపనస) మరియు దాని రసం'],
     [new RegExp('overeating', 'i'), 'అధికంగా తినడం'],
     [new RegExp('heavy\\s*oily\\s*foods', 'i'), 'నూనె మరియు వేపుడు పదార్థాలు'],
-    [new RegExp('hot\\s*spices|sour\\s*citrus\\s*juices', 'i'), 'కారం, మసాలాలు మరియు పుల్లని రసాలు']
+    [new RegExp('hot\\s*spices|sour\\s*citrus\\s*juices', 'i'), 'కారం, మసాలాలు మరియు పుల్లని రసాలు'],
+
+    // Clinical Enriched Items
+    [new RegExp('methi\\s*\\(?fenugreek\\)?\\s*water\\s*(?:&|and)?\\s*methi\\s*paratha', 'i'), 'మెంతుల నీళ్ళు మరియు మెంతి పరోటా'],
+    [new RegExp('methi\\s*\\(?fenugreek\\)?\\s*seed\\s*water', 'i'), 'మెంతుల నీళ్ళు'],
+    [new RegExp('gond\\s*(?:&|and)?\\s*dry\\s*fruit', 'i'), 'గోండ్ మరియు డ్రై ఫ్రూట్ లడ్డూ / హల్వా'],
+    [new RegExp('ragi\\s*\\(?finger\\s*millet\\)?\\s*(?:porridge|ambali|dosa|mudde)', 'i'), 'రాగి జావ / రాగి అంబలి / రాగి రొట్టె'],
+    [new RegExp('ragi\\s*\\(?finger\\s*millet\\)?', 'i'), 'రాగి జావ'],
+    [new RegExp('moringa\\s*\\(?drumstick\\)?\\s*leaf\\s*soup', 'i'), 'మునగాకు సూప్ / రసం'],
+    [new RegExp('moringa\\s*\\(?drumstick\\)?', 'i'), 'మునగాకు / మునక్కాయలు'],
+    [new RegExp('garlic\\s*dal\\s*(?:&|and)?\\s*garlic\\s*infused\\s*cow\'?s\\s*milk', 'i'), 'వెల్లుల్లి పప్పు మరియు వెల్లుల్లి పాలు'],
+    [new RegExp('garlic\\s*infused\\s*warm\\s*water', 'i'), 'వెల్లుల్లి వేసిన గోరువెచ్చని నీరు'],
+    [new RegExp('crushed\\s*raw\\s*garlic', 'i'), 'వెల్లుల్లి రెబ్బలు'],
+    [new RegExp('garlic', 'i'), 'వెల్లుల్లి'],
+    [new RegExp('soaked\\s*almonds\\s*(?:&|and)?\\s*walnuts', 'i'), 'నానబెట్టిన బాదం మరియు అక్రూట్లు (వాల్‌నట్స్)'],
+    [new RegExp('soaked\\s*(?:&|and)?\\s*peeled\\s*almonds|soaked\\s*almonds', 'i'), 'నానబెట్టిన బాదం పప్పులు'],
+    [new RegExp('walnuts', 'i'), 'అక్రూట్లు (వాల్‌నట్స్)'],
+    [new RegExp('warm\\s*saunf\\s*\\(?fennel\\)?\\s*(?:&|and)?\\s*ajwain\\s*water', 'i'), 'సోంపు మరియు వాము వేసిన గోరువెచ్చని నీళ్ళు'],
+    [new RegExp('fennel\\s*\\(?saunf\\)?\\s*(?:&|and)?\\s*cumin\\s*\\(?jeera\\)?\\s*water', 'i'), 'సోంపు మరియు జీలకర్ర నీళ్ళు'],
+    [new RegExp('karela\\s*\\(?bitter\\s*gourd\\)?\\s*juice', 'i'), 'కాకరకాయ రసం'],
+    [new RegExp('karela', 'i'), 'కాకరకాయ'],
+    [new RegExp('jamun\\s*\\(?indian\\s*blackberry\\)?\\s*(?:&|and)?\\s*guava', 'i'), 'నేరేడు పండ్లు మరియు జామపండ్లు'],
+    [new RegExp('jamun', 'i'), 'నేరేడు పండ్లు'],
+    [new RegExp('jowar,\\s*bajra\\s*(?:&|and)?\\s*ragi\\s*multi-millet\\s*rotis', 'i'), 'జొన్న, సజ్జ మరియు రాగి రొట్టెలు'],
+    [new RegExp('sprouted\\s*green\\s*moong\\s*(?:&|and)?\\s*kala\\s*chana', 'i'), 'మొలకెత్తిన పెసలు మరియు నల్ల శనగలు'],
+    [new RegExp('sprouted\\s*green\\s*moong', 'i'), 'మొలకెత్తిన పెసలు'],
+    [new RegExp('cinnamon\\s*\\(?dalchini\\)?\\s*infused\\s*warm\\s*water', 'i'), 'దాల్చిన చెక్క వేసిన గోరువెచ్చని నీరు'],
+    [new RegExp('barley\\s*water\\s*\\(?jau\\s*ka\\s*pani\\)?', 'i'), 'బార్లీ నీళ్ళు'],
+    [new RegExp('papaya\\s*leaf\\s*extract', 'i'), 'బొప్పాయి ఆకు రసం'],
+    [new RegExp('haldi\\s*doodh|golden\\s*turmeric\\s*milk', 'i'), 'పసుపు, మిరియాలు వేసిన గోరువెచ్చని పాలు'],
+    [new RegExp('ginger,\\s*tulsi\\s*(?:&|and)?\\s*clove\\s*herbal\\s*kashayam', 'i'), 'అల్లం, తులసి మరియు లవంగాల కషాయం'],
+    [new RegExp('tulsi\\s*(?:&|and)?\\s*fresh\\s*ginger\\s*herbal\\s*tea', 'i'), 'తులసి మరియు అల్లం హెర్బల్ టీ'],
+    [new RegExp('amla\\s*\\(?indian\\s*gooseberry\\)?\\s*juice', 'i'), 'ఉసిరికాయ రసం'],
+    [new RegExp('amla', 'i'), 'ఉసిరికాయ'],
+    [new RegExp('diluted\\s*mosambi\\s*\\(?sweet\\s*lime\\)?\\s*juice', 'i'), 'తేలికపాటి బత్తాయి రసం'],
+    [new RegExp('unsweetened\\s*cranberry\\s*juice', 'i'), 'తీపి లేని క్రాన్‌బెర్రీ రసం'],
+    [new RegExp('fresh\\s*pomegranate\\s*\\(?anar\\)?\\s*(?:&|and)?\\s*black\\s*raisins', 'i'), 'తాజా దానిమ్మ మరియు నల్ల ఎండుద్రాక్ష'],
+    [new RegExp('fresh\\s*dates\\s*\\(?khajoor\\)?\\s*(?:&|and)?\\s*dried\\s*figs', 'i'), 'తాజా ఖర్జూరాలు మరియు అంజీర పండ్లు'],
+    [new RegExp('white\\s*sugar,\\s*jaggery\\s*\\(?gur\\)?', 'i'), 'తెల్ల పంచదార, బెల్లం మరియు తేనె'],
+    [new RegExp('indian\\s*sweets\\s*\\(gulab\\s*jamun', 'i'), 'స్వీట్లు (గులాబ్ జామూన్, లడ్డూ, హల్వా)'],
+    [new RegExp('potassium\\s*salt\\s*substitutes', 'i'), 'పొటాషియం ఉప్పు ప్రత్యామ్నాయాలు (Lite Salt / Lona Salt - ప్రమాదకరం)'],
+    [new RegExp('grapefruit\\s*(?:&|and)?\\s*fresh\\s*grapefruit\\s*juice', 'i'), 'గ్రేప్‌ఫ్రూట్ (పంపరపనస) పండు మరియు రసం'],
+    [new RegExp('high-oxalate\\s*foods', 'i'), 'అధిక ఆక్సలేట్ ఆహారాలు (పాలకూర, బీట్‌రూట్, టమాటాలు)'],
+    [new RegExp('deep-fried\\s*snacks\\s*\\(samosa', 'i'), 'నూనెలో వేయించిన చిరుతిళ్ళు (సమోసా, పకోడీ, మురుకులు)'],
+    [new RegExp('hot\\s*red\\s*chili\\s*powder', 'i'), 'ఎర్ర కారం పొడి మరియు పచ్చి మిరపకాయలు'],
+    [new RegExp('carbonated\\s*sodas\\s*(?:&|and)?\\s*sparkling\\s*water', 'i'), 'సోడాలు, కూల్‌డ్రింక్స్ మరియు కార్బోనేటెడ్ వాటర్'],
+    [new RegExp('aspirin\\s*(?:&|and)?\\s*nsaid-containing', 'i'), 'ఆస్పిరిన్ మరియు నొప్పి నివారణ మందులు (రక్తస్రావ ప్రమాదం)'],
+    [new RegExp('high-purine\\s*foods', 'i'), 'హై ప్యూరిన్ మాంసాహారం (మటన్, సార్డైన్లు - గౌట్ రోగులకు ప్రమాదం)'],
+    [new RegExp('ice-cold\\s*water', 'i'), 'చల్లటి ఫ్రిజ్ నీళ్ళు మరియు ఐస్ డ్రింక్స్'],
+    [new RegExp('natural\\s*table\\s*salt', 'i'), 'వంట ఉప్పు (రోజుకు 1/2 చెంచా కన్నా తక్కువగా)']
   ];
 
   function translateFoodToTelugu(text) {
@@ -1021,7 +1070,26 @@
     [new RegExp('Limit to 1 cup daily; excessive caffeine elevates resting heart rate and counteracts beta-blockers', 'i'), 'రోజుకు 1 కప్పుకు పరిమితం చేయండి; అధిక కెఫిన్ గుండె వేగాన్ని పెంచుతుంది.'],
     [new RegExp('STRICT DRUG INTERACTION: Blocks CYP3A4 enzyme, causing dangerous toxic blood levels of statins and muscle injury', 'i'), 'కఠినమైన మందుల హెచ్చరిక: స్టాటిన్ మందుల ప్రభావాన్ని ప్రమాదకరంగా పెంచి కండరాల నష్టాన్ని కలిగిస్తుంది.'],
     [new RegExp('STRICT DRUG INTERACTION: High danger of severe hyperkalemia \\(cardiac arrest risk\\) when combined with ACE inhibitors', 'i'), 'కఠినమైన మందుల హెచ్చరిక: రక్తంలో పొటాషియం ప్రమాదకర స్థాయికి చేరి గుండెపోటు వచ్చే ప్రమాదం ఉంది.'],
-    [new RegExp('TABLET REMEDY: Protects gastric mucosa from micro-ulceration and acid burning caused by regular Aspirin intake', 'i'), 'టాబ్లెట్ రక్షణ: ఆస్పిరిన్ వల్ల కడుపులో కలిగే అల్సర్లు మరియు మంట నుండి రక్షిస్తుంది.']
+    [new RegExp('TABLET REMEDY: Protects gastric mucosa from micro-ulceration and acid burning caused by regular Aspirin intake', 'i'), 'టాబ్లెట్ రక్షణ: ఆస్పిరిన్ వల్ల కడుపులో కలిగే అల్సర్లు మరియు మంట నుండి రక్షిస్తుంది.'],
+
+    // Clinical Enriched Reasons
+    [new RegExp('prolactin.*milk production|uterine involution', 'i'), 'తల్లిపాలు సమృద్ధిగా రావడానికి, గర్భాశయ రికవరీకి మరియు డెలివరీ వాపులు తగ్గడానికి సహాయపడుతుంది.'],
+    [new RegExp('postpartum stamina booster.*pelvic floor', 'i'), 'డెలివరీ తర్వాత శక్తినిచ్చి కటి కండరాలు, వెన్ను మరియు కణజాలాల రికవరీని వేగవంతం చేస్తుంది.'],
+    [new RegExp('calcium and iron.*breast milk composition', 'i'), 'తల్లిపాలలో కాల్షియం, ఐరన్ అందించడానికి మరియు ఎముకల బలానికి అద్భుతమైన పోషకాహారం.'],
+    [new RegExp('charantin.*mimic endogenous insulin', 'i'), 'రక్తంలో గ్లూకోజ్ స్థాయిలను తగ్గించడానికి ఇన్సులిన్ లాగా పనిచేసే సహజ గుణాలు కలిగి ఉంది.'],
+    [new RegExp('stimulates glucose-dependent insulin secretion', 'i'), 'ఇన్సులిన్ స్రావాన్ని ప్రేరేపించి చక్కెర శోషణను నియంత్రించడంలో సహాయపడుతుంది.'],
+    [new RegExp('potassium.*balances sodium.*peripheral resistance', 'i'), 'సహజ పొటాషియం రక్తనాళాల ఒత్తిడిని తగ్గించి రక్తపోటును (BP) నియంత్రణలో ఉంచుతుంది.'],
+    [new RegExp('nitrates convert to nitric oxide.*coronary arteries', 'i'), 'రక్తనాళాలను వ్యాకోచింపజేసి గుండెపై భారాన్ని తగ్గిస్తుంది మరియు గుండెకు రక్తప్రసరణను మెరుగుపరుస్తుంది.'],
+    [new RegExp('stimulate megakaryocytes.*platelet recovery in Dengue', 'i'), 'ఎముక మజ్జను ప్రేరేపించి డెంగ్యూ జ్వరంలో రక్తంలోని ప్లేట్‌లెట్ల సంఖ్యను వేగంగా పెంచుతుంది.'],
+    [new RegExp('natural diuretic.*flushes urinary passages.*dissolves micro-calculi', 'i'), 'సహజ మూత్రవిసర్జనను పెంచి మూత్రపిండాల్లోని చిన్న రాళ్ళను, వ్యర్థాలను కరిగించి బయటకు పంపుతుంది.'],
+    [new RegExp('calcium density.*accelerates fracture callus.*bone fusion', 'i'), 'ఎముక విరుపులు త్వరగా అతుక్కోవడానికి మరియు కీళ్ళ పటిష్టతకు అవసరమైన సహజ కాల్షియం అందిస్తుంది.'],
+    [new RegExp('suppresses bronchial mucosal inflammation', 'i'), 'శ్వాసనాళాల వాపును తగ్గించి, ఆయాసం మరియు దగ్గును నివారిస్తుంది.'],
+    [new RegExp('pure albumin protein.*surgical incision healing|tissue repair', 'i'), 'శస్త్రచికిత్స కుట్లు మరియు గాయాలు త్వరగా మానడానికి అవసరమైన స్వచ్ఛమైన ప్రొటీన్‌ను అందిస్తుంది.'],
+    [new RegExp('concentrated simple sugars.*hyperglycemic spikes', 'i'), 'రక్తంలో షుగర్ స్థాయిలు ఒక్కసారిగా ప్రమాదకరంగా పెరిగిపోవడానికి కారణమవుతుంది.'],
+    [new RegExp('massive salt loading.*fluid retention.*arterial walls', 'i'), 'శరీరంలో నీరు చేరి రక్తపోటు మరియు గుండెపై భారం విపరీతంగా పెరగడానికి దారితీస్తుంది.'],
+    [new RegExp('high fats delay gastric emptying.*esophagus', 'i'), 'జీర్ణక్రియను ఆలస్యం చేసి తీవ్రమైన ఎసిడిటీ, గుండెల్లో మంట మరియు వాంతులకు దారితీస్తుంది.'],
+    [new RegExp('high-oxalate.*calcium oxalate kidney stones', 'i'), 'మూత్రపిండాలలో కాల్షియం ఆక్సలేట్ రాళ్ళు ఏర్పడటానికి ప్రధాన కారణమవుతుంది.'],
+    [new RegExp('STRICT WARNING in Dengue: Inhibits platelets', 'i'), 'కఠినమైన హెచ్చరిక: డెంగ్యూలో ప్లేట్‌లెట్లను దెబ్బతీసి తీవ్రమైన అంతర్గత రక్తస్రావానికి దారితీస్తుంది.']
   ];
 
   function translateReasonToTelugu(text) {
@@ -1754,9 +1822,12 @@
       { food: "Late-Night Heavy Dinners", reason: "Disrupts sleep and triggers nocturnal acid reflux; finish dinner 2 hours before bed." }
     ];
 
-    // Combine basePlan items with commonIndian items without duplicates
-    const mergeItems = (baseItems, defaultItems, targetCount) => {
+    // Combine basePlan items with commonIndian items without duplicates as a safety fallback
+    // Each condition now has 10-14 rich, condition-specific items in CLINICAL_DISEASES_DB.
+    // We only merge standard gentle staples as a fallback if the condition list is unusually sparse (< 8 items).
+    const mergeItems = (baseItems, defaultItems, minCount) => {
       const result = Array.isArray(baseItems) ? [...baseItems] : [];
+      if (result.length >= minCount) return result;
       const seen = new Set(result.map(i => (i.food || i.name || '').toLowerCase().trim()));
       for (const item of defaultItems) {
         const key = item.food.toLowerCase().trim();
@@ -1764,14 +1835,14 @@
           seen.add(key);
           result.push(item);
         }
-        if (result.length >= targetCount) break;
+        if (result.length >= minCount) break;
       }
       return result;
     };
 
-    basePlan.eat = mergeItems(basePlan.eat, commonIndianEat, 14);
-    basePlan.limit = mergeItems(basePlan.limit, commonIndianLimit, 8);
-    basePlan.avoid = mergeItems(basePlan.avoid, commonIndianAvoid, 8);
+    basePlan.eat = mergeItems(basePlan.eat, commonIndianEat, 8);
+    basePlan.limit = mergeItems(basePlan.limit, commonIndianLimit, 4);
+    basePlan.avoid = mergeItems(basePlan.avoid, commonIndianAvoid, 4);
 
     return {
       ...basePlan,
@@ -1835,11 +1906,13 @@
       const selectedKey = e.target.value;
       if (window.CLINICAL_DISEASES_DB && window.CLINICAL_DISEASES_DB[selectedKey]) {
         const proto = JSON.parse(JSON.stringify(window.CLINICAL_DISEASES_DB[selectedKey]));
-        proto.conditionName = proto.name;
-        proto.key = selectedKey;
-        const meds = (state.patientData && state.patientData.medicines) || [];
-        const remedies = evaluateMedicationRemedies(meds);
-        const fullPlan = { ...proto, medicationRemedies: remedies };
+        const meds = (state.patientData && state.patientData.medicines) || (SAMPLE_PATIENT && SAMPLE_PATIENT.medicines) || [];
+        const advice = (state.patientData && state.patientData.dietInstructions) || (state.patientData && state.patientData.rawDietText) || '';
+        // Dynamically generate personalized diet for newly selected condition
+        const fullPlan = generatePersonalizedDiet(proto.name, meds, advice);
+        fullPlan.key = selectedKey;
+        fullPlan.conditionName = proto.name;
+        fullPlan.description = proto.description;
         if (state.patientData) {
           state.patientData.dietPlan = fullPlan;
         }

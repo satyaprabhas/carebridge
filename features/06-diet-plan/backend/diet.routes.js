@@ -52,8 +52,11 @@ const commonIndianAvoid = [
 
 function enrichDietPlan(plan) {
   if (!plan) return plan;
-  const mergeItems = (baseItems, defaultItems, targetCount) => {
+  // Clinical protocols in CLINICAL_DISEASES_DB now carry 10-14 rich condition-tailored items.
+  // Fallback items are merged only if a condition list is sparse (< 8 items).
+  const mergeItems = (baseItems, defaultItems, minCount) => {
     const result = Array.isArray(baseItems) ? [...baseItems] : [];
+    if (result.length >= minCount) return result;
     const seen = new Set(result.map(i => (i.food || i.name || '').toLowerCase().trim()));
     for (const item of defaultItems) {
       const key = item.food.toLowerCase().trim();
@@ -61,13 +64,13 @@ function enrichDietPlan(plan) {
         seen.add(key);
         result.push(item);
       }
-      if (result.length >= targetCount) break;
+      if (result.length >= minCount) break;
     }
     return result;
   };
-  plan.eat = mergeItems(plan.eat, commonIndianEat, 14);
-  plan.limit = mergeItems(plan.limit, commonIndianLimit, 8);
-  plan.avoid = mergeItems(plan.avoid, commonIndianAvoid, 8);
+  plan.eat = mergeItems(plan.eat, commonIndianEat, 8);
+  plan.limit = mergeItems(plan.limit, commonIndianLimit, 4);
+  plan.avoid = mergeItems(plan.avoid, commonIndianAvoid, 4);
   return plan;
 }
 
