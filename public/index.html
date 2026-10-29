@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/styles.css?v=3">
+  <link rel="stylesheet" href="/css/styles.css?v=4">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>">
   <style>
     /* Full-Screen 50/50 Split Auth Layout: Image covers entire left half without cropping */
@@ -100,13 +100,14 @@
       justify-content: center !important;
     }
 
-    /* Image fills the entire 50% half of screen with zero cropping */
+    /* Image fills the entire 50% half of screen from top to bottom with zero cropping */
     .login-hero-img {
       width: 100% !important;
       height: 100% !important;
       max-width: 100% !important;
       max-height: 100vh !important;
-      object-fit: contain !important; /* NEVER cropped! */
+      object-fit: cover !important; /* Fills 100% top to bottom edge-to-edge */
+      object-position: center !important;
       display: block !important;
       margin: 0 !important;
       padding: 0 !important;

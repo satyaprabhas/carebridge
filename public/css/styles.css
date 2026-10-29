@@ -478,7 +478,8 @@ button, input, select, textarea {
   height: 100%;
   max-width: 100%;
   max-height: 100vh;
-  object-fit: contain; /* 100% UN-CROPPED: completely preserves all text, badges and graphics */
+  object-fit: cover; /* Fills 100% of top, bottom, and sides edge-to-edge */
+  object-position: center;
   display: block;
   margin: 0;
 }
