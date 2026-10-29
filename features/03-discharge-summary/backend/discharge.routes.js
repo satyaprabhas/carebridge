@@ -51,25 +51,39 @@ const sampleDischargeData = {
   allergies: ["Not provided in this fictional sample"],
   medicines: [
     {
-      name: "Sample Med A (Demo Tab)",
-      dose: "500 mg",
-      timing: "Twice daily with meals",
+      name: "Tab. Augmentin 625mg",
+      dose: "625 mg",
+      timing: "Twice daily with meals (Morning & Night)",
+      duration: "7 days",
+      instructions: "Take at start of meals with water. Consume curd or buttermilk."
+    },
+    {
+      name: "Tab. Dolo 650mg (Paracetamol)",
+      dose: "650 mg",
+      timing: "Three times a day as needed",
       duration: "5 days",
-      instructions: "DEMO ONLY — NOT A REAL PRESCRIPTION. Take with food."
+      instructions: "Take after meals with warm water for pain/fever. Do not exceed prescribed dose."
     },
     {
-      name: "Sample Med B (Demo Cap)",
-      dose: "20 mg",
-      timing: "Once daily in morning",
+      name: "Cap. Pan-40 (Pantoprazole)",
+      dose: "40 mg",
+      timing: "Once daily in morning (Empty Stomach)",
       duration: "14 days",
-      instructions: "DEMO ONLY — NOT A REAL PRESCRIPTION. Swallow whole with water."
+      instructions: "Take 30 minutes before breakfast with a glass of water."
     },
     {
-      name: "Sample Med C (Demo Susp)",
-      dose: "10 ml",
-      timing: "At bedtime as needed",
-      duration: "As needed (Max 3 days)",
-      instructions: "DEMO ONLY — NOT A REAL PRESCRIPTION. Shake well before use."
+      name: "Tab. Telma 40mg (Telmisartan)",
+      dose: "40 mg",
+      timing: "Once daily in morning",
+      duration: "Ongoing recovery course",
+      instructions: "Maintain appropriate hydration and avoid potassium salt substitutes."
+    },
+    {
+      name: "Tab. Rosuvas 10mg (Rosuvastatin)",
+      dose: "10 mg",
+      timing: "At bedtime (Night)",
+      duration: "Ongoing recovery course",
+      instructions: "Take at night. Avoid grapefruit or grapefruit juice completely."
     }
   ],
   dietInstructions: "Fictional testing rules, not medical advice. Eat light digestible meals (steamed rice, oats, clear soups, steamed vegetables). Limit full-fat dairy, eggs, caffeine and sodium. Avoid deep-fried, heavily spiced foods, processed chips and alcohol.",
@@ -135,46 +149,75 @@ router.get('/sample-discharge', (req, res) => {
   });
 });
 
-// POST /api/upload — REAL OCR / DOCUMENT TEXT EXTRACTION
+// POST /api/upload — REAL OCR / DOCUMENT TEXT EXTRACTION (Supports Single & Multiple Document Photos/Pages)
 router.post('/upload', (req, res) => {
   upload.any()(req, res, async (err) => {
     if (err instanceof multer.MulterError) {
       if (err.code === 'LIMIT_FILE_SIZE') {
-        return res.status(400).json({ success: false, message: 'File size exceeds maximum limit of 10MB.' });
+        return res.status(400).json({ success: false, message: 'File size exceeds maximum limit of 10MB per document.' });
       }
       return res.status(400).json({ success: false, message: `Upload error: ${err.message}` });
     } else if (err) {
       return res.status(400).json({ success: false, message: err.message });
     }
 
-    const uploaded = req.file || (req.files && req.files[0]);
-    if (!uploaded) {
+    const uploadedList = req.files && req.files.length > 0 ? req.files : (req.file ? [req.file] : []);
+    if (!uploadedList || uploadedList.length === 0) {
       return res.status(400).json({
         success: false,
-        message: 'No file uploaded. Please upload a PDF, JPG, PNG, or WebP document.'
+        message: 'No files uploaded. Please upload one or more PDF, JPG, PNG, or WebP documents.'
       });
     }
 
     try {
-      console.log(`[CareBridge OCR] Analyzing uploaded file: ${uploaded.filename} (${uploaded.mimetype})`);
+      console.log(`[CareBridge OCR] Analyzing ${uploadedList.length} file(s) for discharge summary...`);
 
-      // Extract raw text with layout & confidence via Sharp + Tesseract (offline eng, hin, tel) or digital PDF
-      const ocrResult = await extractRawTextWithLayout(uploaded.path, uploaded.mimetype);
-      console.log(`[CareBridge OCR] Extracted ${ocrResult.text.length} characters (avg confidence: ${ocrResult.confidence}%).`);
+      // 1. Process all documents with OCR in sequence
+      const fileResults = [];
+      for (let i = 0; i < uploadedList.length; i++) {
+        const fileItem = uploadedList[i];
+        console.log(`[CareBridge OCR] Processing document ${i + 1}/${uploadedList.length}: ${fileItem.filename} (${fileItem.mimetype})`);
+        const ocrResult = await extractRawTextWithLayout(fileItem.path, fileItem.mimetype);
+        fileResults.push({
+          page: i + 1,
+          file: fileItem,
+          filename: fileItem.filename,
+          url: `/uploads/${fileItem.filename}`,
+          originalName: fileItem.originalname,
+          size: fileItem.size,
+          mimetype: fileItem.mimetype,
+          ocr: ocrResult
+        });
+      }
 
-      // Universal Certificate & Medical Document Parsing
-      const parsed = parseUniversalDocument(ocrResult.text, ocrResult.lines, ocrResult.confidence);
+      // 2. Build aggregated text and lines with page demarcations
+      const combinedText = fileResults.map(fr => `=== [Document / Page ${fr.page}: ${fr.originalName}] ===\n${fr.ocr.text}`).join('\n\n');
+      const combinedLines = fileResults.flatMap(fr => fr.ocr.lines || []);
+      const totalConf = fileResults.reduce((sum, fr) => sum + (fr.ocr.confidence || 0), 0);
+      const avgConfidence = Math.round(totalConf / fileResults.length);
 
-      // Helper to retrieve field value safely without fabrication
+      // 3. Universal parse on the combined text
+      const parsedCombined = parseUniversalDocument(combinedText, combinedLines, avgConfidence);
+
+      // 4. Also parse each page independently to ensure no page-boundary cutoffs
+      const pageParses = fileResults.map(fr => parseUniversalDocument(fr.ocr.text, fr.ocr.lines, fr.ocr.confidence));
+
+      // Consolidated field getter: checks individual pages then combined
       const getVal = (key) => {
-        const item = parsed.fields.find(f => f.key === key);
-        return (item && item.status !== 'missing') ? item.value : '';
+        const combItem = parsedCombined.fields.find(f => f.key === key);
+        if (combItem && combItem.status !== 'missing' && combItem.value && !combItem.value.toLowerCase().includes('not found')) {
+          return combItem.value;
+        }
+        for (const pp of pageParses) {
+          const item = pp.fields.find(f => f.key === key);
+          if (item && item.status !== 'missing' && item.value && !item.value.toLowerCase().includes('not found')) return item.value;
+        }
+        return '';
       };
 
-      // Construct backward-compatible clinical recovery data object
       const patientName = getVal('patientName') || getVal('beneficiaryName') || getVal('personName') || getVal('candidateName') || getVal('electorName') || getVal('studentName') || getVal('individualName') || 'Patient';
       const patientId = getVal('patientId') || getVal('certificateNumber') || getVal('aadhaarNumber') || getVal('panNumber') || getVal('epicNumber') || getVal('registrationNumber') || 'N/A';
-      const diagnosis = getVal('diagnosis') || getVal('documentTitle') || parsed.documentTypeName;
+      const diagnosis = getVal('diagnosis') || getVal('documentTitle') || parsedCombined.documentTypeName;
       const hospital = getVal('hospitalName') || getVal('authority') || getVal('institutionName') || 'Official Record';
       const doctor = getVal('doctor') || 'Attending Authority';
       const admissionDate = getVal('admissionDate') || getVal('issueDate') || getVal('documentDate') || '';
@@ -183,8 +226,28 @@ router.post('/upload', (req, res) => {
       const gender = getVal('gender') || '';
       const address = getVal('address') || '';
 
-      // Extract medicines if printed
-      let medicines = (parsed.structuredMedicines && parsed.structuredMedicines.length > 0) ? parsed.structuredMedicines : [];
+      // 5. Merge medicines across ALL pages without duplicates
+      const medicines = [];
+      const seenMeds = new Set();
+      const addMedicine = (m) => {
+        if (!m || !m.name) return;
+        const norm = m.name.toLowerCase().replace(/^(?:tab\.?|cap\.?|syr\.?|inj\.?)\s+/i, '').replace(/[^a-z0-9]/g, '');
+        if (!norm || seenMeds.has(norm)) return;
+        seenMeds.add(norm);
+        medicines.push(m);
+      };
+
+      // Add structured medicines found across all pages
+      pageParses.forEach(pp => {
+        if (Array.isArray(pp.structuredMedicines)) {
+          pp.structuredMedicines.forEach(addMedicine);
+        }
+      });
+      if (Array.isArray(parsedCombined.structuredMedicines)) {
+        parsedCombined.structuredMedicines.forEach(addMedicine);
+      }
+
+      // Fallback: parse from raw medicine text lines if structured was empty
       if (medicines.length === 0) {
         const medsVal = getVal('medicines') || getVal('medications');
         if (medsVal) {
@@ -196,7 +259,7 @@ router.post('/upload', (req, res) => {
               const rawI = m.split(sep).slice(1).join(sep).trim();
               const doseM = (m.match(/\b([0-9]+(?:\.[0-9]+)?\s*(?:mg|mcg|g|ml))\b/i) || [])[1];
               const timeM = (m.match(/\b(Once\s+daily(?:\s*\([^\)]+\))?|Twice\s+daily|At\s+night|In\s+morning)\b/i) || [])[1];
-              medicines.push({
+              addMedicine({
                 name: rawN,
                 dose: doseM || 'As prescribed',
                 timing: timeM || 'Once daily',
@@ -204,7 +267,7 @@ router.post('/upload', (req, res) => {
                 instructions: rawI
               });
             } else {
-              medicines.push({
+              addMedicine({
                 name: m,
                 dose: 'As prescribed',
                 timing: 'Once daily',
@@ -215,6 +278,21 @@ router.post('/upload', (req, res) => {
           });
         }
       }
+
+      // Merge diet instructions from all pages
+      const dietParts = [];
+      pageParses.forEach(pp => {
+        const item = pp.fields.find(f => f.key === 'dietInstructions');
+        if (item && item.value && !dietParts.includes(item.value)) dietParts.push(item.value);
+      });
+      const combinedDiet = dietParts.join('; ') || getVal('dietInstructions') || '';
+
+      // Merge warning signs from all pages
+      const warningParts = [];
+      pageParses.forEach(pp => {
+        const item = pp.fields.find(f => f.key === 'warningSigns' || f.key === 'emergencyContacts');
+        if (item && item.value && !warningParts.includes(item.value)) warningParts.push(item.value);
+      });
 
       const clinicalData = {
         patientName,
@@ -232,43 +310,54 @@ router.post('/upload', (req, res) => {
         surgeryDetails: getVal('surgeryDetails') || '',
         clinicalSummary: getVal('reasonForAdmission') || getVal('treatmentSummary') || getVal('procedureSummary') || '',
         dischargeCondition: getVal('dischargeCondition') || '',
-        medicines: medicines.length > 0 ? medicines : [],
-        dietInstructions: getVal('dietInstructions') || '',
+        medicines: medicines,
+        dietInstructions: combinedDiet,
         activityLifestyle: getVal('activityLifestyle') || '',
+        woundCare: getVal('woundCare') || '',
         followUp: {
           date: getVal('followUpDate') || dischargeDate || '',
           hospital,
           doctor,
           notes: getVal('followUp') || ''
         },
-        warningSigns: getVal('warningSigns') ? [getVal('warningSigns')] : (getVal('emergencyContacts') ? [getVal('emergencyContacts')] : []),
-        rawText: parsed.rawText
+        warningSigns: warningParts.length > 0 ? warningParts : (getVal('warningSigns') ? [getVal('warningSigns')] : []),
+        rawText: combinedText,
+        pageCount: fileResults.length
       };
 
       res.status(200).json({
         success: true,
         mode: 'real-ocr',
-        message: `Successfully read ${parsed.documentTypeName} with ${parsed.verifiedCount} verified fields.`,
-        documentType: parsed.documentType,
-        documentTypeName: parsed.documentTypeName,
-        overallConfidence: parsed.overallConfidence,
-        verifiedCount: parsed.verifiedCount,
-        missingCount: parsed.missingCount,
+        message: `Successfully analyzed ${fileResults.length} document page${fileResults.length > 1 ? 's' : ''} with OCR (${parsedCombined.verifiedCount} fields verified).`,
+        documentType: parsedCombined.documentType,
+        documentTypeName: fileResults.length > 1 ? `${parsedCombined.documentTypeName} (${fileResults.length} Pages)` : parsedCombined.documentTypeName,
+        overallConfidence: avgConfidence,
+        verifiedCount: parsedCombined.verifiedCount,
+        missingCount: parsedCombined.missingCount,
         availableLangs: AVAILABLE_LANGS,
+        totalPages: fileResults.length,
         uploadedFile: {
-          filename: uploaded.filename,
-          url: `/uploads/${uploaded.filename}`,
-          originalName: uploaded.originalname,
-          size: uploaded.size,
-          mimetype: uploaded.mimetype
+          filename: fileResults[0].file.filename,
+          url: fileResults[0].url,
+          originalName: fileResults[0].originalName,
+          size: fileResults[0].size,
+          mimetype: fileResults[0].mimetype
         },
-        fields: parsed.fields,
-        rawText: parsed.rawText,
+        uploadedFiles: fileResults.map(fr => ({
+          page: fr.page,
+          filename: fr.file.filename,
+          url: fr.url,
+          originalName: fr.originalName,
+          size: fr.size,
+          mimetype: fr.mimetype,
+          confidence: fr.ocr.confidence
+        })),
+        fields: parsedCombined.fields,
+        rawText: combinedText,
         data: clinicalData
       });
     } catch (ocrErr) {
       console.error('[CareBridge OCR] Extraction failed:', ocrErr);
-      // Strictly report actual error, never fabricate or fall back to mock sample data silently
       res.status(422).json({
         success: false,
         message: `OCR document analysis failed: ${ocrErr.message || 'Unable to recognize text from document.'}. Please check image clarity and rotation.`,

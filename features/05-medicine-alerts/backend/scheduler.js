@@ -205,8 +205,25 @@ function syncReminders(remindersList) {
       createdAt: existing?.createdAt || new Date().toISOString(),
       lastSentDate: existing?.lastSentDate || null,
       lastSentTime: existing?.lastSentTime || null,
-      lastStatus: existing?.lastStatus || 'PENDING'
+      lastStatus: existing?.lastStatus || 'PENDING',
+      photoUrl: r.photoUrl || existing?.photoUrl || null
     };
+  });
+
+  // Maintain a minimum 10-minute gap between reminders scheduled at the same time
+  const occupiedMinutes = new Set();
+  store.reminders.forEach(r => {
+    let t = r.time || '09:00';
+    if (!/^\d{1,2}:\d{2}$/.test(t)) t = '09:00';
+    let [h, m] = t.split(':').map(Number);
+    let total = (h || 0) * 60 + (m || 0);
+    while (occupiedMinutes.has(total)) {
+      total = (total + 10) % 1440;
+    }
+    occupiedMinutes.add(total);
+    const newH = Math.floor(total / 60);
+    const newM = total % 60;
+    r.time = String(newH).padStart(2, '0') + ':' + String(newM).padStart(2, '0');
   });
 
   saveStore();
@@ -246,6 +263,7 @@ function updateReminder(id, updates) {
     if (updates.dose) rem.dose = updates.dose;
     if (updates.enabled !== undefined) rem.enabled = updates.enabled;
     if (updates.mobileNumber) rem.mobileNumber = normalizePhoneNumber(updates.mobileNumber);
+    if (updates.photoUrl !== undefined) rem.photoUrl = updates.photoUrl;
     saveStore();
     return rem;
   }

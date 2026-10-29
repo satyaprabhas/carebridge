@@ -2161,7 +2161,7 @@ const CLINICAL_DISEASES_DB = {
         "reason": "Nutrient-dense and recommended for Coronary Artery Bypass Grafting (CABG) recovery."
       },
       {
-        "food": "and lean protein",
+        "food": "and light protein (Moong Dal, Paneer, Boiled Egg Whites)",
         "reason": "Nutrient-dense and recommended for Coronary Artery Bypass Grafting (CABG) recovery."
       }
     ],
@@ -2208,7 +2208,7 @@ const CLINICAL_DISEASES_DB = {
         "reason": "Nutrient-dense and recommended for Heart Valve Replacement recovery."
       },
       {
-        "food": "and lean protein",
+        "food": "and light protein (Moong Dal, Paneer, Boiled Egg Whites)",
         "reason": "Nutrient-dense and recommended for Heart Valve Replacement recovery."
       }
     ],
@@ -2247,7 +2247,7 @@ const CLINICAL_DISEASES_DB = {
         "reason": "Nutrient-dense and recommended for Heart Valve Repair recovery."
       },
       {
-        "food": "and lean protein",
+        "food": "and light protein (Moong Dal, Paneer, Boiled Egg Whites)",
         "reason": "Nutrient-dense and recommended for Heart Valve Repair recovery."
       }
     ],
@@ -2327,7 +2327,7 @@ const CLINICAL_DISEASES_DB = {
         "reason": "Nutrient-dense and recommended for Implantable Cardioverter-Defibrillator (ICD) Implantation recovery."
       },
       {
-        "food": "and lean protein",
+        "food": "and light protein (Moong Dal, Paneer, Boiled Egg Whites)",
         "reason": "Nutrient-dense and recommended for Implantable Cardioverter-Defibrillator (ICD) Implantation recovery."
       }
     ],
@@ -2421,7 +2421,7 @@ const CLINICAL_DISEASES_DB = {
         "reason": "Nutrient-dense and recommended for Carotid Endarterectomy recovery."
       },
       {
-        "food": "and lean protein",
+        "food": "and light protein (Moong Dal, Paneer, Boiled Egg Whites)",
         "reason": "Nutrient-dense and recommended for Carotid Endarterectomy recovery."
       }
     ],
@@ -2503,7 +2503,7 @@ const CLINICAL_DISEASES_DB = {
         "reason": "Nutrient-dense and recommended for Peripheral Artery Bypass Surgery recovery."
       },
       {
-        "food": "and lean protein",
+        "food": "and light protein (Moong Dal, Paneer, Boiled Egg Whites)",
         "reason": "Nutrient-dense and recommended for Peripheral Artery Bypass Surgery recovery."
       }
     ],
@@ -2882,7 +2882,7 @@ const CLINICAL_DISEASES_DB = {
         "reason": "Nutrient-dense and recommended for Mitral Valve Replacement recovery."
       },
       {
-        "food": "and lean protein",
+        "food": "and light protein (Moong Dal, Paneer, Boiled Egg Whites)",
         "reason": "Nutrient-dense and recommended for Mitral Valve Replacement recovery."
       }
     ],
@@ -3433,7 +3433,7 @@ const CLINICAL_DISEASES_DB = {
         "reason": "Nutrient-dense and recommended for Lumbar Laminectomy recovery."
       },
       {
-        "food": "and lean protein",
+        "food": "and light protein (Moong Dal, Paneer, Boiled Egg Whites)",
         "reason": "Nutrient-dense and recommended for Lumbar Laminectomy recovery."
       }
     ],
@@ -5924,7 +5924,7 @@ const CLINICAL_DISEASES_DB = {
         "reason": "Nutrient-dense and recommended for Carotid Endarterectomy (Repeat) recovery."
       },
       {
-        "food": "and oatmeal",
+        "food": "and Dalia (Broken Wheat)",
         "reason": "Nutrient-dense and recommended for Carotid Endarterectomy (Repeat) recovery."
       }
     ],
@@ -6178,7 +6178,7 @@ const CLINICAL_DISEASES_DB = {
         "reason": "Nutrient-dense and recommended for Laparoscopic Cholecystectomy with Bile Duct Exploration recovery."
       },
       {
-        "food": "and oatmeal",
+        "food": "and Dalia (Broken Wheat)",
         "reason": "Nutrient-dense and recommended for Laparoscopic Cholecystectomy with Bile Duct Exploration recovery."
       }
     ],
@@ -6288,7 +6288,7 @@ const CLINICAL_DISEASES_DB = {
         "reason": "Nutrient-dense and recommended for Type 2 Diabetes recovery."
       },
       {
-        "food": "and lean protein",
+        "food": "and light protein (Moong Dal, Paneer, Boiled Egg Whites)",
         "reason": "Nutrient-dense and recommended for Type 2 Diabetes recovery."
       }
     ],
@@ -6343,7 +6343,7 @@ const CLINICAL_DISEASES_DB = {
         "reason": "Nutrient-dense and recommended for Prediabetes recovery."
       },
       {
-        "food": "and lean protein",
+        "food": "and light protein (Moong Dal, Paneer, Boiled Egg Whites)",
         "reason": "Nutrient-dense and recommended for Prediabetes recovery."
       }
     ],
@@ -6766,7 +6766,7 @@ const CLINICAL_DISEASES_DB = {
         "reason": "Nutrient-dense and recommended for Hypertriglyceridemia recovery."
       },
       {
-        "food": "and lean protein",
+        "food": "and light protein (Moong Dal, Paneer, Boiled Egg Whites)",
         "reason": "Nutrient-dense and recommended for Hypertriglyceridemia recovery."
       }
     ],
@@ -7359,7 +7359,7 @@ const CLINICAL_DISEASES_DB = {
         "reason": "Nutrient-dense and recommended for Atrial Fibrillation recovery."
       },
       {
-        "food": "and lean protein",
+        "food": "and light protein (Moong Dal, Paneer, Boiled Egg Whites)",
         "reason": "Nutrient-dense and recommended for Atrial Fibrillation recovery."
       }
     ],
@@ -7445,7 +7445,7 @@ const CLINICAL_DISEASES_DB = {
         "reason": "Nutrient-dense and recommended for Stroke recovery."
       },
       {
-        "food": "and lean protein; use texture-modified foods if swallowing is impaired",
+        "food": "and light protein (Moong Dal, Paneer, Boiled Egg Whites); use texture-modified foods if swallowing is impaired",
         "reason": "Nutrient-dense and recommended for Stroke recovery."
       }
     ],
@@ -7915,7 +7915,7 @@ const CLINICAL_DISEASES_DB = {
         "reason": "Nutrient-dense and recommended for Hypercoagulability Disorders recovery."
       },
       {
-        "food": "and lean protein",
+        "food": "and light protein (Moong Dal, Paneer, Boiled Egg Whites)",
         "reason": "Nutrient-dense and recommended for Hypercoagulability Disorders recovery."
       }
     ],
@@ -8462,7 +8462,7 @@ const CLINICAL_DISEASES_DB = {
         "reason": "Nutrient-dense and recommended for Gallstones recovery."
       },
       {
-        "food": "and lean protein",
+        "food": "and light protein (Moong Dal, Paneer, Boiled Egg Whites)",
         "reason": "Nutrient-dense and recommended for Gallstones recovery."
       }
     ],
@@ -9704,7 +9704,7 @@ const CLINICAL_DISEASES_DB = {
         "reason": "Nutrient-dense and recommended for Pulmonary Fibrosis recovery."
       },
       {
-        "food": "and legumes; fruits",
+        "food": "and Dals (Moong Dal, Masoor Dal); fruits",
         "reason": "Nutrient-dense and recommended for Pulmonary Fibrosis recovery."
       },
       {
@@ -10802,7 +10802,7 @@ const CLINICAL_DISEASES_DB = {
         "reason": "Nutrient-dense and recommended for Psoriasis recovery."
       },
       {
-        "food": "and legumes",
+        "food": "and Dals (Moong Dal, Masoor Dal)",
         "reason": "Nutrient-dense and recommended for Psoriasis recovery."
       }
     ],
@@ -11812,7 +11812,7 @@ const CLINICAL_DISEASES_DB = {
         "reason": "Nutrient-dense and recommended for Acne recovery."
       },
       {
-        "food": "lean protein sources",
+        "food": "light protein (Moong Dal, Paneer, Boiled Egg Whites)",
         "reason": "Nutrient-dense and recommended for Acne recovery."
       },
       {
@@ -11887,7 +11887,7 @@ const CLINICAL_DISEASES_DB = {
         "reason": "Nutrient-dense and recommended for Psoriasis of the Skin recovery."
       },
       {
-        "food": "and lean protein sources",
+        "food": "and light protein (Moong Dal, Paneer, Boiled Egg Whites)",
         "reason": "Nutrient-dense and recommended for Psoriasis of the Skin recovery."
       }
     ],

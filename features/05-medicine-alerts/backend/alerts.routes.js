@@ -120,8 +120,8 @@ router.patch('/reminders/:id/toggle', (req, res) => {
 // PATCH /api/alerts/reminders/:id - Update reminder time and details
 router.patch('/reminders/:id', (req, res) => {
   const { id } = req.params;
-  const { time, medName, dose, enabled } = req.body;
-  const updated = updateReminder(id, { time, medName, dose, enabled });
+  const { time, medName, dose, enabled, photoUrl } = req.body;
+  const updated = updateReminder(id, { time, medName, dose, enabled, photoUrl });
 
   if (!updated) {
     return res.status(404).json({ success: false, message: 'Reminder not found.' });

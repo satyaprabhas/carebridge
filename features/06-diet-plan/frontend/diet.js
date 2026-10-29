@@ -55,6 +55,10 @@ export function renderDietPlan(dietPlan) {
           <div style="font-size: 0.8rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: 4px; padding: 0.4rem; color: #991b1b;">
             <strong>Avoid:</strong> ${escapeHtml(r.avoid)}
           </div>
+          ${r.warning ? `
+          <div style="font-size: 0.8rem; background: #fffbeb; border: 1px solid #fde68a; border-radius: 4px; padding: 0.4rem; color: #92400e; margin-top: 0.3rem;">
+            <strong>⚠️ Important Clinical Caution:</strong> ${escapeHtml(r.warning)}
+          </div>` : ''}
         </div>
       `).join('');
     }

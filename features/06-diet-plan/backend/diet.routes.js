@@ -8,111 +8,73 @@ const express = require('express');
 const router = express.Router();
 const { CLINICAL_DISEASES_DB, matchDiseaseCondition } = require('./diseasesData');
 
-const MEDICATION_REMEDIES = [
-  {
-    pattern: /aspirin|ecosprin|disprin/i,
-    name: "Aspirin (Blood Thinner)",
-    sideEffect: "Stomach lining irritation, gastric burning, micro-ulceration, and nausea.",
-    remedy: "Take after food with water. Eat soothing mucilage foods (warm oatmeal, ripe bananas, tender coconut water).",
-    include: "Warm oatmeal, ripe bananas, coconut water, steamed gourd",
-    avoid: "Taking on an empty stomach, sour citrus juices, hot spices, alcohol"
-  },
-  {
-    pattern: /clopidogrel|plavix/i,
-    name: "Clopidogrel (Antiplatelet)",
-    sideEffect: "Increased bleeding time, easy bruising, mild abdominal distress.",
-    remedy: "Pair with bland, cooked convalescent meals. Avoid taking with unverified high-dose herbal blood-thinners.",
-    include: "Boiled rice and dal, steamed pumpkin, light broths",
-    avoid: "High-dose Ginkgo Biloba, excess raw garlic supplements, alcohol"
-  },
-  {
-    pattern: /atorvastatin|rosuvastatin|simvastatin|lipitor/i,
-    name: "Atorvastatin / Statins (Cholesterol)",
-    sideEffect: "Muscle aches (myopathy), liver metabolism load. Dangerous interaction with grapefruit.",
-    remedy: "STRICT WARNING: Avoid Grapefruit and grapefruit juice completely (blocks CYP3A4 enzyme). Support muscle health with CoQ10 foods and water.",
-    include: "Steamed broccoli, lentils, soaked walnuts, chia seeds, adequate water (2L/day)",
-    avoid: "Grapefruit & Grapefruit Juice (STRICTLY PROHIBITED), excessive saturated animal fat"
-  },
-  {
-    pattern: /metoprolol|atenolol|bisoprolol|carvedilol|betaloc/i,
-    name: "Metoprolol (Beta-Blocker)",
-    sideEffect: "Fatigue, slowed heart rate, postural dizziness, mild potassium retention.",
-    remedy: "Eat regular small meals to prevent sudden energy dips. Avoid excessive caffeine which opposes heart-rate regulation.",
-    include: "Whole grains, moong dal, magnesium-rich soaked almonds, clear broths",
-    avoid: "Excessive coffee, tea or energy drinks; skipping meals; unverified potassium supplements"
-  },
-  {
-    pattern: /ramipril|enalapril|lisinopril|telmisartan|losartan/i,
-    name: "Ramipril (ACE-Inhibitor)",
-    sideEffect: "Hyperkalemia (high blood potassium), dry cough, postural dizziness.",
-    remedy: "STRICT WARNING: Do NOT use potassium-based salt substitutes (like Lite Salt / NoSalt). Moderate intake of heavy potassium foods.",
-    include: "Steamed squash, light rice and dal, peeled apples, adequate plain water",
-    avoid: "Potassium-based salt substitutes (Lite Salt), excessive dried apricots, unmonitored banana binging"
-  },
-  {
-    pattern: /pantoprazole|omeprazole|rabeprazole|esomeprazole|pan-40/i,
-    name: "Pantoprazole (Antacid / PPI)",
-    sideEffect: "Reduced gastric acid; lowers absorption of Vitamin B12, Calcium, and Iron over extended use.",
-    remedy: "Take 30 minutes before breakfast. Include fortified foods, curd/yogurt, and soaked seeds to support micronutrient absorption.",
-    include: "Fresh homemade curd/yogurt, soaked almonds, fortified oats, stewed apples",
-    avoid: "Taking immediately after meals (must take on empty stomach), late-night heavy oily dinners"
-  },
-  {
-    pattern: /paracetamol|acetaminophen|tylenol|dolo/i,
-    name: "Paracetamol / Dolo (Pain / Fever)",
-    sideEffect: "Hepatic metabolic load if combined with alcohol or prolonged fasting.",
-    remedy: "Always drink water; take with light crackers, toast, or khichdi.",
-    include: "Clear vegetable soups, toast, warm water, electrolyte fluids",
-    avoid: "Alcohol (severe risk of liver toxicity), exceeding 4000 mg daily"
-  },
-  {
-    pattern: /amoxicillin|azithromycin|ciprofloxacin|cefixime|augmentin/i,
-    name: "Antibiotics",
-    sideEffect: "Depletion of gut flora, loose stools, abdominal cramping.",
-    remedy: "Consume probiotic foods (fresh curd, buttermilk) separated by 2 hours from the antibiotic dose.",
-    include: "Fresh unsweetened curd/yogurt, probiotic buttermilk, rice gruel (kanji)",
-    avoid: "Taking at the exact same minute as high-calcium dairy (separate by 2 hours), alcohol"
-  },
-  {
-    pattern: /furosemide|lasix|torsemide|hydrochlorothiazide/i,
-    name: "Furosemide / Diuretics (Lasix)",
-    sideEffect: "Excessive urinary fluid loss, loss of electrolytes (potassium, sodium, magnesium), dehydration.",
-    remedy: "Monitor fluid output. Replenish natural electrolytes with coconut water or diluted lemon water under doctor supervision.",
-    include: "Diluted lemon water with a pinch of rock salt, coconut water (if potassium is normal)",
-    avoid: "Excess salt (defeats water removal), dehydrating alcohol"
-  }
+const { MEDICATION_REMEDIES, evaluateMedicationRemedies } = require('./medicationRemediesData');
+
+
+const commonIndianEat = [
+  { food: "Moong Dal Khichdi", reason: "Light, easily digestible protein and carbohydrate blend gentle on the stomach." },
+  { food: "Boiled White / Brown Rice", reason: "Clean, easily absorbed energy without gastrointestinal strain." },
+  { food: "Steamed Lauki (Bottle Gourd) & Turai", reason: "High water content and cooling properties that soothe the digestive tract." },
+  { food: "Fresh Homemade Dahi (Curd)", reason: "Probiotics replenish healthy gut flora post-antibiotics and improve digestion." },
+  { food: "Chaas (Fresh Buttermilk with Jeera)", reason: "Hydrates, reduces acidity, and calms medication stomach burning." },
+  { food: "Dalia (Broken Wheat Porridge)", reason: "High soluble fiber supporting regular bowel movements during bed rest." },
+  { food: "Ripe Bananas (Kela)", reason: "Natural potassium and gentle pectin fiber that soothe digestive mucosa." },
+  { food: "Clear Moong Dal Soup & Vegetable Shorba", reason: "Provides systemic hydration, minerals, and light protein." },
+  { food: "Fresh Soft Paneer (Cottage Cheese)", reason: "Clean lean protein vital for post-operative wound healing and cellular repair." },
+  { food: "Boiled Egg Whites", reason: "Pure albumin protein that accelerates tissue regeneration and surgical healing." },
+  { food: "Tender Coconut Water (Nariyal Pani)", reason: "Natural isotonic electrolytes balancing sodium, potassium, and magnesium." },
+  { food: "Plain Toast / Rusk", reason: "Absorbs excess gastric acid and prevents morning nausea." },
+  { food: "Steamed Pumpkin (Kaddu) & Carrots", reason: "Rich in beta-carotene and vitamin A for tissue recovery and immune defense." },
+  { food: "Warm Water with Roasted Cumin (Jeera)", reason: "Relieves gas, abdominal bloating, and post-meal heaviness." }
 ];
 
-function evaluateMedicationRemedies(medicinesList) {
-  const remedies = [];
-  const seenPatterns = new Set();
+const commonIndianLimit = [
+  { food: "Full-Fat Buffalo Milk & Malai", reason: "Heavy saturated fats slow down stomach emptying; prefer skimmed cow's milk." },
+  { food: "Tea & Filter Coffee", reason: "Limit to 1 small cup; excess caffeine causes dehydration and increases acidity." },
+  { food: "Cooking Oil & Desi Ghee", reason: "Limit to 1-2 teaspoons daily; avoid heavy greasy tadkas during recovery." },
+  { food: "Table Salt (Sodium)", reason: "Keep under 1 teaspoon daily to prevent fluid retention and ankle swelling." },
+  { food: "Whole Egg Yolks", reason: "Limit to 1 egg daily; egg whites preferred to prevent digestive heaviness." },
+  { food: "Refined Flour (Maida, White Bread)", reason: "Lacks fiber and can induce post-operative constipation." },
+  { food: "Raw Crunchy Salads", reason: "Difficult for healing intestines to digest; prefer boiled or steamed vegetables." },
+  { food: "Heavy Pulses (Rajma, Chana, Urad)", reason: "Produces gas and abdominal fullness; prefer light moong dal." }
+];
 
-  if (Array.isArray(medicinesList)) {
-    medicinesList.forEach(m => {
-      const name = typeof m === 'string' ? m : (m?.name || '');
-      MEDICATION_REMEDIES.forEach((rem, idx) => {
-        if (rem.pattern.test(name) && !seenPatterns.has(idx)) {
-          seenPatterns.add(idx);
-          remedies.push({
-            medName: name,
-            remedyTitle: rem.name,
-            sideEffect: rem.sideEffect,
-            remedy: rem.remedy,
-            include: rem.include,
-            avoid: rem.avoid
-          });
-        }
-      });
-    });
-  }
+const commonIndianAvoid = [
+  { food: "Deep-Fried Snacks (Samosas, Pakoras, Vada)", reason: "Trans fats and oxidized oils trigger acute indigestion, reflux, and inflammation." },
+  { food: "Heavily Spiced & Oily Curries", reason: "Hot red chilies, garam masala, and excess garlic irritate stomach lining." },
+  { food: "Pickles (Achar), Papads & Salted Chips", reason: "Extreme sodium concentration increases blood pressure and causes water retention." },
+  { food: "Alcohol & Tobacco (Strict Prohibition)", reason: "Interferes with medication clearance, burdens liver, and stops healing." },
+  { food: "Carbonated Sodas & Fizzy Drinks", reason: "Carbonic acid and high refined sugar produce acute abdominal gas." },
+  { food: "Street Food & Roadside Chaat", reason: "High risk of bacterial food poisoning and waterborne infections during recovery." },
+  { food: "Very Sour Foods (Imli, Raw Mango, Vinegar)", reason: "High acid concentration aggravates post-discharge reflux and heartburn." },
+  { food: "Late-Night Heavy Dinners", reason: "Disrupts sleep and triggers nocturnal acid reflux; finish dinner 2 hours before bed." }
+];
 
-  return remedies;
+function enrichDietPlan(plan) {
+  if (!plan) return plan;
+  const mergeItems = (baseItems, defaultItems, targetCount) => {
+    const result = Array.isArray(baseItems) ? [...baseItems] : [];
+    const seen = new Set(result.map(i => (i.food || i.name || '').toLowerCase().trim()));
+    for (const item of defaultItems) {
+      const key = item.food.toLowerCase().trim();
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(item);
+      }
+      if (result.length >= targetCount) break;
+    }
+    return result;
+  };
+  plan.eat = mergeItems(plan.eat, commonIndianEat, 14);
+  plan.limit = mergeItems(plan.limit, commonIndianLimit, 8);
+  plan.avoid = mergeItems(plan.avoid, commonIndianAvoid, 8);
+  return plan;
 }
 
 // GET /api/diet-plan
 router.get('/', (req, res) => {
   const conditionKey = matchDiseaseCondition(req.query.condition || '');
-  const basePlan = CLINICAL_DISEASES_DB[conditionKey] || CLINICAL_DISEASES_DB.general_convalescence;
+  const basePlan = enrichDietPlan(JSON.parse(JSON.stringify(CLINICAL_DISEASES_DB[conditionKey] || CLINICAL_DISEASES_DB.general_convalescence)));
 
   res.status(200).json({
     success: true,
@@ -126,7 +88,7 @@ router.get('/', (req, res) => {
 router.post('/generate', (req, res) => {
   const { diagnosis, medicines, dietInstructions } = req.body || {};
   const conditionKey = matchDiseaseCondition(diagnosis);
-  const basePlan = JSON.parse(JSON.stringify(CLINICAL_DISEASES_DB[conditionKey] || CLINICAL_DISEASES_DB.general_convalescence));
+  const basePlan = enrichDietPlan(JSON.parse(JSON.stringify(CLINICAL_DISEASES_DB[conditionKey] || CLINICAL_DISEASES_DB.general_convalescence)));
   const medRemedies = evaluateMedicationRemedies(medicines);
 
   // Inject specific medication cautions into avoid/eat lists
