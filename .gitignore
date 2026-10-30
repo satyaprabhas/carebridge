@@ -1,5 +1,35 @@
+# Dependencies & Virtual Environments
 node_modules/
+FULL_CODE/node_modules/
+.venv/
+venv/
+
+# Environment Variables & Secrets (Rule 3)
 .env
+FULL_CODE/.env
+*.local
+
+# Hackathon Pack Data & Large Files (Rule 2 & 11)
+data/
+FULL_CODE/data/
+models/
+FULL_CODE/models/
+*.db
+*.sqlite
+*.tar.gz
+
+# Uploads & Temporary Stores
 uploads/*
 !uploads/.gitkeep
-features/05-medicine-alerts/backend/reminders_store.json
+FULL_CODE/uploads/*
+!FULL_CODE/uploads/.gitkeep
+FULL_CODE/features/05-medicine-alerts/backend/reminders_store.json
+
+# Build Outputs & System Junk (Rule 7)
+dist/
+build/
+.DS_Store
+__pycache__/
+*.pyc
+*.log
+*.zip
