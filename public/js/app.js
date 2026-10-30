@@ -1173,45 +1173,230 @@
     return translateFoodToTelugu(s);
   }
 
-  const TELUGU_MED_NAMES = {
-    'paracetamol': 'పారాసిటమాల్',
-    'dolo': 'డోలో 650 (పారాసిటమాల్)',
-    'ibuprofen': 'ఇబుప్రోఫెన్',
-    'naproxen': 'నాప్రాక్సెన్',
-    'diclofenac': 'డిక్లోఫెనాక్',
-    'aspirin': 'ఆస్పిరిన్',
-    'celecoxib': 'సెలెకాక్సిబ్',
-    'etoricoxib': 'ఎటోరికాక్సిబ్',
-    'amoxicillin and clavulanic acid': 'అమోక్సిసిలిన్ మరియు క్లావులానిక్ యాసిడ్',
-    'augmentin': 'ఆగ్‌మెంటిన్ 625',
-    'amoxicillin': 'అమోక్సిసిలిన్',
-    'azithromycin': 'అజిత్రోమైసిన్',
+  const TELUGU_DRUG_NAMES = {
+    'aceclofenac': 'ఎసిక్లోఫెనాక్ (జెరోడాల్)',
+    'zerodol': 'జెరోడాల్ (ఎసిక్లోఫెనాక్ - నొప్పి నివారిణి)',
+    'hifenac': 'హైఫెనాక్ (ఎసిక్లోఫెనాక్)',
+    'acenocoumarol': 'ఎసినోకౌమరాల్ (ఎసిట్రోమ్)',
+    'acitrom': 'ఎసిట్రోమ్ (రక్తం పలుచబడే మందు)',
+    'amlodipine': 'ఆమ్లోడిపైన్ (ఆమ్లాంగ్)',
+    'amlong': 'ఆమ్లాంగ్ (ఆమ్లోడిపైన్ - బీపీ మందు)',
+    'stamlo': 'స్టామ్లో (ఆమ్లోడిపైన్)',
+    'amoxicillin + clavulanic acid': 'అమోక్సిసిలిన్ క్లావులానేట్ (ఆగ్‌మెంటిన్)',
+    'amoxicillin and clavulanic acid': 'అమోక్సిసిలిన్ క్లావులానేట్ (ఆగ్‌మెంటిన్)',
+    'augmentin': 'ఆగ్‌మెంటిన్ 625 (యాంటీబయాటిక్)',
+    'clavam': 'క్లావామ్ 625 (యాంటీబయాటిక్)',
+    'amoxicillin': 'అమోక్సిసిలిన్ (యాంటీబయాటిక్)',
+    'apixaban': 'ఎపిక్సాబాన్ (ఎలిక్విస్)',
+    'eliquis': 'ఎలిక్విస్ (రక్తం పలుచబడే మందు)',
+    'aspirin': 'ఆస్పిరిన్ (ఎకోస్ప్రిన్)',
+    'ecosprin': 'ఎకోస్ప్రిన్ (ఆస్పిరిన్ 75/150)',
+    'atorvastatin': 'అటోర్వాస్టాటిన్ (అటోర్వా)',
+    'atorva': 'అటోర్వా (కొలెస్ట్రాల్ మందు)',
+    'storvas': 'స్టోర్వాస్ (అటోర్వాస్టాటిన్)',
+    'azithromycin': 'అజిత్రోమైసిన్ (అజిత్రాల్)',
+    'azithral': 'అజిత్రాల్ (అజిత్రోమైసిన్)',
+    'biphasic isophane insulin': 'హ్యూమన్ మిక్స్‌టార్డ్ ఇన్సులిన్ (30/70)',
+    'huminsulin': 'హ్యూమిన్సులిన్ 30/70 ఇన్సులిన్',
+    'mixtard': 'హ్యూమన్ మిక్స్‌టార్డ్ 30/70',
+    'actrapid': 'యాక్ట్రాపిడ్ ఇన్సులిన్',
+    'novorapid': 'నోవోరాపిడ్ ఇన్సులిన్',
+    'lantus': 'లాంటస్ ఇన్సులిన్ (గ్లార్గిన్)',
+    'basalog': 'బసలాగ్ ఇన్సులిన్',
+    'bisoprolol': 'బిసోప్రోలోల్',
+    'budesonide + formoterol': 'ఫొరాకార్ట్ ఇన్హేలర్ (బుడెసొనైడ్ + ఫార్మోటెరాల్)',
+    'budesonide': 'బుడెసొనైడ్ ఇన్హేలర్',
+    'formoterol': 'ఫార్మోటెరాల్ ఇన్హేలర్',
+    'foracort': 'ఫొరాకార్ట్ ఇన్హేలర్ (శ్వాసకోశ మందు)',
+    'calcium carbonate + vitamin d3': 'షెల్కాల్ 500 (కాల్షియం + విటమిన్ డి3)',
+    'calcium': 'కాల్షియం కార్బోనేట్ (షెల్కాల్)',
+    'shelcal': 'షెల్కాల్ 500 (కాల్షియం + విటమిన్ డి3)',
+    'carvedilol': 'కార్వెడిలోల్ (బీపీ & గుండె మందు)',
+    'cefixime': 'సెఫిక్సిమ్ (టాక్సిమ్-ఒ)',
+    'taxim': 'టాక్సిమ్-ఒ (సెఫిక్సిమ్ 200)',
+    'zifi': 'జిఫీ (సెఫిక్సిమ్ 200)',
+    'cefpodoxime': 'సెఫ్‌పోడోక్సిమ్ (మోనోసెఫ్-ఒ)',
+    'ceftriaxone': 'సెఫ్ట్రియక్సోన్ ఇంజెక్షన్',
+    'cefuroxime': 'సెఫురోక్సిమ్ (సెఫాకైండ్)',
+    'cefazolin': 'సెఫాజోలిన్ ఇంజెక్షన్',
+    'chlorthalidone': 'క్లోర్తాలిడోన్',
+    'cholecalciferol': 'విటమిన్ డి3 (అప్రైజ్-డి3 60,000 ఐ.యు)',
+    'uprise': 'అప్రైజ్-డి3 (విటమిన్ డి3 60,000 ఐ.యు)',
+    'calcirol': 'కాల్సిరాల్ (విటమిన్ డి3)',
+    'ciprofloxacin': 'సిప్రోఫ్లోక్సాసిన్ (సిప్లాక్స్)',
+    'clopidogrel': 'క్లోపిడోగ్రెల్ (డిప్లాట్)',
+    'deplatt': 'డిప్లాట్ (క్లోపిడోగ్రెల్ 75)',
+    'clopilet': 'క్లోపిలెట్ (క్లోపిడోగ్రెల్)',
+    'crocin': 'క్రోసిన్ 650 (పారాసిటమాల్)',
+    'brufen': 'బ్రూఫెన్ 400 (ఇబుప్రోఫెన్)',
+    'dabigatran': 'డబిగాట్రాన్ (ప్రడాక్సా)',
+    'dapagliflozin': 'డాపాగ్లిఫ్లోజిన్ (ఫార్క్సిగా)',
+    'forxiga': 'ఫార్క్సిగా (షుగర్ మందు)',
+    'diclofenac': 'డిక్లోఫెనాక్ (వోవెరాన్)',
+    'digoxin': 'డిగోక్సిన్ (లానోక్సిన్)',
+    'diltiazem': 'డిల్టియాజెమ్',
+    'domperidone': 'డాంపెరిడోన్ (వికారం నివారిణి)',
     'doxycycline': 'డాక్సీసైక్లిన్',
-    'ciprofloxacin': 'సిప్రోఫ్లోక్సాసిన్',
-    'cefixime': 'సెఫిక్సిమ్',
-    'metronidazole': 'మెట్రోనిడాజోల్',
-    'pantoprazole': 'పాంటోప్రజోల్ (పాన్-40)',
-    'omeprazole': 'ఒమెప్రజోల్',
+    'empagliflozin': 'ఎంపాగ్లిఫ్లోజిన్ (జార్డియన్స్)',
+    'jardiance': 'జార్డియన్స్ (షుగర్ మందు)',
+    'enalapril': 'ఎనాలాప్రిల్',
+    'enoxaparin': 'ఎనోక్సాపారిన్ (క్లెక్సేన్ ఇంజెక్షన్)',
+    'clexane': 'క్లెక్సేన్ ఇంజెక్షన్ (రక్తం గడ్డకట్టకుండా)',
+    'escitalopram': 'ఎస్సిటాలోప్రామ్',
+    'etoricoxib': 'ఎటోరికాక్సిబ్ (నుసియా)',
     'famotidine': 'ఫామోటిడిన్',
-    'ondansetron': 'ఒండాన్‌సెట్రాన్',
-    'domperidone': 'డాంపెరిడోన్',
-    'metoclopramide': 'మెటోక్లోప్రమైడ్',
-    'telmisartan': 'టెల్మిసార్టన్ (టెల్మా)',
+    'ferrous ascorbate + folic acid': 'ఐరన్ + ఫోలిక్ యాసిడ్ (ఓరోఫెర్-ఎక్స్‌టి)',
+    'ferrous sulphate + folic acid': 'ఐరన్ + ఫోలిక్ యాసిడ్',
+    'fluconazole': 'ఫ్లూకోనజోల్',
+    'fondaparinux': 'ఫాండాపారినుక్స్ ఇంజెక్షన్',
+    'furosemide': 'ఫ్యూరోసెమైడ్ (లాసిక్స్)',
+    'lasix': 'లాసిక్స్ (మూత్రవిసర్జన మందు)',
+    'glimepiride': 'గ్లైమిపిరైడ్ (అమరిల్)',
+    'amaryl': 'అమరిల్ (గ్లైమిపిరైడ్)',
+    'glipizide': 'గ్లిపిజైడ్',
+    'heparin': 'హెపారిన్ ఇంజెక్షన్',
+    'hydrochlorothiazide': 'హైడ్రోక్లోరోథయాజైడ్',
+    'hydrocortisone': 'హైడ్రోకార్టిసోన్',
+    'ibuprofen': 'ఇబుప్రోఫెన్ (బ్రూఫెన్)',
+    'insulin': 'ఇన్సులిన్ ఇంజెక్షన్',
+    'ipratropium': 'ఇప్రాట్రోపియం ఇన్హేలర్',
+    'iron': 'ఐరన్ మాత్రలు',
+    'ivabradine': 'ఇవాబ్రాడిన్',
+    'labetalol': 'లాబెటాలాల్ (రక్తపోటు నివారణ మందు)',
+    'lactulose': 'లాక్టులోజ్ సిరప్ (మలబద్ధకం నివారణ)',
+    'levetiracetam': 'లెవెటిరాసిటామ్ (లెవిపిల్)',
+    'levipil': 'లెవిపిల్ (ఫిట్స్ నివారణ మందు)',
+    'levocetirizine': 'లెవోసెట్రిజిన్',
+    'levofloxacin': 'లెవోఫ్లోక్సాసిన్',
+    'levothyroxine': 'లెవోథైరాక్సిన్ (థైరోనార్మ్)',
+    'thyronorm': 'థైరోనార్మ్ (థైరాయిడ్ మందు)',
+    'eltroxin': 'ఎల్ట్రాక్సిన్ (థైరాయిడ్ మందు)',
+    'linagliptin': 'లినాగ్లిప్టిన్ (ట్రాజెంటా)',
+    'linezolid': 'లినెజోలిడ్',
+    'losartan': 'లోసార్టన్ (రిపాస్)',
+    'magnesium sulphate': 'మెగ్నీషియం సల్ఫేట్',
+    'metformin': 'మెట్‌ఫార్మిన్ (గ్లైకోమెట్)',
+    'glycomet': 'గ్లైకోమెట్ (షుగర్ మందు)',
+    'glyciphage': 'గ్లైసిఫేజ్ (మెట్‌ఫార్మిన్)',
+    'methylprednisolone': 'మిథైల్‌ప్రెడ్నిసొలోన్',
+    'metoprolol': 'మెటోప్రొలోల్ (బెటాలోక్)',
+    'betaloc': 'బెటాలోక్ (గుండె వేగం నియంత్రణ)',
+    'metronidazole': 'మెట్రోనిడాజోల్ (ఫ్లాజిల్)',
+    'montelukast': 'మోంటెలూకాస్ట్ (మోంటేర్)',
+    'montek': 'మోంటెక్-ఎల్సి',
+    'mupirocin': 'మ్యూపిరోసిన్ ఆయింట్‌మెంట్ (టి-బాక్ట్)',
+    'naproxen': 'నాప్రాక్సెన్',
+    'nifedipine': 'నిఫెడిపైన్ (నికార్డియా)',
+    'nicardia': 'నికార్డియా (నిఫెడిపైన్)',
+    'nitroglycerin': 'నైట్రోగ్లిజరిన్ (సోర్బిట్రేట్)',
+    'sorbitrate': 'సోర్బిట్రేట్ (గుండె నొప్పికి నాలుక క్రింద మాత్ర)',
+    'omeprazole': 'ఒమెప్రజోల్ (ఒమెజ్)',
+    'ondansetron': 'ఒండాన్‌సెట్రాన్ (ఎమ్మిసెట్)',
+    'pantoprazole': 'పాంటోప్రజోల్ (పాన్-40)',
+    'pan 40': 'పాన్-40 (పాంటోప్రజోల్ - గ్యాస్/అసిడిటీ)',
+    'pan d': 'పాన్-డి (గ్యాస్ & వికారం మందు)',
+    'pantocid': 'పాంటోసిడ్ 40',
+    'paracetamol': 'పారాసిటమాల్ (డోలో 650 / క్రోసిన్)',
+    'dolo': 'డోలో 650 (పారాసిటమాల్)',
+    'potassium chloride': 'పొటాషియం క్లోరైడ్',
+    'prasugrel': 'ప్రాసుగ్రెల్',
+    'prednisolone': 'ప్రెడ్నిసొలోన్',
+    'propranolol': 'ప్రొప్రానోలోల్ (సిప్లార్)',
+    'pyridoxine': 'విటమిన్ బి6 (పైరిడాక్సిన్)',
+    'rabeprazole': 'రాబెప్రజోల్ (రాజో 20)',
+    'razo': 'రాజో 20 (అసిడిటీ మందు)',
+    'ramipril': 'రామిప్రిల్ (కార్డేస్)',
+    'cardace': 'కార్డేస్ (రామిప్రిల్)',
+    'rivaroxaban': 'రివారోక్సాబాన్ (జారెల్టో)',
     'rosuvastatin': 'రోసువాస్టాటిన్ (రోసువాస్)',
-    'atorvastatin': 'అటోర్వాస్టాటిన్',
-    'metoprolol': 'మెటోప్రొలోల్',
-    'ramipril': 'రామిప్రిల్',
-    'clopidogrel': 'క్లోపిడోగ్రెల్',
-    'furosemide': 'ఫ్యూరోసెమైడ్ (లాసిక్స్)'
+    'rosuvas': 'రోసువాస్ (కొలెస్ట్రాల్ మందు)',
+    'sacubitril + valsartan': 'సాకుబిట్రిల్ + వల్సార్టన్ (వైమాడా)',
+    'vymada': 'వైమాడా (గుండె సంరక్షణ మందు)',
+    'cidmus': 'సిడ్మస్ (సాకుబిట్రిల్ వల్సార్టన్)',
+    'salbutamol': 'సాల్బుటమాల్ (ఆస్తాలిన్ ఇన్హేలర్)',
+    'asthalin': 'ఆస్తాలిన్ ఇన్హేలర్',
+    'sitagliptin': 'సిటాగ్లిప్టిన్ (జనువియా)',
+    'januvia': 'జనువియా (షుగర్ మందు)',
+    'spironolactone': 'స్పైరోనోలాక్టోన్ (ఆల్డాక్టోన్)',
+    'aldactone': 'ఆల్డాక్టోన్',
+    'tamsulosin': 'టామ్సులోసిన్ (యూరిమాక్స్)',
+    'telmisartan': 'టెల్మిసార్టన్ (టెల్మా 40)',
+    'telma': 'టెల్మా 40 (బీపీ మందు)',
+    'teneligliptin': 'టెనెలిగ్లిప్టిన్ (జెనిటా)',
+    'ticagrelor': 'టికాగ్రెలర్ (బ్రిలింటా)',
+    'timolol': 'టిమోలోల్ కంటి చుక్కల మందు',
+    'tiotropium': 'టియోట్రోపియం ఇన్హేలర్',
+    'torsemide': 'టార్సెమైడ్ (డైటార్)',
+    'dytor': 'డైటార్ (వాపు తగ్గించే మూత్రవర్ధక మందు)',
+    'tramadol': 'ట్రామడాల్ (అల్ట్రాసెట్)',
+    'ultracet': 'అల్ట్రాసెట్ (తీవ్ర నొప్పి నివారిణి)',
+    'ursodeoxycholic acid': 'ఉర్సోడియోక్సికోలిక్ యాసిడ్ (ఉర్సోకాల్)',
+    'valsartan': 'వల్సార్టన్',
+    'vildagliptin': 'విల్డాగ్లిఫ్టిన్ (గాల్వస్ 50)',
+    'galvus': 'గాల్వస్ 50 (షుగర్ మందు)',
+    'jalra': 'జల్రా (విల్డాగ్లిఫ్టిన్)'
   };
 
   function translateMedNameToTelugu(name) {
     if (!name) return '';
-    const low = name.toLowerCase();
-    for (const [key, val] of Object.entries(TELUGU_MED_NAMES)) {
-      if (low.includes(key)) return val;
+    let clean = name.trim();
+    let isStopped = false;
+    if (/^(?:Stop|Discontinue)\s+/i.test(clean)) {
+      isStopped = true;
+      clean = clean.replace(/^(?:Stop|Discontinue)\s+/i, '').trim();
     }
-    return name;
+
+    let formPrefix = '';
+    if (/^(?:Tab(?:let)?|T\.)\s*/i.test(clean)) {
+      formPrefix = 'మాత్ర: ';
+      clean = clean.replace(/^(?:Tab(?:let)?|T\.)\s*/i, '');
+    } else if (/^(?:Cap(?:sule)?|C\.?)\s*/i.test(clean)) {
+      formPrefix = 'క్యాప్సూల్: ';
+      clean = clean.replace(/^(?:Cap(?:sule)?|C\.?)\s*/i, '');
+    } else if (/^(?:Inj(?:ection)?|I\.)\s*/i.test(clean)) {
+      formPrefix = 'ఇంజెక్షన్: ';
+      clean = clean.replace(/^(?:Inj(?:ection)?|I\.)\s*/i, '');
+    } else if (/^(?:Syp|Syrup)\s*/i.test(clean)) {
+      formPrefix = 'సిరప్: ';
+      clean = clean.replace(/^(?:Syp|Syrup)\s*/i, '');
+    } else if (/^(?:Inhaler|Rotacap|MDI)\s*/i.test(clean)) {
+      formPrefix = 'ఇన్హేలర్: ';
+      clean = clean.replace(/^(?:Inhaler|Rotacap|MDI)\s*/i, '');
+    } else if (/^(?:Drops?)\s*/i.test(clean)) {
+      formPrefix = 'చుక్కల మందు: ';
+      clean = clean.replace(/^(?:Drops?)\s*/i, '');
+    } else if (/^(?:Oint(?:ment)?|Gel|Cream)\s*/i.test(clean)) {
+      formPrefix = 'మలాము / జెల్: ';
+      clean = clean.replace(/^(?:Oint(?:ment)?|Gel|Cream)\s*/i, '');
+    }
+
+    const low = clean.toLowerCase();
+    let translatedDrug = '';
+    for (const [key, val] of Object.entries(TELUGU_DRUG_NAMES)) {
+      if (low.includes(key)) {
+        translatedDrug = val;
+        break;
+      }
+    }
+
+    let res = translatedDrug || clean;
+    res = res.replace(/\b(\d+(?:\.\d+)?)\s*mg\b/gi, '$1 మి.గ్రా')
+             .replace(/\b(\d+(?:\.\d+)?)\s*mcg\b/gi, '$1 మైక్రోగ్రా')
+             .replace(/\b(\d+(?:\.\d+)?)\s*ml\b/gi, '$1 మి.లీ')
+             .replace(/\b(\d{1,3}(?:,\d{3})+)\s*IU\b/gi, '$1 ఐ.యు')
+             .replace(/\b(\d+)\s*IU\b/gi, '$1 ఐ.యు')
+             .replace(/\bPO\b/gi, '(నోటి ద్వారా)')
+             .replace(/\bIV\b/gi, '(సిరల ద్వారా)')
+             .replace(/\bSC\b/gi, '(చర్మం క్రింద)')
+             .replace(/\bSL\b/gi, '(నాలుక క్రింద)')
+             .replace(/\bBD\b/gi, 'రోజుకు 2 సార్లు')
+             .replace(/\bOD\b/gi, 'రోజుకు 1 సారి')
+             .replace(/\bTDS\b/gi, 'రోజుకు 3 సార్లు')
+             .replace(/\bHS\b/gi, 'రాత్రి వేళ')
+             .replace(/\bSOS\b/gi, 'అవసరమైనప్పుడు');
+
+    const finalName = (isStopped ? '🛑 [ఆపండి] ' : '') + formPrefix + res;
+    return finalName.trim();
   }
 
   const TELUGU_SIDE_EFFECTS = [
@@ -1365,40 +1550,197 @@
   ];
 
   function translateTimingToTelugu(text) {
-    if (!text) return '';
-    let s = text;
-    for (let i = 0; i < TELUGU_SCHEDULE_MAP.length; i++) {
-      s = s.replace(TELUGU_SCHEDULE_MAP[i][0], TELUGU_SCHEDULE_MAP[i][1]);
-    }
+    if (!text) return 'సమయానికి తీసుకోండి';
+    let s = String(text);
+    s = s.replace(/Twice daily with meals \(Morning & Night\)/gi, 'భోజనంతో పాటు రోజుకు రెండుసార్లు (ఉదయం & రాత్రి)')
+         .replace(/Twice daily after food \(1-0-1\)/gi, 'భోజనం తర్వాత రోజుకు రెండుసార్లు (ఉదయం & రాత్రి) (1-0-1)')
+         .replace(/Twice daily after food/gi, 'భోజనం తర్వాత రోజుకు రెండుసార్లు')
+         .replace(/Twice daily before food/gi, 'భోజనానికి ముందు రోజుకు రెండుసార్లు')
+         .replace(/Twice daily \(Morning & Night\)/gi, 'రోజుకు రెండుసార్లు (ఉదయం & రాత్రి)')
+         .replace(/Twice daily/gi, 'రోజుకు రెండుసార్లు')
+         .replace(/Three times a day as needed/gi, 'అవసరమైనప్పుడు రోజుకు మూడుసార్లు')
+         .replace(/Three times daily after food/gi, 'భోజనం తర్వాత రోజుకు మూడుసార్లు')
+         .replace(/Three times a day \(Morning, Afternoon & Night\)/gi, 'రోజుకు మూడుసార్లు (ఉదయం, మధ్యాహ్నం & రాత్రి)')
+         .replace(/Three times a day/gi, 'రోజుకు మూడుసార్లు')
+         .replace(/Three times daily/gi, 'రోజుకు మూడుసార్లు')
+         .replace(/Four times a day/gi, 'రోజుకు నాలుగుసార్లు')
+         .replace(/Once daily in morning \(Empty Stomach\)/gi, 'ఉదయం ఖాళీ కడుపుతో ఒకసారి')
+         .replace(/Once daily before breakfast \(1-0-0\)/gi, 'అల్పాహారానికి ముందు ఉదయం ఒకసారి (1-0-0)')
+         .replace(/Once daily before breakfast/gi, 'అల్పాహారానికి ముందు ఒకసారి')
+         .replace(/Once daily after breakfast/gi, 'అల్పాహారం తర్వాత ఒకసారి')
+         .replace(/Once daily in morning/gi, 'ఉదయం పూట రోజుకు ఒకసారి')
+         .replace(/Once daily at bedtime \(Night\)/gi, 'రాత్రి పడుకునే ముందు ఒకసారి (0-0-1)')
+         .replace(/Once daily at bedtime/gi, 'రాత్రి పడుకునే ముందు ఒకసారి')
+         .replace(/Once daily at night/gi, 'రాత్రి వేళ రోజుకు ఒకసారి')
+         .replace(/Once daily/gi, 'రోజుకు ఒకసారి')
+         .replace(/At bedtime \(Night\)/gi, 'రాత్రి పడుకునే ముందు')
+         .replace(/At bedtime/gi, 'పడుకునే ముందు')
+         .replace(/At night/gi, 'రాత్రి వేళ')
+         .replace(/In morning/gi, 'ఉదయం పూట')
+         .replace(/In afternoon/gi, 'మధ్యాహ్నం వేళ')
+         .replace(/As needed \(SOS\)/gi, 'అవసరమైనప్పుడు మాత్రమే (SOS)')
+         .replace(/As needed for pain/gi, 'నొప్పి ఉన్నప్పుడు మాత్రమే (SOS)')
+         .replace(/As needed/gi, 'అవసరమైనప్పుడు మాత్రమే')
+         .replace(/Every 8 hours/gi, 'ప్రతి 8 గంటలకు ఒకసారి')
+         .replace(/Every 12 hours/gi, 'ప్రతి 12 గంటలకు ఒకసారి')
+         .replace(/Every 24 hours/gi, 'ప్రతి 24 గంటలకు ఒకసారి')
+         .replace(/Before food|Empty stomach/gi, 'ఖాళీ కడుపుతో / భోజనానికి ముందు')
+         .replace(/After food|With meals/gi, 'భోజనం తర్వాత');
     return s;
   }
 
   function translateDurationToTelugu(text) {
-    if (!text) return '';
-    let s = text;
-    for (let i = 0; i < TELUGU_SCHEDULE_MAP.length; i++) {
-      s = s.replace(TELUGU_SCHEDULE_MAP[i][0], TELUGU_SCHEDULE_MAP[i][1]);
-    }
+    if (!text) return 'డాక్టర్ సంప్రదింపు వరకు';
+    let s = String(text);
+    s = s.replace(/\b(?:for|x)\s*(\d+)\s*\/\s*7\b/gi, '$1 రోజులు')
+         .replace(/\b(?:for\s+)?(\d+)\s*days?\b/gi, '$1 రోజులు')
+         .replace(/\b(?:for\s+)?(\d+)\s*weeks?\b/gi, '$1 వారాలు')
+         .replace(/\b(?:for\s+)?(\d+)\s*months?\b/gi, '$1 నెలలు')
+         .replace(/Ongoing recovery course/gi, 'రికవరీ కోర్సు కొనసాగుతోంది')
+         .replace(/Till next review|Until next visit|Till review/gi, 'తదుపరి డాక్టర్ సంప్రదింపు వరకు')
+         .replace(/Continuous|Ongoing/gi, 'కొనసాగించండి')
+         .replace(/Lifelong|Long term/gi, 'దీర్ఘకాలికంగా కొనసాగించండి');
     return s;
   }
 
   function translateInstructionsToTelugu(text) {
-    if (!text) return '';
-    let s = text;
-    s = s.replace(/Take at start of meals with water\. Consume curd or buttermilk\.?/gi, 'భోజనం ప్రారంభంలో నీటితో తీసుకోండి. తాజా పెరుగు లేదా మజ్జిగ వాడండి.');
-    s = s.replace(/Take after meals with warm water for pain\/fever\. Do not exceed prescribed dose\.?/gi, 'నొప్పి/జ్వరం కోసం భోజనం తర్వాత గోరువెచ్చని నీటితో తీసుకోండి. మోతాదు మించవద్దు.');
-    s = s.replace(/Take 30 minutes before breakfast with a glass of water\.?/gi, 'అల్పాహారానికి 30 నిమిషాల ముందు గ్లాసు నీటితో తీసుకోండి.');
-    s = s.replace(/Maintain appropriate hydration and avoid potassium salt substitutes\.?/gi, 'తగినంత మంచినీరు త్రాగండి మరియు పొటాషియం ఉప్పు ప్రత్యామ్నాయాలను నివారించండి.');
-    s = s.replace(/Take at night\. Avoid grapefruit or grapefruit juice completely\.?/gi, 'రాత్రి తీసుకోండి. గ్రేప్‌ఫ్రూట్ లేదా దాని రసాన్ని పూర్తిగా నివారించండి.');
-    s = s.replace(/With a full glass of water/gi, 'పూర్తి గ్లాసు నీటితో');
-    s = s.replace(/After food/gi, 'భోజనం తర్వాత');
-    s = s.replace(/Before food/gi, 'భోజనానికి ముందు');
+    if (!text) return 'డాక్టర్ సూచించిన విధంగా తీసుకోండి.';
+    let s = String(text);
+    s = s.replace(/Take at start of meals with water\. Consume curd or buttermilk\.?/gi, 'భోజనం ప్రారంభంలో నీటితో తీసుకోండి. తాజా పెరుగు లేదా మజ్జిగ వాడండి.')
+         .replace(/Take after meals with warm water for pain\/fever\. Do not exceed prescribed dose\.?/gi, 'నొప్పి/జ్వరం కోసం భోజనం తర్వాత గోరువెచ్చని నీటితో తీసుకోండి. మోతాదు మించవద్దు.')
+         .replace(/Take 30 minutes before breakfast with a glass of water\.?/gi, 'అల్పాహారానికి 30 నిమిషాల ముందు గ్లాసు నీటితో తీసుకోండి.')
+         .replace(/Maintain appropriate hydration and avoid potassium salt substitutes\.?/gi, 'తగినంత మంచినీరు త్రాగండి మరియు పొటాషియం ఉప్పు ప్రత్యామ్నాయాలను నివారించండి.')
+         .replace(/Take at night\. Avoid grapefruit or grapefruit juice completely\.?/gi, 'రాత్రి తీసుకోండి. గ్రేప్‌ఫ్రూట్ లేదా దాని రసాన్ని పూర్తిగా నివారించండి.')
+         .replace(/Take as prescribed by attending physician\.?/gi, 'చికిత్స అందించిన వైద్యుడు సూచించిన విధంగా ఖచ్చితంగా తీసుకోండి.')
+         .replace(/With a full glass of water/gi, 'పూర్తి గ్లాసు నీటితో తీసుకోండి')
+         .replace(/Take with food or milk/gi, 'ఆహారం లేదా పాలతో కలిపి తీసుకోండి')
+         .replace(/Do not crush or chew/gi, 'నమలవద్దు లేదా పొడి చేయవద్దు')
+         .replace(/Take on empty stomach/gi, 'ఖాళీ కడుపుతో తీసుకోండి')
+         .replace(/After food/gi, 'భోజనం తర్వాత')
+         .replace(/Before food/gi, 'భోజనానికి ముందు')
+         .replace(/Avoid alcohol/gi, 'మద్యపానం పూర్తిగా నివారించండి')
+         .replace(/Please confirm with your healthcare professional\.?/gi, 'దయచేసి మీ వైద్యుడిని సంప్రదించి నిర్ధారించుకోండి.');
     return translateFoodToTelugu(s);
   }
 
   function translateDoseToTelugu(text) {
     if (!text) return 'ప్రామాణిక మోతాదు';
-    return text;
+    let s = String(text);
+    s = s.replace(/\b(\d+(?:\.\d+)?)\s*mg\b/gi, '$1 మి.గ్రా')
+         .replace(/\b(\d+(?:\.\d+)?)\s*mcg\b/gi, '$1 మైక్రోగ్రా')
+         .replace(/\b(\d+(?:\.\d+)?)\s*ml\b/gi, '$1 మి.లీ')
+         .replace(/\b(\d+(?:\.\d+)?)\s*g(?:m)?\b/gi, '$1 గ్రాములు')
+         .replace(/\b(\d{1,3}(?:,\d{3})+|\d+)\s*iu\b/gi, '$1 ఐ.యు')
+         .replace(/\b(\d+)\s*units?\b/gi, '$1 యూనిట్లు')
+         .replace(/\b(\d+)\s*tablets?\b/gi, '$1 మాత్ర(లు)')
+         .replace(/\b(\d+)\s*capsules?\b/gi, '$1 క్యాప్సూల్(లు)')
+         .replace(/\b(\d+)\s*drops?\b/gi, '$1 చుక్కలు')
+         .replace(/\b(\d+)\s*puffs?\b/gi, '$1 పఫ్‌లు')
+         .replace(/As prescribed/gi, 'డాక్టర్ సూచించిన మోతాదు')
+         .replace(/Standard dose/gi, 'ప్రామాణిక మోతాదు');
+    return s;
+  }
+
+  function translatePurposeToTelugu(text) {
+    if (!text) return '';
+    let s = String(text);
+    s = s.replace(/Blood thinner to prevent clots/gi, 'రక్తం గడ్డకట్టకుండా నిరోధించే బ్లడ్ థిన్నర్')
+         .replace(/Blood pressure & heart medication/gi, 'రక్తపోటు (బీపీ) మరియు గుండె రక్షణ మందు')
+         .replace(/Blood sugar control/gi, 'రక్తంలో చక్కెర (షుగర్) నియంత్రణ')
+         .replace(/Cholesterol lowering medication/gi, 'కొలెస్ట్రాల్‌ను తగ్గించే మందు')
+         .replace(/Acid reducer & stomach protection/gi, 'ఎసిడిటీని తగ్గించి కడుపును రక్షించే మందు')
+         .replace(/Antibiotic to treat or prevent bacterial infection/gi, 'బ్యాక్టీరియా ఇన్ఫెక్షన్‌ను నివారించే యాంటీబయాటిక్')
+         .replace(/Pain relief and fever reduction/gi, 'నొప్పి ఉపశమనం మరియు జ్వరాన్ని తగ్గించే మందు')
+         .replace(/Vitamin D supplement for bones/gi, 'ఎముకల బలానికి విటమిన్ డి సప్లిమెంట్')
+         .replace(/Thyroid hormone replacement/gi, 'థైరాయిడ్ హార్మోన్ సమతుల్యత కోసం')
+         .replace(/Antiplatelet agent/gi, 'రక్తం గడ్డకట్టకుండా కాపాడే ఔషధం')
+         .replace(/Beta blocker for heart/gi, 'గుండె స్పందన మరియు బీపీని నియంత్రించే బీటా బ్లాకర్')
+         .replace(/Diuretic \(water tablet\)/gi, 'శరీరంలో అధిక నీటిని మరియు వాపును తగ్గించే డైయూరిటిక్')
+         .replace(/Anti-inflammatory/gi, 'వాపు మరియు నొప్పిని తగ్గించే మందు')
+         .replace(/Electrolyte replacement/gi, 'శరీరంలో ఎలక్ట్రోలైట్ సమతుల్యత కోసం')
+         .replace(/Antidiabetic/gi, 'మధుమేహం (షుగర్) నియంత్రణ మందు');
+    return s;
+  }
+
+  const TELUGU_FIELD_TITLES = {
+    'patientName': 'రోగి పేరు',
+    'patientId': 'రోగి ఐడీ / MRN సంఖ్య',
+    'age': 'వయస్సు',
+    'gender': 'లింగం',
+    'wardBed': 'వార్డు & బెడ్ సంఖ్య',
+    'admissionDate': 'ఆసుపత్రిలో చేరిన తేదీ',
+    'dischargeDate': 'డిశ్చార్జ్ తేదీ',
+    'address': 'రోగి చిరునామా / లొకేషన్',
+    'doctor': 'సంప్రదించిన వైద్యుడు',
+    'department': 'హాస్పిటల్ విభాగం',
+    'hospital': 'ఆసుపత్రి పేరు',
+    'diagnosis': 'ప్రాథమిక వ్యాధి నిర్ధారణ',
+    'reasonForAdmission': 'చేరడానికి గల కారణం & లక్షణాలు',
+    'courseInHospital': 'ఆసుపత్రిలో చికిత్స & కోర్సు',
+    'surgeryDetails': 'శస్త్రచికిత్స లేదా సర్జికల్ విధానం',
+    'treatmentSummary': 'అందించిన చికిత్స వివరాలు',
+    'dischargeCondition': 'డిశ్చార్జ్ నాటికి రోగి పరిస్థితి & వైటల్స్',
+    'dietInstructions': 'ఆహార మార్గదర్శకాలు & పోషకాహారం',
+    'activityLifestyle': 'శారీరక శ్రమ & జీవనశైలి మార్గదర్శకాలు',
+    'woundCare': 'గాయం సంరక్షణ & డ్రెస్సింగ్ సూచనలు',
+    'medicines': 'సూచించిన మందుల జాబితా & మోతాదులు',
+    'followUp': 'తదుపరి అపాయింట్‌మెంట్ & ఫాలో-అప్',
+    'warningSigns': 'అత్యవసర హెచ్చరిక సంకేతాలు'
+  };
+
+  function translateFieldTitleToTelugu(titleOrKey) {
+    if (!titleOrKey) return '';
+    if (TELUGU_FIELD_TITLES[titleOrKey]) return TELUGU_FIELD_TITLES[titleOrKey];
+    for (const [k, v] of Object.entries(TELUGU_FIELD_TITLES)) {
+      if (titleOrKey.toLowerCase().replace(/[^a-z]/g, '') === k.toLowerCase()) return v;
+    }
+    return titleOrKey;
+  }
+
+  function translateGenderToTelugu(g) {
+    if (!g) return 'పేర్కొనబడలేదు';
+    const low = String(g).trim().toLowerCase();
+    if (low === 'male' || low === 'm') return 'పురుషుడు';
+    if (low === 'female' || low === 'f') return 'స్త్రీ';
+    return g;
+  }
+
+  function translateClinicalTextToTelugu(text) {
+    if (!text) return '';
+    let s = String(text);
+    // Common clinical patterns
+    s = s.replace(/Coronary Artery Bypass Graft(?:ing)?\s*\(CABG\s*x?\s*(\d+)?\)/gi, 'కరోనరీ ఆర్టరీ బైపాస్ గ్రాఫ్టింగ్ (CABG) శస్త్రచికిత్స')
+         .replace(/Coronary Artery Bypass Graft(?:ing)?/gi, 'కరోనరీ ఆర్టరీ బైపాస్ గ్రాఫ్టింగ్ శస్త్రచికిత్స (CABG)')
+         .replace(/Coronary Artery Disease\s*\(CAD\)/gi, 'గుండె రక్తనాళాల వ్యాధి (CAD)')
+         .replace(/Severe Triple Vessel Disease\s*\(TVD\)/gi, 'తీవ్రమైన మూడు రక్తనాళాల వ్యాధి (TVD)')
+         .replace(/Acute Coronary Syndrome\s*\(ACS\)/gi, 'తీవ్రమైన గుండె నొప్పి / కరోనరీ సిండ్రోమ్ (ACS)')
+         .replace(/Acute Myocardial Infarction/gi, 'తీవ్రమైన గుండెపోటు (హార్ట్ ఎటాక్)')
+         .replace(/Type 2 Diabetes Mellitus|Type II Diabetes Mellitus/gi, 'టైప్ 2 మధుమేహం (షుగర్ వ్యాధి)')
+         .replace(/Essential Hypertension/gi, 'అధిక రక్తపోటు (హైపర్ టెన్షన్ / బీపీ)')
+         .replace(/Hypertension/gi, 'అధిక రక్తపోటు (బీపీ)')
+         .replace(/Dyslipidemia/gi, 'రక్తంలో అధిక కొవ్వు (డిస్లిపిడెమియా)')
+         .replace(/Appendicitis/gi, 'అపెండిసైటిస్ వాపు')
+         .replace(/Cholecystitis/gi, 'పిత్తాశయ వాపు')
+         .replace(/Laparoscopic Appendectomy/gi, 'లాపరోస్కోపిక్ అపెండిసైటిస్ శస్త్రచికిత్స')
+         .replace(/Laparoscopic Cholecystectomy/gi, 'లాపరోస్కోపిక్ పిత్తాశయ తొలగింపు శస్త్రచికిత్స')
+         .replace(/Caesarean Section|C-Section/gi, 'సిజేరియన్ కాన్పు శస్త్రచికిత్స')
+         .replace(/Pneumonia/gi, 'న్యుమోనియా ఊపిరితిత్తుల ఇన్ఫెక్షన్')
+         .replace(/Normal Vaginal Delivery/gi, 'సాధారణ కాన్పు')
+         .replace(/Post-operative day\s*(\d+)/gi, 'శస్త్రచికిత్స తర్వాతి $1వ రోజు')
+         .replace(/Hemodynamically stable/gi, 'రక్తప్రసరణ మరియు వైటల్స్ పూర్తిగా స్థిరంగా ఉన్నాయి')
+         .replace(/Stable condition at discharge|Discharged in stable condition/gi, 'డిశ్చార్జ్ నాటికి రోగి ఆరోగ్యం మరియు వైటల్స్ స్థిరంగా ఉన్నాయి')
+         .replace(/Afebrile, chest clear, bilateral air entry normal/gi, 'జ్వరం లేదు, ఊపిరితిత్తులు మరియు శ్వాస పూర్తిగా సాధారణం')
+         .replace(/Surgical sternal wound clean, dry and healthy with no discharge/gi, 'శస్త్రచికిత్స గాయం శుభ్రంగా, పొడిగా మరియు చీము లేకుండా ఆరోగ్యంగా ఉంది')
+         .replace(/Surgical wound clean and dry/gi, 'శస్త్రచికిత్స గాయం శుభ్రంగా మరియు పొడిగా ఉంది')
+         .replace(/Low-salt and low-oil diet|Low salt, low fat.*diet/gi, 'తక్కువ ఉప్పు, తక్కువ నూనెతో కూడిన గుండె ఆరోగ్య ఆహారం')
+         .replace(/Light activity as tolerated; avoid strenuous lifting/gi, 'తేలికపాటి నడక; 5 కిలోల కంటే ఎక్కువ బరువున్న వస్తువులను ఎత్తవద్దు')
+         .replace(/Maintain sterile hygiene, keep dressing clean and dry, wash hands before touching dressing, avoid rubbing/gi, 'పరిశుభ్రత పాటించండి, డ్రెస్సింగ్‌ను పొడిగా ఉంచండి, డ్రెస్సింగ్ తాకే ముందు చేతులు కడుక్కోండి, రుద్దవద్దు')
+         .replace(/Schedule follow-up appointment with primary care provider/gi, 'ప్రాథమిక వైద్యుడితో తదుపరి సంప్రదింపు అపాయింట్‌మెంట్ షెడ్యూల్ చేసుకోండి')
+         .replace(/Seek immediate medical attention for sudden chest pain, shortness of breath, high fever, or fainting/gi, 'ఆకస్మిక ఛాతీ నొప్పి, శ్వాస తీసుకోవడంలో తీవ్ర ఇబ్బంది, అధిక జ్వరం లేదా స్పృహ తప్పడం జరిగితే వెంటనే అత్యవసర వైద్య సహాయం పొందండి')
+         .replace(/Review in (?:Cardiology|Surgical|General)?\s*OPD after (\d+) days/gi, '$1 రోజుల తర్వాత ఓపీడీలో డాక్టర్‌ను సంప్రదించండి')
+         .replace(/Remove sutures after (\d+)(?:-(\d+))? days/gi, '$1 రోజుల తర్వాత కుట్లు తొలగించండి')
+         .replace(/Attending Physician/gi, 'సంప్రదించే ముఖ్య వైద్యుడు');
+    return s;
   }
 
   const TELUGU_CHECKLIST_MAP = [
@@ -1473,17 +1815,39 @@
 
     let html = '';
     medicines.forEach(m => {
-      const name = isTe ? translateMedNameToTelugu(m.name) : m.name;
-      const dose = m.dose ? (isTe ? translateDoseToTelugu(m.dose) : m.dose) : (isTe ? 'దయచేసి డాక్టర్‌ను సంప్రదించండి.' : 'Please confirm with your healthcare professional.');
-      const timing = m.timing ? (isTe ? translateTimingToTelugu(m.timing) : m.timing) : (isTe ? 'దయచేసి డాక్టర్‌ను సంప్రదించండి.' : 'Please confirm with your healthcare professional.');
-      const duration = m.duration ? (isTe ? translateDurationToTelugu(m.duration) : m.duration) : (isTe ? 'దయచేసి డాక్టర్‌ను సంప్రదించండి.' : 'Please confirm with your healthcare professional.');
-      const instructions = m.instructions ? (isTe ? translateInstructionsToTelugu(m.instructions) : m.instructions) : (isTe ? 'దయచేసి డాక్టర్‌ను సంప్రదించండి.' : 'Please confirm with your healthcare professional.');
+      const rawName = m.name || '';
+      const isStopped = /^(?:Stop|Discontinue)\s+/i.test(rawName) || m.status === 'stopped' || m.discontinued;
+      const cleanName = rawName.replace(/^(?:Stop|Discontinue)\s+/i, '').trim();
+
+      const name = isTe ? translateMedNameToTelugu(cleanName) : cleanName;
+      const dose = m.dose ? (isTe ? translateDoseToTelugu(m.dose) : m.dose) : (isTe ? 'డాక్టర్ సూచించిన మోతాదు' : 'As prescribed');
+      const timing = m.timing ? (isTe ? translateTimingToTelugu(m.timing) : m.timing) : (isTe ? 'సమయానికి తీసుకోండి' : 'Take on time');
+      const duration = m.duration ? (isTe ? translateDurationToTelugu(m.duration) : m.duration) : (isTe ? 'డాక్టర్ సంప్రదింపు వరకు' : 'Ongoing recovery');
+      const instructions = m.instructions ? (isTe ? translateInstructionsToTelugu(m.instructions) : m.instructions) : (isTe ? 'వైద్యుల సలహా ప్రకారం వాడండి.' : 'Take as directed by doctor.');
+      
+      let purposeText = m.purpose || m.reason || '';
+      if (!purposeText && typeof getDrugPlainPurpose === 'function') {
+        purposeText = getDrugPlainPurpose(cleanName);
+      }
+      if (purposeText && isTe) {
+        purposeText = translatePurposeToTelugu(purposeText);
+      }
+
+      const stoppedBadge = isStopped
+        ? (isTe ? '<span class="badge" style="background:#fee2e2; color:#b91c1c; font-size:0.75rem; font-weight:700; margin-left:6px;">🛑 నిలిపివేయబడింది</span>'
+                : '<span class="badge" style="background:#fee2e2; color:#b91c1c; font-size:0.75rem; font-weight:700; margin-left:6px;">🛑 Discontinued</span>')
+        : '';
+
+      const doseTag = isStopped
+        ? (isTe ? 'నిలిపివేయబడింది' : 'Discontinued')
+        : (isTe ? 'సూచించిన మోతాదు' : 'Prescribed Dose');
 
       html += `
-        <tr>
+        <tr style="${isStopped ? 'background-color: #fef2f2; opacity: 0.88;' : ''}">
           <td class="med-name-cell">
-            <strong>${escapeHtml(name)}</strong>
-            <span class="tag">${isTe ? 'సూచించిన మోతాదు' : 'Prescribed Dose'}</span>
+            <strong>${escapeHtml(name)}</strong> ${stoppedBadge}
+            <span class="tag" style="${isStopped ? 'background:#fca5a5; color:#7f1d1d;' : ''}">${doseTag}</span>
+            ${purposeText ? `<div style="font-size:0.8rem; color:#0d9488; margin-top:3px; font-weight:500;">🛡️ ${escapeHtml(purposeText)}</div>` : ''}
           </td>
           <td><strong>${escapeHtml(dose)}</strong></td>
           <td>${escapeHtml(timing)}</td>
@@ -3515,26 +3879,30 @@
 
     // Render Fields List (Side-by-side right pane)
     const fieldsList = $('extracted-fields-list');
+    const isTeMode = (state.currentLang === 'te');
     if (fieldsList) {
       if (fields && fields.length > 0) {
         fieldsList.innerHTML = fields.map(f => {
-          let badgeText = '✓ Verified';
+          let badgeText = isTeMode ? '✓ ధృవీకరించబడింది' : '✓ Verified';
           let badgeClass = 'verified';
           if (f.status === 'needs_verification') {
-            badgeText = `⚠️ Needs verification (${f.confidence || 0}%)`;
+            badgeText = isTeMode ? `⚠️ ధృవీకరణ అవసరం (${f.confidence || 0}%)` : `⚠️ Needs verification (${f.confidence || 0}%)`;
             badgeClass = 'needs_verification';
           } else if (f.status === 'missing') {
-            badgeText = 'Not found';
+            badgeText = isTeMode ? 'లభించలేదు' : 'Not found';
             badgeClass = 'missing';
           } else if (f.confidence) {
-            badgeText = `✓ Verified (${f.confidence}%)`;
+            badgeText = isTeMode ? `✓ ధృవీకరించబడింది (${f.confidence}%)` : `✓ Verified (${f.confidence}%)`;
           }
+
+          const fieldDisplayTitle = isTeMode ? translateFieldTitleToTelugu(f.title || f.key) : (f.title || f.key);
+          const fieldPlaceholder = f.status === 'missing' ? (isTeMode ? 'పత్రంలో లభించలేదు' : 'Not found in document') : '';
 
           const isMultiLine = f.key === 'medicines' || f.key === 'woundCare' || f.key === 'surgeryDetails' || (f.value && f.value.length > 80);
           return `
             <div class="ocr-field-card ${badgeClass}">
               <div class="ocr-field-header">
-                <span class="ocr-field-title">${escapeHtml(f.title || f.key)}</span>
+                <span class="ocr-field-title">${escapeHtml(fieldDisplayTitle)}</span>
                 <span class="ocr-field-badge ${badgeClass}">${badgeText}</span>
               </div>
               ${isMultiLine ? `
@@ -3543,7 +3911,7 @@
                   data-key="${escapeHtml(f.key)}" 
                   rows="3"
                   style="width: 100%; border: 1px solid var(--slate-300); border-radius: 6px; padding: 0.5rem; font-family: inherit; font-size: 0.875rem; resize: vertical;"
-                  placeholder="${f.status === 'missing' ? 'Not found in document' : ''}"
+                  placeholder="${fieldPlaceholder}"
                 >${escapeHtml(f.value === 'Not found' ? '' : f.value)}</textarea>
               ` : `
                 <input 
@@ -3551,7 +3919,7 @@
                   class="ocr-field-input" 
                   data-key="${escapeHtml(f.key)}" 
                   value="${escapeHtml(f.value === 'Not found' ? '' : f.value)}" 
-                  placeholder="${f.status === 'missing' ? 'Not found in document' : ''}"
+                  placeholder="${fieldPlaceholder}"
                 >
               `}
             </div>
@@ -3561,23 +3929,23 @@
         // Fallback for sample summary
         fieldsList.innerHTML = `
           <div class="ocr-field-card verified">
-            <div class="ocr-field-header"><span class="ocr-field-title">Patient Name</span><span class="ocr-field-badge verified">✓ Verified</span></div>
+            <div class="ocr-field-header"><span class="ocr-field-title">${isTeMode ? 'రోగి పేరు' : 'Patient Name'}</span><span class="ocr-field-badge verified">${isTeMode ? '✓ ధృవీకరించబడింది' : '✓ Verified'}</span></div>
             <input type="text" class="ocr-field-input" data-key="patientName" value="${escapeHtml(data.patientName || '')}">
           </div>
           <div class="ocr-field-card verified">
-            <div class="ocr-field-header"><span class="ocr-field-title">Patient ID</span><span class="ocr-field-badge verified">✓ Verified</span></div>
+            <div class="ocr-field-header"><span class="ocr-field-title">${isTeMode ? 'రోగి ఐడీ' : 'Patient ID'}</span><span class="ocr-field-badge verified">${isTeMode ? '✓ ధృవీకరించబడింది' : '✓ Verified'}</span></div>
             <input type="text" class="ocr-field-input" data-key="patientId" value="${escapeHtml(data.patientId || '')}">
           </div>
           <div class="ocr-field-card verified">
-            <div class="ocr-field-header"><span class="ocr-field-title">Diagnosis</span><span class="ocr-field-badge verified">✓ Verified</span></div>
+            <div class="ocr-field-header"><span class="ocr-field-title">${isTeMode ? 'ప్రాథమిక వ్యాధి నిర్ధారణ' : 'Diagnosis'}</span><span class="ocr-field-badge verified">${isTeMode ? '✓ ధృవీకరించబడింది' : '✓ Verified'}</span></div>
             <input type="text" class="ocr-field-input" data-key="diagnosis" value="${escapeHtml(data.diagnosis || '')}">
           </div>
           <div class="ocr-field-card verified">
-            <div class="ocr-field-header"><span class="ocr-field-title">Admission Date</span><span class="ocr-field-badge verified">✓ Verified</span></div>
+            <div class="ocr-field-header"><span class="ocr-field-title">${isTeMode ? 'చేరిన తేదీ' : 'Admission Date'}</span><span class="ocr-field-badge verified">${isTeMode ? '✓ ధృవీకరించబడింది' : '✓ Verified'}</span></div>
             <input type="text" class="ocr-field-input" data-key="admissionDate" value="${escapeHtml(data.admissionDate || '')}">
           </div>
           <div class="ocr-field-card verified">
-            <div class="ocr-field-header"><span class="ocr-field-title">Discharge Date</span><span class="ocr-field-badge verified">✓ Verified</span></div>
+            <div class="ocr-field-header"><span class="ocr-field-title">${isTeMode ? 'డిశ్చార్జ్ తేదీ' : 'Discharge Date'}</span><span class="ocr-field-badge verified">${isTeMode ? '✓ ధృవీకరించబడింది' : '✓ Verified'}</span></div>
             <input type="text" class="ocr-field-input" data-key="dischargeDate" value="${escapeHtml(data.dischargeDate || '')}">
           </div>
         `;
@@ -3776,23 +4144,84 @@
 
   function updateActiveDischargeRecord(p) {
     if (!p) return;
-    setText('rec-patient-name', p.patientName || 'N/A');
-    setText('rec-patient-id', p.patientId || 'N/A');
-    setText('rec-patient-age', p.age ? (String(p.age).includes('Yr') ? p.age : `${p.age} Yrs`) : 'N/A');
-    setText('rec-patient-gender', p.gender || 'Not specified');
-    setText('rec-patient-ward', p.wardBed || 'N/A');
+    const isTe = (state.currentLang === 'te');
+
+    // Update Card title and badge
+    const recCardH2 = $('active-record-card')?.querySelector('.card-header h2');
+    if (recCardH2) {
+      recCardH2.textContent = isTe ? 'ప్రస్తుత క్రియాశీల డిశ్చార్జ్ రికార్డు' : 'Current Active Discharge Record';
+    }
+    const recBadge = $('rec-status-badge');
+    if (recBadge) {
+      recBadge.textContent = isTe ? '✓ ధృవీకరించబడిన క్రియాశీల రికార్డు' : 'Active Verified Record';
+      recBadge.className = 'badge badge-success';
+    }
+
+    // Update block titles if Telugu
+    const blocks = $$('#active-record-card .extracted-field-block');
+    const blockTitles = [
+      { en: '👤 Patient Profile & Ward', te: '👤 రోగి వివరాలు & వార్డు' },
+      { en: '🗓️ Stay Timeline & Hospital Location', te: '🗓️ ఆసుపత్రిలో చేరిన సమయం & చిరునామా' },
+      { en: '🩺 Primary Diagnosis', te: '🩺 ప్రాథమిక వ్యాధి నిర్ధారణ' },
+      { en: '🏥 Hospital & Attending Doctors', te: '🏥 హాస్పిటల్ & సంప్రదించే వైద్యులు' },
+      { en: '📋 Reason for Admission & Complaints', te: '📋 చేరడానికి గల కారణం & లక్షణాలు' },
+      { en: '🔬 Surgical Procedure & Course', te: '🔬 శస్త్రచికిత్స వివరాలు & ఆసుపత్రి కోర్సు' },
+      { en: '💖 Discharge Condition & Clinical Vitals', te: '💖 డిశ్చార్జ్ నాటికి రోగి పరిస్థితి & వైటల్స్' },
+      { en: '🥗 Dietary Guidance & Nutrition', te: '🥗 ఆహార మార్గదర్శకాలు & పోషకాహారం' },
+      { en: '🏃 Activity & Recovery Lifestyle', te: '🏃 శారీరక శ్రమ & రికవరీ జీవనశైలి' },
+      { en: '📅 Follow-Up Appointments', te: '📅 తదుపరి డాక్టర్ సంప్రదింపుల షెడ్యూల్' },
+      { en: '🚨 Signs of Concern & Emergency Criteria', te: '🚨 హెచ్చరిక సంకేతాలు & అత్యవసర లక్షణాలు' },
+      { en: '🩹 Wound Care & Dressing Instructions', te: '🩹 గాయం సంరక్షణ & డ్రెస్సింగ్ సూచనలు' }
+    ];
+    blocks.forEach((blk, idx) => {
+      if (blockTitles[idx]) {
+        const h4 = blk.querySelector('h4');
+        if (h4) h4.textContent = isTe ? blockTitles[idx].te : blockTitles[idx].en;
+      }
+    });
+
+    // Sub-labels in block 1 & 2
+    const metaSpans = $$('#active-record-card .field-meta-row > span');
+    if (metaSpans.length >= 4) {
+      metaSpans[0].innerHTML = isTe ? `వయస్సు: <strong id="rec-patient-age">--</strong>` : `Age: <strong id="rec-patient-age">--</strong>`;
+      metaSpans[1].innerHTML = isTe ? `లింగం: <strong id="rec-patient-gender">--</strong>` : `Sex: <strong id="rec-patient-gender">--</strong>`;
+      metaSpans[2].innerHTML = isTe ? `వార్డు & బెడ్: <strong id="rec-patient-ward">--</strong>` : `Ward & Bed: <strong id="rec-patient-ward">--</strong>`;
+      metaSpans[3].innerHTML = isTe ? `చిరునామా: <span id="rec-hospital-address">--</span>` : `Address: <span id="rec-hospital-address">--</span>`;
+    }
+
+    setText('rec-patient-name', p.patientName || (isTe ? 'పేరు లభించలేదు' : 'N/A'));
+    setText('rec-patient-id', p.patientId || (isTe ? 'ఐడీ లభించలేదు' : 'N/A'));
+    setText('rec-patient-age', p.age ? (isTe ? `${p.age} సంవత్సరాలు` : (String(p.age).includes('Yr') ? p.age : `${p.age} Yrs`)) : (isTe ? 'లభించలేదు' : 'N/A'));
+    setText('rec-patient-gender', isTe ? translateGenderToTelugu(p.gender) : (p.gender || 'Not specified'));
+    setText('rec-patient-ward', p.wardBed || (isTe ? 'లభించలేదు' : 'N/A'));
     setText('rec-adm-date', formatDate(p.admissionDate));
     setText('rec-dis-date', formatDate(p.dischargeDate));
-    setText('rec-hospital-address', p.address || 'N/A');
-    setText('rec-diagnosis', p.diagnosis || 'Clinical evaluation and recovery.');
-    setText('rec-doctor', p.doctor ? (p.hospital ? `${p.doctor} • ${p.hospital}` : p.doctor) : (p.followUp?.doctor ? `${p.followUp.doctor} • ${p.followUp.hospital}` : 'Attending Physician'));
-    setText('rec-complaints', p.reasonForAdmission || p.clinicalSummary || p.courseInHospital || 'Documented symptoms and hospital course.');
-    setText('rec-surgery', p.surgeryDetails || p.treatmentSummary || 'No surgical intervention documented.');
-    setText('rec-vitals', p.dischargeCondition || 'Stable condition at discharge.');
-    setText('rec-diet', p.dietInstructions || 'Standard balanced nutrition.');
-    setText('rec-activity', p.activityLifestyle || 'Light activity as tolerated; avoid strenuous lifting.');
-    setText('rec-wound-care', p.woundCare || 'Maintain sterile hygiene, keep dressing clean and dry, wash hands before touching dressing, avoid rubbing.');
-    
+    setText('rec-hospital-address', p.address || (isTe ? 'హాస్పిటల్ చిరునామా' : 'N/A'));
+
+    const diagText = p.diagnosis || (isTe ? 'క్లినికల్ మూల్యాంకనం మరియు రికవరీ.' : 'Clinical evaluation and recovery.');
+    setText('rec-diagnosis', isTe ? translateClinicalTextToTelugu(diagText) : diagText);
+
+    const docText = p.doctor ? (p.hospital ? `${p.doctor} • ${p.hospital}` : p.doctor) : (p.followUp?.doctor ? `${p.followUp.doctor} • ${p.followUp.hospital}` : (isTe ? 'సంప్రదించిన ముఖ్య వైద్యుడు' : 'Attending Physician'));
+    setText('rec-doctor', docText);
+
+    const compText = p.reasonForAdmission || p.clinicalSummary || p.courseInHospital || (isTe ? 'రోగి లక్షణాలు మరియు ఆసుపత్రి చికిత్స వివరాలు.' : 'Documented symptoms and hospital course.');
+    setText('rec-complaints', isTe ? translateClinicalTextToTelugu(compText) : compText);
+
+    const surgText = p.surgeryDetails || p.treatmentSummary || (isTe ? 'శస్త్రచికిత్స అవసరం లేదు / సాధారణ చికిత్స అందించబడింది.' : 'No surgical intervention documented.');
+    setText('rec-surgery', isTe ? translateClinicalTextToTelugu(surgText) : surgText);
+
+    const vitText = p.dischargeCondition || (isTe ? 'డిశ్చార్జ్ సమయానికి రోగి పరిస్థితి స్థిరంగా ఉంది.' : 'Stable condition at discharge.');
+    setText('rec-vitals', isTe ? translateClinicalTextToTelugu(vitText) : vitText);
+
+    const dietText = p.dietInstructions || (isTe ? 'పౌష్టికాహార మార్గదర్శకాలు పాటించండి.' : 'Standard balanced nutrition.');
+    setText('rec-diet', isTe ? translateClinicalTextToTelugu(dietText) : dietText);
+
+    const actText = p.activityLifestyle || (isTe ? 'తేలికపాటి నడక; అధిక బరువులు ఎత్తవద్దు.' : 'Light activity as tolerated; avoid strenuous lifting.');
+    setText('rec-activity', isTe ? translateClinicalTextToTelugu(actText) : actText);
+
+    const woundText = p.woundCare || (isTe ? 'పరిశుభ్రత పాటించండి, డ్రెస్సింగ్‌ను పొడిగా ఉంచండి, డ్రెస్సింగ్ తాకే ముందు చేతులు కడుక్కోండి, రుద్దవద్దు.' : 'Maintain sterile hygiene, keep dressing clean and dry, wash hands before touching dressing, avoid rubbing.');
+    setText('rec-wound-care', isTe ? translateClinicalTextToTelugu(woundText) : woundText);
+
     let followUpText = '';
     if (typeof p.followUp === 'string') {
       followUpText = p.followUp;
@@ -3803,8 +4232,8 @@
         p.followUp.notes || ''
       ].filter(Boolean).join(' • ');
     }
-    followUpText = cleanClientOcrNoise(followUpText);
-    setText('rec-followup', followUpText || 'Schedule follow-up appointment with primary care provider.');
+    followUpText = cleanClientOcrNoise(followUpText) || (isTe ? 'ప్రాథమిక వైద్యుడితో తదుపరి అపాయింట్‌మెంట్ షెడ్యూల్ చేసుకోండి.' : 'Schedule follow-up appointment with primary care provider.');
+    setText('rec-followup', isTe ? translateClinicalTextToTelugu(followUpText) : followUpText);
 
     let warningsText = '';
     if (Array.isArray(p.warningSigns)) {
@@ -3812,13 +4241,8 @@
     } else if (p.warningSigns) {
       warningsText = String(p.warningSigns);
     }
-    setText('rec-warnings', warningsText || 'Seek immediate medical attention for sudden chest pain, shortness of breath, high fever, or fainting.');
-
-    const recBadge = $('rec-status-badge');
-    if (recBadge) {
-      recBadge.textContent = 'Active Verified Record';
-      recBadge.className = 'badge badge-success';
-    }
+    warningsText = warningsText || (isTe ? 'ఆకస్మిక ఛాతీ నొప్పి, శ్వాస తీసుకోవడంలో తీవ్ర ఇబ్బంది, అధిక జ్వరం లేదా స్పృహ తప్పడం జరిగితే వెంటనే అత్యవసర వైద్య సహాయం పొందండి.' : 'Seek immediate medical attention for sudden chest pain, shortness of breath, high fever, or fainting.');
+    setText('rec-warnings', isTe ? translateClinicalTextToTelugu(warningsText) : warningsText);
   }
 
   function confirmExtractedCarePlan() {
@@ -4727,17 +5151,52 @@
     const dashBadge = $('dash-status-badge');
     if (dashBadge) dashBadge.textContent = isTe ? 'యాక్టివ్ కేర్ ప్లాన్' : 'Active Care Plan';
     const recBadge = $('rec-status-badge');
-    if (recBadge) recBadge.textContent = isTe ? 'కేర్‌బ్రిడ్జ్‌లో యాక్టివ్' : 'Active in CareBridge';
+    if (recBadge) recBadge.textContent = isTe ? '✓ ధృవీకరించబడిన రికార్డు' : 'Active Verified Record';
+
+    // OCR Review Section headers and buttons
+    const revH2 = $('review-title');
+    if (revH2) revH2.textContent = isTe ? 'పత్రం OCR & వివరాల సమీక్ష' : 'Document OCR & Certificate Verification';
+    const revP = $('review-title')?.nextElementSibling;
+    if (revP) revP.textContent = isTe ? 'మూల పత్రంతో పాటు తీసిన వివరాలను సరిచూడండి. నిర్ధారించే ముందు ఏదైనా ఫీల్డ్‌ను సవరించవచ్చు.' : 'Compare the original document against extracted values side-by-side. You can edit any field before confirming.';
+    const btnConfExt = $('btn-confirm-extracted');
+    if (btnConfExt) btnConfExt.textContent = isTe ? '✓ మార్పులను ధృవీకరించండి & కేర్‌ప్లాన్‌కు వర్తింపజేయండి' : '✓ Confirm Verified Details & Apply to Care Plan';
+    const btnDiscExt = $('btn-discard-extracted');
+    if (btnDiscExt) btnDiscExt.textContent = isTe ? '✕ రద్దు చేయండి' : '✕ Discard';
+    const btnConfTop = document.querySelector('.btn-confirm-extracted-top');
+    if (btnConfTop) btnConfTop.textContent = isTe ? '✓ వివరాలు నిర్ధారించండి' : '✓ Confirm Details';
+    const btnDiscTop = document.querySelector('.btn-discard-extracted-top');
+    if (btnDiscTop) btnDiscTop.textContent = isTe ? '✕ రద్దు' : '✕ Discard';
+    const ocrDocSpan = document.querySelector('.ocr-document-toolbar > span');
+    if (ocrDocSpan) ocrDocSpan.textContent = isTe ? '📄 మూల పత్రం ప్రివ్యూ' : '📄 Original Document Preview';
+
+    // Medicine Schedule Alerts & Disclaimers
+    const medAlert = document.querySelector('#page-medicines .alert-warning div');
+    if (medAlert) {
+      medAlert.innerHTML = isTe
+        ? '<strong>వైద్యుల నిర్ధారణ అవసరం:</strong> ఏదైనా మోతాదు, సమయం లేదా వ్యవధి స్పష్టంగా లేకపోతే, మందులు వేసుకునే ముందు మీ డాక్టర్‌ను సంప్రదించండి.'
+        : '<strong>Original Discharge Source of Truth:</strong> If any dose, timing or duration is missing or unclear, please confirm with your healthcare professional before taking the medication.';
+    }
+    const medDemoBadge = document.querySelector('#page-medicines .badge-demo');
+    if (medDemoBadge) {
+      medDemoBadge.textContent = isTe ? 'డెమో ప్రివ్యూ — అసలైన ప్రిస్క్రిప్షన్ కాదు' : 'DEMO ONLY — NOT A REAL PRESCRIPTION';
+    }
 
     // 3. TRIGGER IMMEDIATE RE-RENDER OF ALL DATA-DRIVEN COMPONENTS
     const activePatient = state.patientData || SAMPLE_PATIENT;
     if (activePatient) {
+      updateActiveDischargeRecord(activePatient);
       if (activePatient.medicines) renderMedicineTable(activePatient.medicines);
       if (activePatient.dietPlan) renderDietPlan(activePatient.dietPlan);
       renderFollowupAndChecklist(activePatient);
       renderWarningSigns(activePatient);
     }
     renderMedicineAlerts();
+
+    // Re-render OCR fields list if review section is active
+    const reviewSec = $('extracted-review-section');
+    if (reviewSec && !reviewSec.classList.contains('hidden') && typeof renderPagePreview === 'function') {
+      try { renderPagePreview(0); } catch (e) {}
+    }
   }
 
   // ============================================================
