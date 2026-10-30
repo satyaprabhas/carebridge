@@ -540,6 +540,31 @@
     }
   }
 
+  function createCleanPatientRecord(patientName, patientId, age, gender) {
+    return {
+      patientName: patientName || 'Patient',
+      patientId: patientId || 'CB-PENDING',
+      age: age ? parseInt(age, 10) : null,
+      gender: gender || 'Not Specified',
+      admissionDate: '',
+      dischargeDate: '',
+      hospital: '',
+      doctor: '',
+      diagnosis: '',
+      reasonForAdmission: '',
+      surgeryDetails: '',
+      dischargeCondition: '',
+      dietInstructions: '',
+      allergies: [],
+      medicines: [],
+      dietPlan: null,
+      followUp: null,
+      homeCare: [],
+      warningSigns: [],
+      isCleanNewPatient: true
+    };
+  }
+
   function handleLogin(username, password) {
     username = (username || '').trim();
     password = password || '';
@@ -568,11 +593,12 @@
       if (saved) {
         state.patientData = saved;
       } else {
-        const userPatient = JSON.parse(JSON.stringify(SAMPLE_PATIENT));
-        userPatient.patientName = matchedLocal.fullName;
-        userPatient.patientId = matchedLocal.patientId;
-        if (matchedLocal.age) userPatient.age = matchedLocal.age;
-        if (matchedLocal.gender) userPatient.gender = matchedLocal.gender;
+        const userPatient = createCleanPatientRecord(
+          matchedLocal.fullName,
+          matchedLocal.patientId,
+          matchedLocal.age,
+          matchedLocal.gender
+        );
         state.patientData = userPatient;
         saveCurrentPatientData();
       }
@@ -596,13 +622,12 @@
         if (saved) {
           state.patientData = saved;
         } else {
-          const userPatient = JSON.parse(JSON.stringify(SAMPLE_PATIENT));
-          if (result.user) {
-            userPatient.patientName = result.user.name || userPatient.patientName;
-            userPatient.patientId = result.user.patientId || userPatient.patientId;
-            if (result.user.age) userPatient.age = result.user.age;
-            if (result.user.gender) userPatient.gender = result.user.gender;
-          }
+          const userPatient = createCleanPatientRecord(
+            result.user?.name || username,
+            result.user?.patientId,
+            result.user?.age,
+            result.user?.gender
+          );
           state.patientData = userPatient;
           saveCurrentPatientData();
         }
@@ -657,14 +682,17 @@
       body: JSON.stringify(newUser)
     }).catch(() => {});
 
-    // Log the new user in immediately and personalise dashboard
+    // Log the new user in immediately with their own fresh record
     state.isLoggedIn = true;
-    const userPatient = JSON.parse(JSON.stringify(SAMPLE_PATIENT));
-    userPatient.patientName = newUser.fullName;
-    userPatient.patientId = newUser.patientId;
-    userPatient.age = newUser.age;
-    userPatient.gender = newUser.gender;
+    state.currentUser = newUser.username.toLowerCase();
+    const userPatient = createCleanPatientRecord(
+      newUser.fullName,
+      newUser.patientId,
+      newUser.age,
+      newUser.gender
+    );
     state.patientData = userPatient;
+    saveCurrentPatientData();
 
     showApp();
   }
@@ -913,12 +941,29 @@
     renderMedicineTable(p.medicines || []);
 
     // Diet Plan
-    if (!p.dietPlan || !p.dietPlan.conditionName || !Array.isArray(p.dietPlan.medicationRemedies) || p.dietPlan.medicationRemedies.length === 0) {
-      p.dietPlan = generatePersonalizedDiet(p.diagnosis, p.medicines, p.dietInstructions);
+    if (!p.diagnosis && (!p.medicines || p.medicines.length === 0)) {
+      renderDietPlan({
+        conditionName: "Awaiting Discharge Summary Upload",
+        description: "Upload your hospital discharge summary above. CareBridge will automatically analyze your diagnosis across 270+ conditions and tailor specific foods to eat, limit, and avoid.",
+        medicationRemedies: [],
+        eat: [
+          { food: "Awaiting Clinical Analysis", reason: "Specific foods to eat will be recommended based on your verified diagnosis." }
+        ],
+        limit: [
+          { food: "Awaiting Clinical Analysis", reason: "Food restrictions will be calibrated to your active medical condition." }
+        ],
+        avoid: [
+          { food: "Awaiting Clinical Analysis", reason: "Dangerous drug-food interactions will be checked once medications are scanned." }
+        ]
+      });
     } else {
-      p.dietPlan.medicationRemedies = evaluateMedicationRemedies(p.medicines || []);
+      if (!p.dietPlan || !p.dietPlan.conditionName || !Array.isArray(p.dietPlan.medicationRemedies) || p.dietPlan.medicationRemedies.length === 0) {
+        p.dietPlan = generatePersonalizedDiet(p.diagnosis, p.medicines, p.dietInstructions);
+      } else {
+        p.dietPlan.medicationRemedies = evaluateMedicationRemedies(p.medicines || []);
+      }
+      renderDietPlan(p.dietPlan);
     }
-    renderDietPlan(p.dietPlan);
 
     // Follow-up & Checklist
     renderFollowupAndChecklist(p);
