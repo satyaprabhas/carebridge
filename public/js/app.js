@@ -2168,19 +2168,114 @@
     }
   }
 
-  function renderFollowupAndChecklist(p) {
-    const isTe = (state.currentLang === 'te');
-    if (p.followUp) {
-      setText('fol-date', `${formatDate(p.followUp.date)} at ${p.followUp.time || '10:30 AM'}`);
-      setText('fol-doctor', p.followUp.doctor);
-      setText('fol-dept', isTe ? translateDeptToTelugu(p.followUp.department) : p.followUp.department);
-      setText('fol-hosp', isTe ? translateHospToTelugu(p.followUp.hospital) : p.followUp.hospital);
-      setText('fol-notes', isTe ? translateNotesToTelugu(p.followUp.notes) : (p.followUp.notes || 'Not available in the sample record.'));
+
+  // Clinical Home Care & Warning Signs Default Engines (guarantees zero blank screens)
+  function getDefaultHomeCare(diagnosis) {
+    const diag = (diagnosis || '').toLowerCase();
+    if (diag.includes('asthma') || diag.includes('pulmonary') || diag.includes('bronch') || diag.includes('respiratory')) {
+      return [
+        'Avoid exposure to active smoke, dust, room fresheners, incense, and cold air triggers.',
+        'Always rinse mouth and gargle with warm water thoroughly after using inhalers.',
+        'Keep reliever inhaler accessible at all times, including at bedside and during travel.',
+        'Gradually increase light daily walking as your breathing ease permits.'
+      ];
     }
+    if (diag.includes('cardiac') || diag.includes('atrial') || diag.includes('coronary') || diag.includes('heart') || diag.includes('hypertension')) {
+      return [
+        'Rest adequately and avoid strenuous heavy lifting (>5 kg) during initial recovery.',
+        'Adhere strictly to low-salt diet (under 5 g salt daily; avoid pickles, papad, and salted snacks).',
+        'Take blood thinners and cardiac medications at the exact prescribed time daily without skipping.',
+        'Record resting pulse and blood pressure regularly in a daily recovery journal.'
+      ];
+    }
+    if (diag.includes('diabet')) {
+      return [
+        'Follow regular diabetic meal timings; avoid prolonged fasting and sugary processed foods.',
+        'Inspect feet and skin daily for any cuts, blisters, swelling, or redness.',
+        'Take prescribed antidiabetic medications at their recommended meal timings.',
+        'Stay well hydrated with clean water; maintain light 20-30 minute daily walking.'
+      ];
+    }
+    return [
+      'Rest adequately and avoid strenuous physical exertion or heavy lifting (>5 kg).',
+      'Maintain adequate hydration (drink 2 litres of water throughout the day unless restricted).',
+      'Take all prescribed medications at their designated timings after meals.',
+      'Resume normal light daily activities gradually as your comfort and stamina allow.'
+    ];
+  }
+
+  function getDefaultWarningSigns(diagnosis) {
+    const diag = (diagnosis || '').toLowerCase();
+    if (diag.includes('asthma') || diag.includes('pulmonary') || diag.includes('bronch') || diag.includes('respiratory')) {
+      return {
+        urgent: [
+          'Reliever inhaler does not ease breathing difficulty within 5 minutes',
+          'Too breathless to speak full sentences or struggling to breathe at rest',
+          'Bluish discoloration of lips, tongue, or fingertips (cyanosis)',
+          'Severe chest tightness, heavy pressure, drowsiness, or confusion'
+        ],
+        caution: [
+          'Persistent cough or mild wheezing that requires frequent reliever use',
+          'Feeling unusually tired or breathless after minor household activities',
+          'Low-grade temperature or persistent yellow/green phlegm',
+          'Difficulty sleeping due to nocturnal coughing or chest tightness'
+        ]
+      };
+    }
+    if (diag.includes('cardiac') || diag.includes('atrial') || diag.includes('coronary') || diag.includes('heart') || diag.includes('hypertension')) {
+      return {
+        urgent: [
+          'Severe chest heaviness, pressure, or radiating pain to arm, neck, or jaw',
+          'Sudden severe breathlessness or suffocating feeling when lying flat',
+          'Any unexpected bleeding from gums, urine, black tarry stools, or vomiting blood',
+          'Sudden weakness of face/arm/leg, slurred speech, or loss of consciousness'
+        ],
+        caution: [
+          'Mild swelling in feet, ankles, or lower legs towards evening',
+          'Unusual fatigue or decreased tolerance for regular walking',
+          'Blood pressure reading consistently higher than 140/90 mmHg',
+          'Mild persistent dizziness when standing up from bed or chair'
+        ]
+      };
+    }
+    return {
+      urgent: [
+        'Sudden high fever (>101°F / 38.3°C) or severe uncontrollable chills',
+        'Severe sharp chest pain or acute severe abdominal pain',
+        'Sudden shortness of breath or difficulty breathing at rest',
+        'Loss of consciousness, severe dizziness, or fainting'
+      ],
+      caution: [
+        'Persistent low-grade temperature not responding to rest',
+        'Inability to tolerate oral fluids or food for over 24 hours',
+        'New or worsening redness, swelling, or drainage around recovery site',
+        'Persistent headache or unexplained lightheadedness'
+      ]
+    };
+  }
+
+  function renderFollowupAndChecklist(p) {
+    if (!p) return;
+    const isTe = (state.currentLang === 'te');
+    const fu = p.followUp || {};
+
+    const rawDate = fu.date || (p.dischargeDate ? p.dischargeDate : '');
+    const folDate = rawDate ? formatDate(rawDate) : (isTe ? 'డిశ్చార్జ్ తర్వాత 7-10 రోజుల్లో' : 'Scheduled in 7–10 days post-discharge');
+    const folDoc = fu.doctor || p.doctor || (isTe ? 'హాజరయ్యే వైద్యుడు' : 'Attending Physician');
+    const folDept = fu.department || p.department || (isTe ? 'అవుట్‌పేషెంట్ క్లినిక్ (OPD)' : 'Outpatient Clinic (Speciality OPD)');
+    const folHosp = fu.hospital || p.hospital || (isTe ? 'హాస్పిటల్ అవుట్‌పేషెంట్ విభాగం' : 'Hospital Outpatient Department');
+    const folNotes = fu.notes || (isTe ? 'ఫాలో-అప్ సందర్శనల సమయంలో ఈ డిశ్చార్జ్ సారాంశం మరియు అన్ని ప్రస్తుత మందులను తీసుకురండి.' : 'Please bring this discharge summary and all current medications during follow-up visits.');
+
+    setText('fol-date', fu.time ? `${folDate} at ${fu.time}` : folDate);
+    setText('fol-doctor', folDoc);
+    setText('fol-dept', isTe ? translateDeptToTelugu(folDept) : folDept);
+    setText('fol-hosp', isTe ? translateHospToTelugu(folHosp) : folHosp);
+    setText('fol-notes', isTe ? translateNotesToTelugu(folNotes) : folNotes);
 
     const checklistContainer = $('homecare-checklist-items');
-    if (checklistContainer && p.homeCare) {
-      checklistContainer.innerHTML = p.homeCare.map((item, idx) => {
+    let items = (Array.isArray(p.homeCare) && p.homeCare.length > 0) ? p.homeCare : getDefaultHomeCare(p.diagnosis);
+    if (checklistContainer && items && items.length > 0) {
+      checklistContainer.innerHTML = items.map((item, idx) => {
         const isChecked = state.homeCareChecklist[idx] ? 'checked' : '';
         const itemText = isTe ? translateChecklistItemToTelugu(item) : item;
         return `
@@ -2190,7 +2285,7 @@
           </li>
         `;
       }).join('');
-      updateChecklistProgress(p.homeCare.length);
+      updateChecklistProgress(items.length);
     }
   }
 
@@ -2205,30 +2300,38 @@
   }
 
   function renderWarningSigns(p) {
+    if (!p) return;
     const urgentList = $('warning-urgent-list');
     const cautionList = $('warning-caution-list');
     const isTe = (state.currentLang === 'te');
 
-    if (urgentList && p.warningSignsUrgent) {
-      urgentList.innerHTML = p.warningSignsUrgent.map(w => {
+    const defaults = getDefaultWarningSigns(p.diagnosis);
+    let uList = (Array.isArray(p.warningSignsUrgent) && p.warningSignsUrgent.length > 0) ? p.warningSignsUrgent : defaults.urgent;
+    let cList = (Array.isArray(p.warningSignsCaution) && p.warningSignsCaution.length > 0) ? p.warningSignsCaution : ((Array.isArray(p.warningSigns) && p.warningSigns.length > 0) ? p.warningSigns : defaults.caution);
+
+    if (urgentList) {
+      urgentList.innerHTML = uList.map(w => {
         const text = isTe ? translateWarningItemToTelugu(w) : w;
-        return `
-        <li><strong>•</strong> ${escapeHtml(text)}</li>
-      `;
+        return `<li><strong>•</strong> ${escapeHtml(text)}</li>`;
       }).join('');
     }
 
-    const cList = p.warningSignsCaution || p.warningSigns;
-    if (cautionList && cList) {
+    if (cautionList) {
       cautionList.innerHTML = cList.map(w => {
         const text = isTe ? translateWarningItemToTelugu(w) : w;
-        return `
-        <li><strong>•</strong> ${escapeHtml(text)}</li>
-      `;
+        return `<li><strong>•</strong> ${escapeHtml(text)}</li>`;
       }).join('');
     }
-  }
 
+    // Also update dynamic doctor name in caution prompt
+    const cautionPrompt = $('page-warnings')?.querySelector('.warning-caution-box .prompt');
+    if (cautionPrompt) {
+      const docName = p.doctor || (isTe ? 'మీ వైద్యుడిని' : 'your attending physician');
+      cautionPrompt.textContent = isTe
+        ? `ఈ క్రింది లక్షణాలు కనిపిస్తే వెంటనే ${docName} లేదా అవుట్‌పేషెంట్ క్లినిక్‌ని సంప్రదించండి:`
+        : `Contact ${docName} or the outpatient clinic if any of these symptoms develop:`;
+    }
+  }
   // ============================================================
   // MEDICINE ALERTS & DOSAGE REMINDERS ENGINE
   // ============================================================

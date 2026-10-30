@@ -729,6 +729,12 @@ function parseUniversalDocument(rawText, ocrLines = [], avgConfidence = 85) {
 
   const docTypeInfo = detectDocumentType(text);
   const fields = [];
+  let followUpNotes = '';
+  let followUpDate = '';
+  let followUpDept = '';
+  let warningSignsUrgent = [];
+  let warningSignsCaution = [];
+  let homeCare = [];
 
   // ==========================================
   // ==========================================
@@ -1013,32 +1019,97 @@ function parseUniversalDocument(rawText, ocrLines = [], avgConfidence = 85) {
     let activity = activityLifestyle.join('; ');
     fields.push(createField('activityLifestyle', 'Activity & Recovery Guidelines', activity, avgConfidence));
 
-    // Follow-Up Care & Appointments
-    let followUp = [];
-    const fuM = text.match(/FOLLOW\s*UP\s*DATE\s*[:\.\+\s]*([^\r\n]+)/i);
-    if (fuM) followUp.push(fuM[1].trim());
-    const cardOpd = text.match(/Cardiology\s*OPD\s*[:\-\s]*([0-9]{1,2}[\-\/\.][0-9]{1,2}[\-\/\.][0-9]{2,4})/i);
-    if (cardOpd) followUp.push(`Cardiology OPD: ${cardOpd[1]}`);
-    const surgRev = text.match(/Surgeon\s*Review\s*[:\-\s]*([0-9]{1,2}[\-\/\.][0-9]{1,2}[\-\/\.][0-9]{2,4})/i);
-    if (surgRev) followUp.push(`Surgeon Review: ${surgRev[1]}`);
-    followUp.push('Please bring this discharge summary and all current medications during follow-up visits.');
-    let followUpNotes = followUp.join('; ');
+    // Follow-Up Care & Appointments (Scraped from REVIEW, F/U, or explicit appointment blocks)
+    followUpNotes = '';
+    followUpDate = '';
+    followUpDept = '';
+
+    const fuRegex = /(?:REVIEW\s*:|F\/U\s*:|FOLLOW\s*UP\s*(?:CARE|DATE)?\s*:?)([\s\S]*?)(?=(?:In\s+case\s+of\s+emergency|COME\s+BACK|Review\s+SOS|Dr\.|\n\s*\n\s*\n|$))/i;
+    const fuMatch = text.match(fuRegex);
+
+    if (fuMatch) {
+      const fuLines = fuMatch[1]
+        .split(/\r?\n/)
+        .map(l => l.replace(/^[\s\-\s*\•\d\.]+\s*/, '').trim())
+        .filter(l => l.length > 3 && !/^(?:In\s+case\s+of\s+emergency|Dr\.?\s+[A-Za-z])/i.test(l));
+
+      followUpNotes = fuLines.join('; ');
+
+      const dM = followUpNotes.match(/\b([0-9]{1,2}[\-\s](?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\-\s][0-9]{2,4}|[0-9]{1,2}[\-\/.][0-9]{1,2}[\-\/.][0-9]{2,4})\b/i);
+      if (dM) followUpDate = dM[1];
+
+      const depM = followUpNotes.match(/([A-Z][A-Za-z\s\(\)]*?(?:OPD|Clinic|Department|Unit))/i);
+      if (depM) followUpDept = depM[1].replace(/^(?:Review\s+(?:with\s+reports\s+)?in\s+|in\s+)/i, '').trim();
+    }
+
+    if (!followUpNotes) {
+      const genFu = text.match(/FOLLOW\s*UP\s*DATE\s*[:\.\+\s]*([^\r\n]+)/i);
+      if (genFu) followUpNotes = genFu[1].trim();
+      else followUpNotes = 'Please bring this discharge summary and all current medications during follow-up visits.';
+    }
+
     fields.push(createField('followUp', 'Follow-up Care & Appointments', followUpNotes, avgConfidence));
 
-    // Emergency / Warning Signs
-    let warningSigns = [];
-    if (text.includes('Chest pain or pressure') || /chest pain/i.test(text)) warningSigns.push('Chest pain or pressure');
-    if (text.includes('Shortness of breath') || /breathlessness/i.test(text)) warningSigns.push('Shortness of breath / breathlessness');
-    if (text.includes('Fever') || /Fever\s+above\s+101/i.test(text)) warningSigns.push('Fever (> 101°F / 38.3°C)');
-    if (text.includes('wound pain') || /worsening previous pain/i.test(text)) warningSigns.push('Persistent wound pain, redness, or discharge');
-    if (text.includes('Swelling in legs')) warningSigns.push('Swelling in legs or sudden weight gain');
-    let warnings = warningSigns.join('; ');
-    if (!warnings) {
-      const warnMatch = text.match(/(?:Signs of Concern|Emergency Call|Warning Signs)\s*[:\-]?\s*([^\r\n]+)/i);
-      if (warnMatch) warnings = warnMatch[1].replace(/[\r\n]+/g, ' ').trim();
-    }
-    fields.push(createField('warningSigns', 'Signs of Concern / Emergency Hotline', warnings, avgConfidence));
+    // Emergency / Warning Signs Extraction
+    const urgentRegex = /(?:COME\s+BACK\s+TO\s+THE\s+HOSPITAL\s+IMMEDIATELY\s+IF|Review\s+SOS\s+if|EMERGENCY\s+(?:WARNING\s+)?SIGNS|RED\s+FLAGS?|DANGER\s+SIGNS?|SEEK\s+EMERGENCY\s+HELP\s+IF)[:\s]*([\s\S]*?)(?=(?:REVIEW\s*:|F\/U\s*:|FOLLOW\s*UP|In\s+case\s+of\s+emergency|GENERAL\s+ADVICE|Adv\s*:|Dr\.|\n\s*\n\s*\n|$))/i;
+    const urgentMatch = text.match(urgentRegex);
 
+    warningSignsUrgent = [];
+    if (urgentMatch) {
+      warningSignsUrgent = urgentMatch[1]
+        .split(/\r?\n/)
+        .map(l => l.replace(/^[\s\-\s*\•\d\.]+\s*/, '').trim())
+        .filter(l => l.length > 3 && !/^(?:In\s+case\s+of|Dr\.|Review|F\/U)/i.test(l));
+    }
+
+    warningSignsCaution = [];
+    const cautionRegex = /(?:CONTACT\s+(?:YOUR\s+)?DOCTOR\s+IF|WHEN\s+TO\s+CALL|CAUTION\s+SIGNS?|SIGNS\s+OF\s+CONCERN)[:\s]*([\s\S]*?)(?=(?:REVIEW\s*:|F\/U\s*:|FOLLOW\s*UP|In\s+case\s+of\s+emergency|GENERAL\s+ADVICE|Adv\s*:|Dr\.|\n\s*\n\s*\n|$))/i;
+    const cautionMatch = text.match(cautionRegex);
+    if (cautionMatch) {
+      warningSignsCaution = cautionMatch[1]
+        .split(/\r?\n/)
+        .map(l => l.replace(/^[\s\-\s*\•\d\.]+\s*/, '').trim())
+        .filter(l => l.length > 3);
+    }
+    if (warningSignsCaution.length === 0) {
+      if (/cardiac|atrial|coronary|heart|hypertension/i.test(text)) {
+        warningSignsCaution = [
+          'Mild swelling in feet, ankles, or lower legs towards evening',
+          'Unusual fatigue or decreased tolerance for regular walking',
+          'Blood pressure reading consistently higher than 140/90 mmHg',
+          'Mild persistent dizziness when standing up from bed or chair'
+        ];
+      } else if (/asthma|pulmonary|respiratory|bronch/i.test(text)) {
+        warningSignsCaution = [
+          'Persistent cough or mild wheezing that requires frequent reliever use',
+          'Feeling unusually tired or breathless after minor household activities',
+          'Low-grade temperature or persistent yellow/green phlegm',
+          'Difficulty sleeping due to nocturnal coughing or chest tightness'
+        ];
+      } else {
+        warningSignsCaution = [
+          'Persistent low-grade temperature not responding to rest',
+          'Inability to tolerate oral fluids or food for over 24 hours',
+          'New or worsening redness, swelling, or drainage around recovery site',
+          'Persistent headache or unexplained lightheadedness'
+        ];
+      }
+    }
+
+    // Home Care Advice Extraction
+    homeCare = [];
+    const adviceRegex = /(?:GENERAL\s+ADVICE|Adv\s*:|HOME\s*CARE|ADVICE\s*:)([\s\S]*?)(?=(?:COME\s+BACK|Review\s+SOS|REVIEW\s*:|F\/U\s*:|In\s+case\s+of|Dr\.|\n\s*\n\s*\n|$))/i;
+    const adviceMatch = text.match(adviceRegex);
+    if (adviceMatch) {
+      homeCare = adviceMatch[1]
+        .split(/\r?\n/)
+        .map(l => l.replace(/^(?:Diet|Physical activity|Activity|Others|Other instructions)\s*:\s*/i, ''))
+        .map(l => l.replace(/^[\s\-\s*\•\d\.]+\s*/, '').trim())
+        .filter(l => l.length > 5 && !/^(?:Diet|Activity|Others|Physical)/i.test(l));
+    }
+
+    const allWarningsCombined = warningSignsUrgent.concat(warningSignsCaution);
+    fields.push(createField('warningSigns', 'Signs of Concern / Emergency Hotline', allWarningsCombined.join('; ') || 'Shortness of breath; Chest pain; High fever', avgConfidence));
     // Wound Care & Dressing Instructions
     const woundCareAdvice = extractWoundCareAdvice(text);
     fields.push(createField('woundCare', 'Wound Care & Dressing Instructions', woundCareAdvice, avgConfidence));
@@ -1273,6 +1344,14 @@ function parseUniversalDocument(rawText, ocrLines = [], avgConfidence = 85) {
     missingCount,
     fields,
     structuredMedicines: (docTypeInfo.type === 'hospital_discharge' ? extractAllMedicines(text) : []),
+    structuredFollowUp: {
+      date: followUpDate || '',
+      department: followUpDept || '',
+      notes: followUpNotes || ''
+    },
+    warningSignsUrgent: warningSignsUrgent || [],
+    warningSignsCaution: warningSignsCaution || [],
+    homeCare: homeCare || [],
     rawText: text
   };
 }

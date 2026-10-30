@@ -329,12 +329,16 @@ router.post('/upload', (req, res) => {
         activityLifestyle: getVal('activityLifestyle') || '',
         woundCare: getVal('woundCare') || '',
         followUp: {
-          date: getVal('followUpDate') || dischargeDate || '',
-          hospital,
-          doctor,
-          notes: getVal('followUp') || ''
+          date: parsedCombined.structuredFollowUp?.date || getVal('followUpDate') || dischargeDate || '',
+          hospital: hospital || 'Hospital Outpatient Department',
+          doctor: doctor || 'Attending Physician',
+          department: parsedCombined.structuredFollowUp?.department || getVal('department') || 'Speciality OPD',
+          notes: parsedCombined.structuredFollowUp?.notes || getVal('followUp') || 'Please bring this discharge summary and all current medications during follow-up visits.'
         },
-        warningSigns: warningParts.length > 0 ? warningParts : (getVal('warningSigns') ? [getVal('warningSigns')] : []),
+        warningSignsUrgent: (parsedCombined.warningSignsUrgent && parsedCombined.warningSignsUrgent.length > 0) ? parsedCombined.warningSignsUrgent : [],
+        warningSignsCaution: (parsedCombined.warningSignsCaution && parsedCombined.warningSignsCaution.length > 0) ? parsedCombined.warningSignsCaution : [],
+        warningSigns: (parsedCombined.warningSignsUrgent || []).concat(parsedCombined.warningSignsCaution || []),
+        homeCare: (parsedCombined.homeCare && parsedCombined.homeCare.length > 0) ? parsedCombined.homeCare : [],
         rawText: combinedText,
         pageCount: fileResults.length
       };
