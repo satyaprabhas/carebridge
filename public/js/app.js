@@ -3115,16 +3115,24 @@
 
     if (grid) {
       grid.innerHTML = state.selectedFiles.map((file, idx) => {
-        const isImg = file.type.startsWith('image/');
+        const isImg = (file.type && file.type.startsWith('image/')) || /\.(jpg|jpeg|png|webp)$/i.test(file.name);
+        const isWord = /\.(docx|doc)$/i.test(file.name) || file.type.includes('word');
+        const isHtml = /\.(html|htm)$/i.test(file.name) || file.type.includes('html');
+        let icon = '📄';
+        let typeLabel = 'PDF Document';
+        if (isImg) { icon = '🖼️'; typeLabel = 'Photo / Image'; }
+        else if (isWord) { icon = '📝'; typeLabel = 'Word Document (.docx)'; }
+        else if (isHtml) { icon = '🌐'; typeLabel = 'HTML Summary (.html)'; }
+
         return `
           <div class="selected-file-row" style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.35rem 0.65rem; gap: 0.5rem; font-size: 0.8rem;">
             <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0;">
-              <span style="font-size: 1.1rem;">${isImg ? '🖼️' : '📄'}</span>
+              <span style="font-size: 1.1rem;">${icon}</span>
               <div style="flex: 1; min-width: 0;">
                 <div style="font-weight: 600; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${file.name}">
-                  Page ${idx + 1}: ${file.name}
+                  Doc ${idx + 1}: ${file.name}
                 </div>
-                <div style="color: #64748b; font-size: 0.72rem;">${formatBytes(file.size)} • ${isImg ? 'Photo / Image' : 'PDF'}</div>
+                <div style="color: #64748b; font-size: 0.72rem;">${formatBytes(file.size)} • ${typeLabel}</div>
               </div>
             </div>
             <button type="button" class="btn btn-xs btn-text text-danger btn-remove-single-file" data-file-index="${idx}" style="padding: 2px 6px; font-size: 0.75rem;" title="Remove this document">

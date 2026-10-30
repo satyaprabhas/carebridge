@@ -20,9 +20,9 @@
         <div id="upload-dropzone" class="upload-dropzone-box" role="region" aria-label="Discharge document upload dropzone">
           <div class="dropzone-icon-circle" aria-hidden="true">📤</div>
           <h3>Upload your discharge document</h3>
-          <p>Choose a PDF or image of your hospital discharge summary.</p>
+          <p>Choose a PDF, Word document (.docx), HTML file, or photo of your hospital discharge summary.</p>
 
-          <input type="file" id="discharge-file-input" class="visually-hidden" accept=".pdf,.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp,application/pdf">
+          <input type="file" id="discharge-file-input" class="visually-hidden" accept=".pdf,.docx,.doc,.html,.htm,.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/html">
 
           <div class="dropzone-actions">
             <button type="button" id="btn-choose-file" class="btn btn-outline-primary">
@@ -34,7 +34,7 @@
           </div>
 
           <div class="file-formats-hint" style="margin-top: 1rem; font-size: 0.775rem; color: var(--slate-400);">
-            Supported formats: PDF, JPG, JPEG, PNG, and WebP (Max file size: 10MB)
+            Supported formats: PDF, Word (.docx), HTML, JPG, JPEG, PNG, and WebP (Max file size: 10MB)
           </div>
 
           <!-- Selected File Banner -->

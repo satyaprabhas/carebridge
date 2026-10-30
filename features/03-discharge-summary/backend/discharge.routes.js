@@ -24,12 +24,25 @@ const storage = multer.diskStorage({
   }
 });
 
-const allowedMimeTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+const allowedMimeTypes = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'text/html',
+  'application/xhtml+xml',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/msword'
+];
+
 const fileFilter = (req, file, cb) => {
-  if (allowedMimeTypes.includes(file.mimetype)) {
+  const ext = path.extname(file.originalname).toLowerCase();
+  const allowedExts = ['.pdf', '.jpg', '.jpeg', '.png', '.webp', '.html', '.htm', '.docx', '.doc'];
+  
+  if (allowedMimeTypes.includes(file.mimetype) || allowedExts.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Only PDF, JPG, PNG, and WebP files are accepted.'));
+    cb(new Error('Invalid file type. Only PDF, JPG, PNG, WebP, HTML, and Word (.docx/.doc) documents are accepted.'));
   }
 };
 

@@ -26,6 +26,46 @@ const path = require('path');
 const sharp = require('sharp');
 const Tesseract = require('tesseract.js');
 const { PDFParse } = require('pdf-parse');
+const mammoth = require('mammoth');
+
+/**
+ * Cleanly extract structured text from HTML keeping line breaks and table layout
+ */
+function extractHtmlCleanText(html) {
+  if (!html || typeof html !== 'string') return '';
+  // 1. Strip style, script and header tags
+  let cleaned = html
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+
+  // 2. Normalize table rows so all cells of a row stay on ONE clean line
+  cleaned = cleaned.replace(/<tr[^>]*>([\s\S]*?)<\/tr>/gi, (match, rowContent) => {
+    let rowText = rowContent
+      .replace(/[\r\n\t]+/g, ' ')
+      .replace(/<\/(td|th)>/gi, '   ')
+      .replace(/<[^>]+>/g, ' ');
+    return '\n' + rowText + '\n';
+  });
+
+  // 3. Convert block level elements to newlines
+  cleaned = cleaned
+    .replace(/<\/(p|div|h[1-6]|li|section|article)>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'");
+
+  return cleaned
+    .split(/\r?\n/)
+    .map(l => l.replace(/[ \t]+/g, ' ').trim())
+    .filter(Boolean)
+    .join('\n');
+}
+
 
 const TESSDATA_DIR = path.resolve(__dirname, '../../../tessdata');
 
@@ -62,7 +102,63 @@ async function getFastWorker(lang = 'eng') {
  * 1. Extract Text from PDF or Preprocessed Image
  */
 async function extractRawTextWithLayout(filePath, mimetype, requestedLang = 'eng') {
-  const isPdf = mimetype === 'application/pdf' || filePath.toLowerCase().endsWith('.pdf');
+  const lowerPath = filePath.toLowerCase();
+  const isHtml = mimetype === 'text/html' || mimetype === 'application/xhtml+xml' || lowerPath.endsWith('.html') || lowerPath.endsWith('.htm');
+  const isWord = mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 
+                mimetype === 'application/msword' || 
+                lowerPath.endsWith('.docx') || 
+                lowerPath.endsWith('.doc');
+  const isPdf = mimetype === 'application/pdf' || lowerPath.endsWith('.pdf');
+
+  // 1. HTML Discharge Summary Handling (Instant, 100% digital precision)
+  if (isHtml) {
+    try {
+      const rawHtml = fs.readFileSync(filePath, 'utf8');
+      const cleanText = extractHtmlCleanText(rawHtml);
+      if (cleanText.trim().length > 10) {
+        return {
+          text: cleanText,
+          confidence: 98,
+          isHtmlStream: true,
+          lines: cleanText.split('\n').map(l => ({ text: l.trim(), confidence: 98 }))
+        };
+      }
+    } catch (err) {
+      console.warn('[CareBridge OCR] HTML parse error:', err.message);
+    }
+  }
+
+  // 2. Microsoft Word Document Handling (.docx, .doc via mammoth)
+  if (isWord) {
+    try {
+      const buffer = fs.readFileSync(filePath);
+      // Try HTML conversion first to preserve tables and paragraphs cleanly
+      const htmlResult = await mammoth.convertToHtml({ buffer });
+      if (htmlResult && htmlResult.value && htmlResult.value.trim().length > 10) {
+        const cleanText = extractHtmlCleanText(htmlResult.value);
+        return {
+          text: cleanText,
+          confidence: 98,
+          isWordDoc: true,
+          lines: cleanText.split('\n').map(l => ({ text: l.trim(), confidence: 98 }))
+        };
+      }
+
+      // Fallback: raw text extraction
+      const rawResult = await mammoth.extractRawText({ buffer });
+      const rawText = (rawResult && rawResult.value) ? rawResult.value.trim() : '';
+      if (rawText.length > 10) {
+        return {
+          text: rawText,
+          confidence: 95,
+          isWordDoc: true,
+          lines: rawText.split('\n').map(l => l.trim()).filter(Boolean).map(l => ({ text: l, confidence: 95 }))
+        };
+      }
+    } catch (err) {
+      console.warn('[CareBridge OCR] Word DOCX parse error:', err.message);
+    }
+  }
 
   if (isPdf) {
     try {
@@ -439,12 +535,11 @@ function cleanMedicineLine(line) {
     s = s.replace(parenM[0], ' ').trim();
   }
 
-  if (!instructions) {
-    const foodM = s.match(/\b(after\s+food|before\s+food|with\s+(?:food|meals)|empty\s+stomach|before\s+breakfast|after\s+meals|in\s+case\s+of\s+[a-z]+)\b/i);
-    if (foodM) {
-      instructions = foodM[1].trim();
-      s = s.replace(foodM[0], ' ').trim();
-    }
+  const foodM = s.match(/\b((?:(?:in\s+the\s+)?(?:morning|afternoon|evening|night)\s+)?(?:after\s+(?:food|meals|breakfast|lunch|dinner)|before\s+(?:food|meals|breakfast|lunch|dinner)|with\s+(?:food|meals)|on\s+empty\s+stomach|empty\s+stomach|at\s+bedtime|in\s+case\s+of\s+[a-z]+))\b/i);
+  if (foodM) {
+    const foodTxt = foodM[1].trim();
+    instructions = instructions ? `${instructions}; ${foodTxt}` : foodTxt;
+    s = s.replace(foodM[0], ' ').trim();
   }
 
   let name = s.replace(/[\(\)\,\;\:\-\–\—\.]+/g, ' ').replace(/\s+/g, ' ').trim();
