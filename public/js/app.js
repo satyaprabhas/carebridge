@@ -3057,12 +3057,25 @@
     if (!fileList || fileList.length === 0) return;
     if (!state.selectedFiles) state.selectedFiles = [];
 
-    const validExts = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+    const validMimes = [
+      'application/pdf',
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'text/html',
+      'application/xhtml+xml',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword',
+      'text/plain'
+    ];
+    const validExtRegex = /\.(pdf|docx|doc|html|htm|txt|jpg|jpeg|png|webp)$/i;
     const maxBytes = 10 * 1024 * 1024; // 10MB per file
 
     Array.from(fileList).forEach(file => {
-      if (!validExts.includes(file.type)) {
-        showUploadAlert('warning', `Skipped "${file.name}": Unsupported format. Please select PDF, JPG, PNG, or WebP.`);
+      const extMatch = validExtRegex.test(file.name);
+      const mimeMatch = file.type && validMimes.includes(file.type);
+      if (!extMatch && !mimeMatch) {
+        showUploadAlert('warning', `Skipped "${file.name}": Unsupported format. Please select PDF, Word (.docx), HTML, Text (.txt), or Image files.`);
         return;
       }
       if (file.size > maxBytes) {
@@ -3118,11 +3131,13 @@
         const isImg = (file.type && file.type.startsWith('image/')) || /\.(jpg|jpeg|png|webp)$/i.test(file.name);
         const isWord = /\.(docx|doc)$/i.test(file.name) || file.type.includes('word');
         const isHtml = /\.(html|htm)$/i.test(file.name) || file.type.includes('html');
+        const isTxt = /\.txt$/i.test(file.name) || file.type === 'text/plain';
         let icon = '📄';
         let typeLabel = 'PDF Document';
         if (isImg) { icon = '🖼️'; typeLabel = 'Photo / Image'; }
         else if (isWord) { icon = '📝'; typeLabel = 'Word Document (.docx)'; }
         else if (isHtml) { icon = '🌐'; typeLabel = 'HTML Summary (.html)'; }
+        else if (isTxt) { icon = '📃'; typeLabel = 'Text File (.txt)'; }
 
         return `
           <div class="selected-file-row" style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 0.35rem 0.65rem; gap: 0.5rem; font-size: 0.8rem;">
@@ -3328,7 +3343,7 @@
       }
 
       if (fileUrl) {
-        const isPdf = fileUrl.toLowerCase().endsWith('.pdf') || activeFile?.mimetype === 'application/pdf';
+        const isPdf = fileUrl.toLowerCase().endsWith('.pdf') || activeFile?.mimetype === 'application/pdf' || /\.(html|htm|txt)$/i.test(fileUrl);
         if (isPdf) {
           if (imgEl) imgEl.classList.add('hidden');
           if (iframeEl) {
@@ -4766,7 +4781,7 @@
           const imgEl = $('ocr-preview-img');
           const iframeEl = $('ocr-preview-iframe');
           const fileUrl = activeFile.url;
-          const isPdf = fileUrl.toLowerCase().endsWith('.pdf') || activeFile.mimetype === 'application/pdf';
+          const isPdf = fileUrl.toLowerCase().endsWith('.pdf') || activeFile.mimetype === 'application/pdf' || /\.(html|htm|txt)$/i.test(fileUrl);
           if (isPdf) {
             if (imgEl) imgEl.classList.add('hidden');
             if (iframeEl) {

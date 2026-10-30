@@ -52,9 +52,20 @@ export function initDischargeModule({ onCarePlanUpdated, currentPatient }) {
 
   function handleFileSelected(file) {
     clearAlert();
-    const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
-    if (!allowed.includes(file.type)) {
-      showAlert('danger', 'Unsupported file type. Please upload a PDF, JPG, JPEG, PNG, or WebP document.');
+    const validMimes = [
+      'application/pdf',
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'text/html',
+      'application/xhtml+xml',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword',
+      'text/plain'
+    ];
+    const validExtRegex = /\.(pdf|docx|doc|html|htm|txt|jpg|jpeg|png|webp)$/i;
+    if (!validExtRegex.test(file.name) && !(file.type && validMimes.includes(file.type))) {
+      showAlert('danger', 'Unsupported file type. Please upload a PDF, Word (.docx), HTML, Text (.txt), or Image file.');
       return;
     }
     if (file.size > 10 * 1024 * 1024) {

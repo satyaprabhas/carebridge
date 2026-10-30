@@ -32,17 +32,18 @@ const allowedMimeTypes = [
   'text/html',
   'application/xhtml+xml',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/msword'
+  'application/msword',
+  'text/plain'
 ];
 
 const fileFilter = (req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase();
-  const allowedExts = ['.pdf', '.jpg', '.jpeg', '.png', '.webp', '.html', '.htm', '.docx', '.doc'];
+  const allowedExts = ['.pdf', '.jpg', '.jpeg', '.png', '.webp', '.html', '.htm', '.docx', '.doc', '.txt'];
   
   if (allowedMimeTypes.includes(file.mimetype) || allowedExts.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Only PDF, JPG, PNG, WebP, HTML, and Word (.docx/.doc) documents are accepted.'));
+    cb(new Error('Invalid file type. Only PDF, Word (.docx/.doc), HTML, Text (.txt), and Image (JPG, PNG, WebP) files are accepted.'));
   }
 };
 

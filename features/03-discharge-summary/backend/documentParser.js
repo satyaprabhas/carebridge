@@ -103,7 +103,27 @@ async function getFastWorker(lang = 'eng') {
  */
 async function extractRawTextWithLayout(filePath, mimetype, requestedLang = 'eng') {
   const lowerPath = filePath.toLowerCase();
+  const isTxt = mimetype === 'text/plain' || lowerPath.endsWith('.txt');
   const isHtml = mimetype === 'text/html' || mimetype === 'application/xhtml+xml' || lowerPath.endsWith('.html') || lowerPath.endsWith('.htm');
+
+  // 0. Plain Text Discharge Summary (.txt) Handling (Instant, 100% digital precision)
+  if (isTxt) {
+    try {
+      const rawText = fs.readFileSync(filePath, 'utf8');
+      const cleanLines = rawText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      if (rawText.trim().length > 10) {
+        return {
+          text: rawText,
+          confidence: 99,
+          isTextFile: true,
+          lines: cleanLines.map(l => ({ text: l, confidence: 99 }))
+        };
+      }
+    } catch (err) {
+      console.warn('[CareBridge OCR] Text file parse error:', err.message);
+    }
+  }
+
   const isWord = mimetype === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 
                 mimetype === 'application/msword' || 
                 lowerPath.endsWith('.docx') || 
