@@ -620,15 +620,20 @@
   function handleRegistration(formData) {
     const { fullName, username, password, age, gender } = formData;
 
-    if (!fullName || !username || !password) {
+    const cleanFullName = (fullName || '').trim();
+    const cleanUsername = (username || '').trim();
+    const cleanPassword = password || '';
+
+    if (!cleanFullName || !cleanUsername || !cleanPassword) {
       showAuthAlert('danger', 'Full Name, Username, and Password are required.');
       return;
     }
 
-    // Check existing in local storage
+    // Check existing in local storage (clean duplicate usernames safely)
     const localUsers = getRegisteredUsers();
-    if (localUsers.some(u => u.username.toLowerCase() === username.toLowerCase()) || username.toLowerCase() === 'patient') {
-      showAuthAlert('danger', 'This username is already taken. Please choose another username.');
+    const isTaken = localUsers.some(u => (u.username || '').toLowerCase() === cleanUsername.toLowerCase()) || cleanUsername.toLowerCase() === 'patient';
+    if (isTaken) {
+      showAuthAlert('danger', `Username "${cleanUsername}" is already taken. Please choose a different username.`);
       return;
     }
 
@@ -710,11 +715,26 @@
     const loginPage = $('login-page');
     const appContainer = $('app-container');
 
-    if (loginPage) loginPage.classList.add('hidden');
-    if (appContainer) appContainer.classList.remove('hidden');
+    if (loginPage) {
+      loginPage.classList.add('hidden');
+      loginPage.style.display = 'none';
+    }
+    if (appContainer) {
+      appContainer.classList.remove('hidden');
+      appContainer.style.display = 'flex';
+    }
 
-    renderAllViews();
-    navigateTo('dashboard');
+    try {
+      renderAllViews();
+    } catch (err) {
+      console.warn('Error during renderAllViews:', err);
+    }
+
+    try {
+      navigateTo('dashboard');
+    } catch (err) {
+      console.warn('Error during navigateTo dashboard:', err);
+    }
   }
 
   function handleLogout() {
@@ -729,8 +749,14 @@
     const appContainer = $('app-container');
     const loginPage = $('login-page');
 
-    if (appContainer) appContainer.classList.add('hidden');
-    if (loginPage) loginPage.classList.remove('hidden');
+    if (appContainer) {
+      appContainer.classList.add('hidden');
+      appContainer.style.display = 'none';
+    }
+    if (loginPage) {
+      loginPage.classList.remove('hidden');
+      loginPage.style.display = 'flex';
+    }
 
     const u = $('login-username');
     const p = $('login-password');
