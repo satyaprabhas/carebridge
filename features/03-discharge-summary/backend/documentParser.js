@@ -479,75 +479,40 @@ function createField(key, title, rawValue, confidence = 85, isSensitive = false)
  */
 function cleanMedicineLine(line) {
   if (!line || typeof line !== 'string') return null;
-  const raw = line.trim();
+  let raw = line.trim();
   if (raw.length < 3) return null;
 
-  // Filter out surgical, anatomical, administrative or vitals lines
-  if (/\b(?:uterus|ovaries|tubectomy|incision|peritoneum|placenta|hemostasis|foleys|fetal|cervix|anesthesia|operative|investigation|examination|ultrasound|ecg|x-ray|doctor|hospital|patient|admission|discharge|insurance|payer|sponser|allergies|diagnosis|complaints|history|policy|appointment|contact|printed|survey|nagar|phase|cin\s*no|discharge\s*summary)\b/i.test(raw)) {
+  // Strip leading list numbering e.g. "1. ", "1) ", "- ", "• "
+  raw = raw.replace(/^[0-9]+[\.\)\s\-\]]+/, '').replace(/^[\-\s*\•\–]\s*/, '').trim();
+
+  // Filter out non-medicine clinical lines (vitals, investigations, surgical details, admin)
+  if (/\b(?:uterus|ovaries|tubectomy|incision|peritoneum|placenta|hemostasis|foleys|fetal|cervix|anesthesia|operative|investigation|examination|ultrasound|ecg|x-ray|doctor|hospital|patient|admission|discharge|insurance|payer|sponser|allergies|diagnosis|complaints|history|policy|appointment|contact|printed|survey|nagar|phase|cin\s*no|discharge\s*summary|echo\b|lvef\b|creatinine\b|hb\b|tsh\b|cha2ds2|peak\s+flow|pefr\b|cxr\b|aec\b|tlc\b)\b/i.test(raw)) {
     return null;
   }
 
-  // Filter out noisy lines without letters
   const alphaChars = (raw.match(/[a-zA-Z]/g) || []).length;
   if (alphaChars < 4 || (alphaChars / raw.length) < 0.35) {
     return null;
   }
 
-  // Check medicine type
-  const hasMedType = /\b(TAB\.?|CAP\.?|SYP\.?|INJ\.?|OINT\.?|SUSP\.?|INHALER\.?|DROPS?|CREAM)\b/i.test(raw);
-  
-  // Check dosage
-  const doseM = raw.match(/\b([0-9]+(?:\.[0-9]+)?\s*(?:mg|mcg|g|ml|iu|puffs?))\b/i);
-  const numDoseM = !doseM ? raw.match(/\b([A-Za-z]+)\s+([0-9]{2,4})\b/i) : null;
-  const hasDose = !!(doseM || numDoseM);
+  const medTypeM = raw.match(/\b(Tablet|Tab\.?|Capsule|Cap\.?|Syrup|Syp\.?|Injection|Inj\.?|MDI|Inhaler|Drops?|Ointment|Oint\.?|Cream|T\.)\b/i);
+  const medType = medTypeM ? medTypeM[1] : '';
 
-  // Check frequency
-  const hasFreq = /\b([0-1]\s*[-–]\s*[0-1]\s*[-–]\s*[0-1]|ONCE\s+DAILY|TWICE\s+DAILY|THRICE\s+DAILY|THREE\s+TIMES\s+A\s+DAY|AT\s+BED\s*TIME|AT\s+NIGHT|IN\s+MORNING|AS\s+NEEDED)\b/i.test(raw) ||
+  const doseM = raw.match(/\b([0-9]+(?:\.[0-9]+)?\s*(?:mg|mcg|g|ml|iu))\b/i);
+  const puffsM = raw.match(/\b([0-9]+\s*puffs?)\b/i);
+  const numDoseM = (!doseM && !puffsM) ? raw.match(/\b([A-Za-z]+)\s+([0-9]{2,4})\b/i) : null;
+  const hasDose = !!(doseM || puffsM || numDoseM);
+
+  const hasFreq = /\b([0-1]\s*[-–]\s*[0-1]\s*[-–]\s*[0-1]|ONCE\s+DAILY|TWICE\s+DAILY|THRICE\s+DAILY|THREE\s+TIMES\s+A\s+DAY|AT\s+BED\s*TIME|AT\s+NIGHT|IN\s+THE\s+MORNING|IN\s+MORNING|AS\s+NEEDED|EVERY\s+[0-9]+\s+HOURS?)\b/i.test(raw) ||
                   /\b(OD|BD|TDS|QID|HS|PRN|SOS)\b/.test(raw);
 
-  // Must have a medicine type, OR have both a dose and a frequency
-  if (!hasMedType && !(hasDose && hasFreq)) {
+  if (!medType && !(hasDose && hasFreq)) {
     return null;
   }
 
-  let s = raw.replace(/^[0-9]+[\.\)\s\-\]]+/, '').trim();
+  let s = raw;
 
-  let medType = '';
-  const typeM = s.match(/\b(TAB\.?|CAP\.?|SYP\.?|INJ\.?|OINT\.?|SUSP\.?|INHALER\.?|DROPS?|CREAM)\b/i);
-  if (typeM) {
-    medType = typeM[1].toUpperCase().replace(/\.$/, '') + '.';
-    s = s.replace(typeM[0], '').trim();
-  }
-
-  let dose = '';
-  if (doseM) {
-    dose = doseM[1].trim();
-    s = s.replace(doseM[0], ' ').trim();
-  } else if (numDoseM) {
-    dose = numDoseM[2] + 'mg';
-    s = s.replace(numDoseM[0], numDoseM[1]).trim();
-  }
-
-  let duration = '';
-  const durM = s.match(/\b(?:FOR\s+|X\s*)?([0-9]+\s*(?:DAYS?|WEEKS?|MONTHS?))\b/i);
-  if (durM) {
-    duration = `For ${durM[1].trim()}`;
-    s = s.replace(durM[0], ' ').trim();
-  }
-
-  let timing = 'Once daily';
-  const freqM = s.match(/\b([0-1]\s*[-–]\s*[0-1]\s*[-–]\s*[0-1]|ONCE\s+DAILY|TWICE\s+DAILY|THRICE\s+DAILY|THREE\s+TIMES\s+A\s+DAY|AT\s+BED\s*TIME|AT\s+NIGHT|IN\s+MORNING|AS\s+NEEDED)\b/i) ||
-                s.match(/\b(OD|BD|TDS|QID|HS|PRN|SOS)\b/);
-  if (freqM) {
-    const rawFreq = freqM[1].trim().replace(/\s+/g, '');
-    if (/1-0-1/i.test(rawFreq) || /^BD$/i.test(rawFreq) || /TWICE/i.test(rawFreq)) timing = 'Twice daily (Morning & Night)';
-    else if (/1-1-1/i.test(rawFreq) || /^TDS$/i.test(rawFreq) || /THRICE|THREETIMES/i.test(rawFreq)) timing = 'Three times a day (Morning, Afternoon & Night)';
-    else if (/1-0-0/i.test(rawFreq) || /^OD$/i.test(rawFreq) || /MORNING/i.test(rawFreq)) timing = 'Once daily in morning';
-    else if (/0-0-1/i.test(rawFreq) || /^HS$/i.test(rawFreq) || /BEDTIME|NIGHT/i.test(rawFreq)) timing = 'At bedtime (Night)';
-    else if (/ASNEEDED|PRN|SOS/i.test(rawFreq)) timing = 'As needed (SOS)';
-    s = s.replace(freqM[0], ' ').trim();
-  }
-
+  // 1. Instructions in parentheses
   let instructions = '';
   const parenM = s.match(/\(([^)]+)\)/);
   if (parenM) {
@@ -555,30 +520,138 @@ function cleanMedicineLine(line) {
     s = s.replace(parenM[0], ' ').trim();
   }
 
-  const foodM = s.match(/\b((?:(?:in\s+the\s+)?(?:morning|afternoon|evening|night)\s+)?(?:after\s+(?:food|meals|breakfast|lunch|dinner)|before\s+(?:food|meals|breakfast|lunch|dinner)|with\s+(?:food|meals)|on\s+empty\s+stomach|empty\s+stomach|at\s+bedtime|in\s+case\s+of\s+[a-z]+))\b/i);
+  // 2. Duration extraction
+  let duration = '';
+  const lifelongM = s.match(/\b(?:to\s+continue\s+)?lifelong\b/i);
+  if (lifelongM) {
+    duration = 'Lifelong';
+    s = s.replace(lifelongM[0], ' ').trim();
+  }
+
+  if (!duration) {
+    const medFractionDurM = s.match(/\bx\s*([0-9]+)\s*\/\s*([0-9]+)\b/i);
+    if (medFractionDurM) {
+      const num = parseInt(medFractionDurM[1], 10);
+      const denom = parseInt(medFractionDurM[2], 10);
+      if (denom === 7) duration = `For ${num} day${num > 1 ? 's' : ''}`;
+      else if (denom === 12 || denom === 52) duration = `For ${num} month${num > 1 ? 's' : ''}`;
+      else duration = `For ${num} days`;
+      s = s.replace(medFractionDurM[0], ' ').trim();
+    }
+  }
+
+  if (!duration) {
+    const durM = s.match(/\b(?:FOR\s+|X\s*)?([0-9]+\s*(?:DAYS?|WEEKS?|MONTHS?|YEARS?))\b/i);
+    if (durM) {
+      duration = `For ${durM[1].trim()}`;
+      s = s.replace(durM[0], ' ').trim();
+    }
+  }
+
+  // 3. Tapering schedule
+  const taperM = s.match(/\b(then\s+[0-9]+\s*mg\s+.*?(?:then\s+stop|stop))\b/i);
+  if (taperM) {
+    const taperText = `Taper: ${taperM[1].trim()}`;
+    instructions = instructions ? `${instructions}; ${taperText}` : taperText;
+    s = s.replace(taperM[0], ' ').trim();
+  }
+
+  // 4. Timing / Frequency
+  let timing = 'Once daily';
+  const freqDetailedM = s.match(/\b(once\s+daily\s+in\s+the\s+morning|once\s+daily\s+at\s+night|once\s+daily\s+in\s+morning|twice\s+daily\s+in\s+morning\s+and\s+night|twice\s+daily|thrice\s+daily|three\s+times\s+a\s+day|at\s+bed\s*time|at\s+night|in\s+the\s+morning|in\s+morning|as\s+needed|every\s+[0-9]+\s+hours?)\b/i);
+  const freqCodeM = !freqDetailedM ? (s.match(/\b([0-1]\s*[-–]\s*[0-1]\s*[-–]\s*[0-1])\b/) || s.match(/\b(OD|BD|TDS|QID|HS|PRN|SOS)\b/)) : null;
+
+  if (freqDetailedM) {
+    const rawF = freqDetailedM[1].toLowerCase();
+    if (rawF.includes('in the morning') || rawF.includes('in morning')) {
+      timing = 'Once daily in morning';
+    } else if (rawF.includes('at night') || rawF.includes('bedtime')) {
+      timing = 'At bedtime (Night)';
+    } else if (rawF.includes('twice')) {
+      timing = 'Twice daily (Morning & Night)';
+    } else if (rawF.includes('thrice') || rawF.includes('three times')) {
+      timing = 'Three times a day (Morning, Afternoon & Night)';
+    } else if (rawF.includes('as needed')) {
+      timing = 'As needed (SOS)';
+    } else {
+      timing = 'Once daily';
+    }
+    s = s.replace(freqDetailedM[0], ' ').trim();
+  } else if (freqCodeM) {
+    const code = freqCodeM[1].trim().replace(/\s+/g, '');
+    if (/1-0-1/i.test(code) || /^BD$/i.test(code)) timing = 'Twice daily (Morning & Night)';
+    else if (/1-1-1/i.test(code) || /^TDS$/i.test(code)) timing = 'Three times a day (Morning, Afternoon & Night)';
+    else if (/1-0-0/i.test(code) || /^OD$/i.test(code)) timing = 'Once daily in morning';
+    else if (/0-0-1/i.test(code) || /^HS$/i.test(code)) timing = 'At bedtime (Night)';
+    else if (/ASNEEDED|PRN|SOS/i.test(code)) timing = 'As needed (SOS)';
+    s = s.replace(freqCodeM[0], ' ').trim();
+  }
+
+  // 5. Dosage extraction
+  let dose = '';
+  if (doseM) {
+    dose = doseM[1].trim();
+    s = s.replace(doseM[0], ' ').trim();
+  }
+  if (puffsM) {
+    dose = dose ? `${dose} (${puffsM[1].trim()})` : puffsM[1].trim();
+    s = s.replace(puffsM[0], ' ').trim();
+  }
+  if (!dose && numDoseM) {
+    dose = numDoseM[2] + 'mg';
+    s = s.replace(numDoseM[0], numDoseM[1]).trim();
+  }
+
+  // 6. Food and condition instructions
+  const foodM = s.match(/\b((?:with|after|before|on)\s+(?:evening\s+meal|breakfast|lunch|dinner|meals|food|empty\s+stomach))\b/i);
   if (foodM) {
-    const foodTxt = foodM[1].trim();
-    instructions = instructions ? `${instructions}; ${foodTxt}` : foodTxt;
+    const extra = foodM[1].trim();
+    instructions = instructions ? `${instructions}; ${extra}` : extra;
     s = s.replace(foodM[0], ' ').trim();
   }
 
-  let name = s.replace(/[\(\)\,\;\:\-\–\—\.]+/g, ' ').replace(/\s+/g, ' ').trim();
-  if (medType && !name.toUpperCase().startsWith(medType)) {
+  const condM = s.match(/\b(for\s+[a-z]+(?:\s+(?:or|and)\s+[a-z]+)*)\b/i);
+  if (condM) {
+    const extra = condM[1].trim();
+    instructions = instructions ? `${instructions}; ${extra}` : extra;
+    s = s.replace(condM[0], ' ').trim();
+  }
+
+  const maxM = s.match(/\b(max\s+[0-9]+\s+[a-z\/]+)\b/i);
+  if (maxM) {
+    const extra = maxM[1].trim();
+    instructions = instructions ? `${instructions}; ${extra}` : extra;
+    s = s.replace(maxM[0], ' ').trim();
+  }
+
+  // 7. Clean up name
+  let name = s
+    .replace(/^Tablet\s+/i, 'Tablet ')
+    .replace(/^Tab\.?\s+/i, 'Tab. ')
+    .replace(/^Capsule\s+/i, 'Capsule ')
+    .replace(/^Cap\.?\s+/i, 'Cap. ')
+    .replace(/^Syrup\s+/i, 'Syrup ')
+    .replace(/^Syp\.?\s+/i, 'Syp. ')
+    .replace(/^Injection\s+/i, 'Injection ')
+    .replace(/^Inj\.?\s+/i, 'Inj. ')
+    .replace(/^MDI\s+/i, 'MDI ')
+    .replace(/^T\.\s*/i, 'Tab. ')
+    .replace(/[\(\)\,\;\:\-\–\—\.]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (medType && !name.toLowerCase().startsWith(medType.toLowerCase()) && !name.toLowerCase().startsWith('tab')) {
     name = `${medType} ${name}`;
   }
 
   if (!name || name.length < 2) return null;
-
-  if (!instructions) {
-    instructions = 'Take as prescribed by attending physician';
-  }
 
   return {
     name: name.trim(),
     dose: dose || 'Standard dose',
     timing,
     duration: duration || 'Ongoing recovery course',
-    instructions: instructions.trim()
+    instructions: instructions.trim() || 'Take as prescribed by attending physician'
   };
 }
 
@@ -611,13 +684,19 @@ function extractAllMedicines(text) {
 
   const addMed = (m) => {
     if (!m || !m.name) return;
-    const norm = m.name.toLowerCase().replace(/^(?:tab\.?|cap\.?|syp\.?|inj\.?|oint\.?|susp\.?|inhaler\.?|drops?)\s+/i, '').replace(/[^a-z0-9]/g, '');
+    const norm = m.name.toLowerCase().replace(/^(?:tab\.?|tablet|cap\.?|capsule|syp\.?|syrup|inj\.?|injection|oint\.?|susp\.?|inhaler\.?|mdi|drops?)\s+/i, '').replace(/[^a-z0-9]/g, '');
     if (!norm || norm.length < 2 || seen.has(norm)) return;
     seen.add(norm);
     medicines.push(m);
   };
 
-  const lines = text.split(/\r?\n/);
+  // Find explicit prescription section e.g. "TREATMENT ADVISED ON DISCHARGE:", "Rx on discharge:", "DISCHARGE MEDICATIONS:"
+  const rxSectionRegex = /(?:TREATMENT\s+ADVISED\s+ON\s+DISCHARGE|Rx\s+on\s+discharge|Rx\s+at\s+discharge|DISCHARGE\s+MEDICATIONS?|MEDICATIONS\s+AT\s+DISCHARGE|TREATMENT\s+ON\s+DISCHARGE|Rx\s*:|MEDICATIONS\s*:|TREATMENT\s*:)([\s\S]*?)(?=(?:GENERAL\s+ADVICE|ADVICE\s*:|Adv\s*:|COME\s+BACK\s+TO|Review\s+SOS|REVIEW\s*:|F\/U\s*:|Diet\s*:|In\s+case\s+of\s+emergency|Dr\.|\n\s*\n\s*\n|$))/i;
+  const match = text.match(rxSectionRegex);
+
+  let targetText = match ? match[1] : text;
+
+  const lines = targetText.split(/\r?\n/);
   for (const line of lines) {
     const parsed = cleanMedicineLine(line);
     if (parsed) addMed(parsed);
@@ -691,7 +770,13 @@ function parseUniversalDocument(rawText, ocrLines = [], avgConfidence = 85) {
     fields.push(createField('address', 'Residential / Hospital Address', address, avgConfidence));
 
     // Patient Name
-    let patientName = getLabelVal(['Patient Name', 'Name of the Patient', 'Name of Patient', 'Pt Name', 'Name', 'Patient']);
+    let patientName = getLabelVal(['Patient Name', 'Name of the Patient', 'Name of Patient', 'Pt Name', 'Name', 'Patient', 'Pt']);
+    if (!patientName) {
+      const ptDirectMatch = text.match(/(?:^|[\r\n\|])\s*(?:Pt\.?|Patient)\s*[:\-\s]+([A-Za-z][A-Za-z\s\.\']{1,35}?)(?=\s*,\s*\d|\s+(?:Age|Gender|Sex|UHID|IP|DOA|DOD|\r?\n|$))/i);
+      if (ptDirectMatch) {
+        patientName = ptDirectMatch[1].trim();
+      }
+    }
     if (!patientName) {
       const titleMatch = text.match(/(?:^|[\r\n\|])\s*(?:Patient\s*Name|Name|Pt\.?\s*Name|Patient)?\s*[:\-\~\_\.\s]*\b(Mr\.?|Mrs\.?|Ms\.?|Master|Dr\.?|Sri\.?|Smt\.?)\s*([A-Za-z][A-Za-z\s\.\']{1,35}?)(?=\s+(?:Department|Dept|Speciality|Specialty|Consultant|Doctor|Surgeon|Physician|Age|Gender|Sex|Hospital|Ward|Bed|Room|Admission|UHID|IP|OP|\r?\n|~|\||\:|$))/i);
       if (titleMatch) {
@@ -730,12 +815,22 @@ function parseUniversalDocument(rawText, ocrLines = [], avgConfidence = 85) {
     }
     fields.push(createField('patientId', 'Patient ID / UHID', patientId, avgConfidence));
 
-    // Age: NEVER match obstetric ML- (marriage length) or child age
+    // Age & Gender (Support standard labels and clinical slash notation "54/F", "85/M")
     let age = '';
-    const ageVal = getLabelVal(['Age', 'Age / Gender', 'Age/Gender', 'Age / Sex', 'Age/Sex', 'AgelGender', 'Ago/Gender']);
-    if (ageVal) {
-      const m = ageVal.match(/\b([0-9]{1,3})\s*(?:Yrs?|Years?|y)?\b/i);
-      if (m) age = `${m[1]} Yrs`;
+    let gender = '';
+
+    const slashMatch = text.match(/\b([0-9]{1,3})\s*\/\s*(M|F|Male|Female)\b/i);
+    if (slashMatch) {
+      age = `${slashMatch[1]} Yrs`;
+      gender = /^m/i.test(slashMatch[2]) ? 'Male' : 'Female';
+    }
+
+    if (!age) {
+      const ageVal = getLabelVal(['Age', 'Age / Gender', 'Age/Gender', 'Age / Sex', 'Age/Sex', 'AgelGender', 'Ago/Gender']);
+      if (ageVal) {
+        const m = ageVal.match(/\b([0-9]{1,3})\s*(?:Yrs?|Years?|y)?\b/i);
+        if (m) age = `${m[1]} Yrs`;
+      }
     }
     if (!age) {
       const ageMatch = text.match(/(?:AgelGender|Ago\/Gender|Age\s*[\/\&]?\s*(?:Gender|Sex)|\bAge\b)\s*[:\.\+\-\s]*([0-9]{1,3})\s*(?:years?|yrs?|y)?\b/i);
@@ -743,16 +838,16 @@ function parseUniversalDocument(rawText, ocrLines = [], avgConfidence = 85) {
     }
     fields.push(createField('age', 'Patient Age / DOB', age, avgConfidence));
 
-    // Gender & Title Inference (Mrs. / Ms. / Smt. -> strictly Female)
-    let gender = '';
-    if (/\b(?:Mrs\.?|Ms\.?|Smt\.?)\b/i.test(patientName || text)) {
-      gender = 'Female';
-    } else if (/\b(?:Mr\.?|Sri\.?)\b/i.test(patientName || text)) {
-      gender = 'Male';
-    } else {
-      const genVal = getLabelVal(['Gender', 'Sex', 'Age / Gender', 'Age/Gender', 'Age / Sex', 'Age/Sex', 'AgelGender', 'Ago/Gender']);
-      if (/female/i.test(genVal)) gender = 'Female';
-      else if (/male/i.test(genVal) && !/baby/i.test(genVal)) gender = 'Male';
+    if (!gender) {
+      if (/\b(?:Mrs\.?|Ms\.?|Smt\.?)\b/i.test(patientName || text)) {
+        gender = 'Female';
+      } else if (/\b(?:Mr\.?|Sri\.?)\b/i.test(patientName || text)) {
+        gender = 'Male';
+      } else {
+        const genVal = getLabelVal(['Gender', 'Sex', 'Age / Gender', 'Age/Gender', 'Age / Sex', 'Age/Sex', 'AgelGender', 'Ago/Gender']);
+        if (/female/i.test(genVal)) gender = 'Female';
+        else if (/male/i.test(genVal) && !/baby/i.test(genVal)) gender = 'Male';
+      }
     }
     if (!gender) {
       const mGen = text.match(/(?:AgelGender|Age\/Gender|Gender|Sex)\s*[:\.\+\s]*(?:\d+\s*(?:Yrs|Years)?\s*[\/\s]+)?(Female|Male)/i);
@@ -776,14 +871,14 @@ function parseUniversalDocument(rawText, ocrLines = [], avgConfidence = 85) {
     }
     fields.push(createField('wardBed', 'Ward & Bed Details', wardBed, avgConfidence));
 
-    // Admission Date
+    // Admission Date (Numeric or Month-name format like 13-Mar-26 or 28 Mar 2026)
     let admissionDate = getLabelVal(['Admission dt/tm', 'Admission Dt/Tm', 'Admission Dt', 'Admission Date', 'Date of Admission', 'DOA']);
     if (admissionDate) {
-      const dMatch = admissionDate.match(/\b([0-9]{1,2}[\-\/\.][0-9]{1,2}[\-\/\.][0-9]{2,4})\b/);
+      const dMatch = admissionDate.match(/\b([0-9]{1,2}[\-\s](?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\-\s][0-9]{2,4}|[0-9]{1,2}[\-\/.][0-9]{1,2}[\-\/.][0-9]{2,4})\b/i);
       if (dMatch) admissionDate = dMatch[1];
     }
     if (!admissionDate) {
-      const admMatch = text.match(/(?:Admission\s*(?:dt\/tm|Date)|Date\s*of\s*Admission|DOA)\s*[^A-Za-z0-9\n]{0,5}\s*([0-9]{1,2}[\-\/\.][0-9]{1,2}[\-\/\.][0-9]{2,4})/i);
+      const admMatch = text.match(/(?:Admission\s*(?:dt\/tm|Date|Dt)|Date\s*of\s*Admission|DOA)\s*[:\.\-\s]*([0-9]{1,2}[\-\s](?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\-\s][0-9]{2,4}|[0-9]{1,2}[\-\/.][0-9]{1,2}[\-\/.][0-9]{2,4})/i);
       if (admMatch) admissionDate = admMatch[1].trim();
     }
     fields.push(createField('admissionDate', 'Admission Date', admissionDate, avgConfidence));
@@ -791,11 +886,11 @@ function parseUniversalDocument(rawText, ocrLines = [], avgConfidence = 85) {
     // Discharge Date
     let dischargeDate = getLabelVal(['Discharge Dt/Tm', 'Discharge Dt', 'Discharge Date', 'Date of Discharge', 'DOD']);
     if (dischargeDate) {
-      const dMatch = dischargeDate.match(/\b([0-9]{1,2}[\-\/\.][0-9]{1,2}[\-\/\.][0-9]{2,4})\b/);
+      const dMatch = dischargeDate.match(/\b([0-9]{1,2}[\-\s](?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\-\s][0-9]{2,4}|[0-9]{1,2}[\-\/.][0-9]{1,2}[\-\/.][0-9]{2,4})\b/i);
       if (dMatch) dischargeDate = dMatch[1];
     }
     if (!dischargeDate) {
-      const disMatch = text.match(/(?:Discharge\s*(?:Dt|Date)|Date\s*of\s*Discharge|DOD)\s*[^A-Za-z0-9\n]{0,5}\s*([0-9]{1,2}[\-\/\.][0-9]{1,2}[\-\/\.][0-9]{2,4})/i);
+      const disMatch = text.match(/(?:Discharge\s*(?:Dt|Date)|Date\s*of\s*Discharge|DOD)\s*[:\.\-\s]*([0-9]{1,2}[\-\s](?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\-\s][0-9]{2,4}|[0-9]{1,2}[\-\/.][0-9]{1,2}[\-\/.][0-9]{2,4})/i);
       if (disMatch) dischargeDate = disMatch[1].trim();
     }
     fields.push(createField('dischargeDate', 'Discharge Date', dischargeDate, avgConfidence));
@@ -831,17 +926,21 @@ function parseUniversalDocument(rawText, ocrLines = [], avgConfidence = 85) {
     fields.push(createField('reasonForAdmission', 'Reason for Admission / Complaints', reasonForAdmission, avgConfidence));
 
     // Primary Diagnosis
-    let diagnosis = getLabelVal(['Primary Diagnosis', 'Final Diagnosis', 'Diagnosis', 'Provisional Diagnosis']);
+    let diagnosis = getLabelVal(['Primary Diagnosis', 'Final Diagnosis', 'Diagnosis', 'Provisional Diagnosis', 'Dx']);
     if (!diagnosis) {
       const hasCAD = /Coronary\s*artery\s*disease/i.test(text);
       const hasCABG = /Coronary\s*Artery\s*Bypass\s*Grafting/i.test(text) || /CABG/i.test(text);
       if (hasCAD && hasCABG) {
         diagnosis = 'Coronary Artery Disease (CAD multi-vessel) • Status post Coronary Artery Bypass Grafting (CABG x 3: LIMA to LAD, SVG to OM, SVG to RCA)';
       } else {
-        const cadMatch = text.match(/(Coronary\s*artery\s*disease[^\r\n]*|Status\s*post\s*Coronary[^\r\n]*)/i);
-        const diagBlock = text.match(/(?:Final\s*Diagnosis|Primary\s*Diagnosis|Diagnosis)\s*[:\-\|\s]*([^\r\n]+)/i);
-        if (cadMatch) diagnosis = cadMatch[1].trim();
-        else if (diagBlock) diagnosis = diagBlock[1].trim();
+        const dxBlock = text.match(/(?:Final\s*Diagnosis|Primary\s*Diagnosis|Diagnosis|\bDx\b)\s*[:\-\|\s]*([\s\S]*?)(?=(?:\r?\n\s*\r?\n|H\/o|History|Course|Investigation|Ix|Condn|Rx|Treatment|$))/i);
+        if (dxBlock) {
+          diagnosis = dxBlock[1]
+            .split(/\r?\n/)
+            .map(l => l.replace(/^[\s\-\s*\•\d\.]+\s*/, '').trim())
+            .filter(Boolean)
+            .join('; ');
+        }
       }
     }
     fields.push(createField('diagnosis', 'Primary Diagnosis', diagnosis, avgConfidence));
