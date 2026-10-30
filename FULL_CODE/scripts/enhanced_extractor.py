@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Enhanced extractor for H2 Discharge Summary to Care Plan (100% target version)."""
+"""Enhanced extractor for H2 Discharge Summary to Care Plan with Telugu translation."""
 import re
 from datetime import date, datetime
 from pathlib import Path
@@ -139,11 +139,11 @@ def extract_dose(line):
             unit = "tablet" if val == "1" else "tablets"
         return f"{val} {unit}"
 
-    # 10. Bare numbers after brand name e.g. "Flagyl 400", "Calpol 650", "Pan 40", "Augmentin 625", "Concor 5", "Amaryl 1", "Thyronorm 50"
+    # 10. Bare numbers after brand name (include all common hospital strengths: 1 to 1000 mg/mcg)
     m_bare = re.search(r"\b(?:[A-Za-z]+)\s+(\d{1,4})\b", line)
     if m_bare:
         num = int(m_bare.group(1))
-        if num in (1, 2, 4, 5, 10, 20, 25, 40, 50, 75, 100, 150, 200, 250, 300, 400, 500, 625, 650, 850, 1000):
+        if num in (1, 2, 2.5, 4, 5, 10, 12.5, 20, 25, 40, 50, 60, 75, 80, 90, 100, 120, 150, 160, 200, 250, 300, 400, 500, 625, 650, 850, 1000):
             unit = "mcg" if any(k in line.lower() for k in ["thyro", "eltroxin", "levo"]) else "mg"
             return f"{num} {unit}"
 
@@ -176,25 +176,34 @@ def parse_med_line(line):
     freq = ""
     if re.search(r"\bat (?:bed ?time|night)\b|nightly\b|\bHS\b|\b0-0-1\b", line, re.I):
         freq = "HS"
-    elif re.search(r"\bbefore meals\b|\bTDS\b|\b1-1-1\b", line, re.I):
+    elif re.search(r"\bbefore meals\b|\bTDS\b|\b1-1-1\b|\bthree times daily\b|\bthrice daily\b", line, re.I):
         freq = "TDS"
     elif re.search(r"\bbreakfast\s*(&|and)\s*dinner\b|\bmorning\s*(&|and)\s*night\b|\bBD\b|\b1-0-1\b|\btwice daily\b", line, re.I):
         freq = "BD"
-    elif re.search(r"\bonce daily\b|\bOD\b|\b1-0-0\b", line, re.I):
+    elif re.search(r"\bonce daily\b|\bOD\b|\b1-0-0\b|[½\d/.]+-0-0\b", line, re.I):
         freq = "OD"
     elif re.search(r"\b(SOS|PRN|as needed)\b", line, re.I):
         freq = "SOS"
-    elif re.search(r"\bweekly\b|once a week", line, re.I):
+    elif re.search(r"\bweekly\b|once a week|once weekly|\b1\s*/\s*week\b|\b1\s*/\s*wk\b", line, re.I):
         freq = "WEEKLY"
     else:
         f = FREQ_RE.search(line)
         if f: freq = f.group(0).upper()
 
     # Duration
-    du = DUR_RE.search(line)
-    duration = du.group(0) if du else ""
+    if re.search(r"\bthen\s+\d+\s*(?:mg|mcg|tabs?|tablets?|units?)\b", line, re.I):
+        durs = re.findall(r"(?:for\s+|x\s*)?\d+(?:\.\d+)?\s*(?:days?|d\b|weeks?|wks?|w\b|/7|/52)", line, re.I)
+        if len(durs) > 1:
+            duration = ", then ".join(durs)
+        else:
+            du = DUR_RE.search(line)
+            duration = du.group(0) if du else ""
+    else:
+        du = DUR_RE.search(line)
+        duration = du.group(0) if du else ""
+
     if not duration:
-        if "lifelong" in line.lower() or "life-long" in line.lower(): duration = "lifelong"
+        if "lifelong" in line.lower() or "life-long" in line.lower() or "long term" in line.lower(): duration = "lifelong"
         elif "till" in line.lower() and "review" in line.lower(): duration = "till next review"
 
     # Timing
@@ -272,39 +281,47 @@ def extract_from_summary(text):
     )
 
 def generate_english_text(cp):
-    lines = ["MY DISCHARGE CARE PLAN - CHANDRAPURI DISTRICT HOSPITAL\n"]
-    lines.append("YOUR MEDICINES (Take exactly as written below):")
+    lines = [
+        "CHANDRAPURI DISTRICT HOSPITAL - PATIENT DISCHARGE CARE INSTRUCTIONS",
+        "Please follow this medication and recovery schedule carefully at home.\n",
+        "PRESCRIBED MEDICINES (Take exactly as directed):"
+    ]
     for i, m in enumerate(cp["medicines"], 1):
         nm = m.get("name") or "Medicine"
         ds = m.get("dose") or ""
         fr = m.get("frequency") or "as directed"
         dur = m.get("duration") or "till review"
         tim = m.get("timing") or ""
-        timing_str = f", {tim}" if tim else ""
-        lines.append(f"{i}. {nm} {ds} - Take {fr}{timing_str}, duration: {dur}.")
+        timing_str = f" ({tim})" if tim else ""
+        lines.append(f"{i}. {nm} {ds} -> Schedule: {fr}{timing_str}, Duration: {dur}.")
 
     if cp.get("stop_medicines"):
-        lines.append("\nMEDICINES TO STOP (Do not take these anymore):")
+        lines.append("\nDISCONTINUED MEDICATIONS (Do NOT take these anymore):")
         for s in cp["stop_medicines"]:
-            lines.append(f"- STOP {s}. Please discontinue this medicine immediately.")
+            lines.append(f"- Please stop {s} completely; do not consume it.")
 
     if cp.get("warning_signs"):
-        lines.append("\nEMERGENCY WARNING SIGNS (Visit emergency immediately if you notice):")
+        lines.append("\nCRITICAL SYMPTOMS (Contact emergency or hospital casualty immediately if you experience):")
         for w in cp["warning_signs"][:4]:
-            lines.append(f"- Danger sign: {w}")
+            words = w.split()
+            short_w = " ".join(words[:8]) if len(words) > 8 else w
+            lines.append(f"- Warning symptom to report: {short_w}")
 
     if cp.get("follow_ups"):
-        lines.append("\nYOUR NEXT HOSPITAL VISITS:")
+        lines.append("\nUPCOMING DOCTOR VISITS:")
         for fu in cp["follow_ups"]:
-            lines.append(f"- Scheduled visit on date: {fu['date']} at OPD for check-up.")
+            lines.append(f"- Scheduled review on date: {fu['date']} at hospital OPD.")
 
-    lines.append("\nIn case of any emergency, go to Casualty / ER of Chandrapuri District Hospital (open 24 hours).")
+    lines.append("\nFor medical emergencies, visit Chandrapuri Hospital Casualty immediately (open 24/7).")
+    lines.append("Always consult your doctor or healthcare worker before making any medication changes.")
     return "\n".join(lines)
 
 def generate_hindi_text(cp):
-    lines = ["मेरी देखभाल योजना - चंद्रपुरी जिला अस्पताल\n"]
-    lines.append("यह आपकी अस्पताल से छुट्टी के बाद की देखभाल योजना है। कृपया अपनी दवाइयाँ नियमित रूप से सही समय पर लें।\n")
-    lines.append("आपकी दवाइयाँ (ठीक वैसे ही लें जैसा नीचे लिखा है):")
+    lines = [
+        "मेरी देखभाल योजना - चंद्रपुरी जिला अस्पताल",
+        "यह आपकी अस्पताल से छुट्टी के बाद की देखभाल योजना है। कृपया अपनी दवाइयाँ नियमित रूप से सही समय पर लें।\n",
+        "आपकी दवाइयाँ (ठीक वैसे ही लें जैसा नीचे लिखा है):"
+    ]
     for i, m in enumerate(cp["medicines"], 1):
         nm = m.get("name") or "दवा"
         ds = m.get("dose") or ""
@@ -320,7 +337,9 @@ def generate_hindi_text(cp):
     if cp.get("warning_signs"):
         lines.append("\nखतरे के संकेत (इनमें से कोई भी समस्या होने पर बिना देर किए तुरंत अस्पताल जाएँ):")
         for w in cp["warning_signs"][:4]:
-            lines.append(f"- {w} होने पर तुरंत डॉक्टर से संपर्क करें या अस्पताल जाएँ।")
+            words = w.split()
+            short_w = " ".join(words[:8]) if len(words) > 8 else w
+            lines.append(f"- {short_w} होने पर तुरंत डॉक्टर से संपर्क करें या अस्पताल जाएँ।")
 
     if cp.get("follow_ups"):
         lines.append("\nअस्पताल में अगली जाँच की महत्वपूर्ण तारीखें:")
@@ -329,4 +348,53 @@ def generate_hindi_text(cp):
 
     lines.append("\nआपातकालीन स्थिति में तुरंत चंद्रपुरी जिला अस्पताल की इमरजेंसी कैजुअल्टी में जाएँ (यह सेवा 24 घंटे उपलब्ध है)।")
     lines.append("यदि आपको कोई भी संदेह हो तो कोई भी दवा बदलने से पहले अपने डॉक्टर या नर्स से सलाह अवश्य लें।")
+    return "\n".join(lines)
+
+
+def generate_telugu_text(cp):
+    lines = [
+        "డిశ్చార్జ్ సంరక్షణ ప్రణాళిక - చంద్రపురి జిల్లా ఆసుపత్రి",
+        "దయచేసి ఈ క్రింది సూచించిన మందులు మరియు సలహాలను క్రమం తప్పకుండా పాటించండి.\n",
+        "మీరు తీసుకోవలసిన మందుల వివరాలు:"
+    ]
+    for i, m in enumerate(cp["medicines"], 1):
+        nm = m.get("name") or "Medicine"
+        ds = m.get("dose") or ""
+        fr = m.get("frequency") or "రోజుకు"
+        dur = m.get("duration") or "వరకు"
+        tim = m.get("timing") or ""
+        
+        tim_te = ""
+        if "after" in tim.lower():
+            tim_te = "ఆహారం తిన్న తర్వాత"
+        elif "before" in tim.lower():
+            tim_te = "ఆహారానికి ముందు"
+        elif "empty" in tim.lower():
+            tim_te = "ఖాళీ కడుపుతో ముందు"
+        elif "bed" in tim.lower() or "night" in tim.lower():
+            tim_te = "రాత్రి పడుకునే ముందు"
+            
+        timing_str = f" ({tim_te})" if tim_te else ""
+        lines.append(f"{i}. {nm} {ds} - రోజుకు {fr}{timing_str} సమయానికి తీసుకోండి, {dur} వరకు క్రమం తప్పకుండా వాడాలి.")
+
+    if cp.get("stop_medicines"):
+        lines.append("\nఈ మందులను వెంటనే ఆపివేయండి (ఇకపై అస్సలు వాడవద్దు):")
+        for s in cp["stop_medicines"]:
+            lines.append(f"- {s} మందును వెంటనే ఆపివేయండి; ఈ మందు ఇకపై అవసరం లేదు మరియు వాడకూడదు.")
+
+    if cp.get("warning_signs"):
+        lines.append("\nప్రమాదకరమైన అత్యవసర సంకేతాలు (ఈ క్రింది లక్షణాలు కనిపిస్తే వెంటనే ఆసుపత్రికి రండి):")
+        for w in cp["warning_signs"][:4]:
+            words = w.split()
+            short_w = " ".join(words[:8]) if len(words) > 8 else w
+            lines.append(f"- ప్రమాదకర లక్షణం: {short_w} కనిపిస్తే వెంటనే డాక్టర్‌ను సంప్రదించండి లేదా ఎమర్జెన్సీకి వెళ్లండి.")
+
+    if cp.get("follow_ups"):
+        lines.append("\nతదుపరి వైద్య పరీక్షల తేదీలు (ఆసుపత్రికి తిరిగి రావాల్సిన తేదీలు):")
+        for fu in cp["follow_ups"]:
+            date_val = fu["date"]
+            lines.append(f"- తదుపరి పరీక్ష తేదీ: {date_val} నాడు ఆసుపత్రి OPD లో పరీక్షల నివేదికలతో హాజరు కావాలి.")
+
+    lines.append("\nఏదైనా అత్యవసర పరిస్థితి ఉంటే వెంటనే చంద్రపురి జిల్లా ఆసుపత్రి ఎమర్జెన్సీ క్యాజువాలిటీకి వెళ్లండి (24 గంటలు అందుబాటులో ఉంటుంది).")
+    lines.append("మందుల వాడకంలో ఏవైనా సందేహాలు ఉంటే మార్పులు చేసే ముందు మీ డాక్టర్ లేదా నర్సును సంప్రదించండి.")
     return "\n".join(lines)
