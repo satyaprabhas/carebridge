@@ -10,13 +10,14 @@
 
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { execSync } = require('child_process');
 
 const teamId = process.argv[2] || 'TEAM_CAREBRIDGE';
 const psId = process.argv[3] || 'H2S';
 const zipBaseName = `${teamId}_${psId}`;
 const rootDir = path.resolve(__dirname, '../..');
-const outZipPath = path.join(rootDir, '..', `${zipBaseName}.zip`);
+const outZipPath = path.join(os.tmpdir(), `${zipBaseName}.zip`);
 
 console.log('====================================================');
 console.log(` PACKAGING HACKATHON SUBMISSION: ${zipBaseName}.zip`);
@@ -60,7 +61,7 @@ try {
 }
 
 console.log('\n[3/3] Archiving into submission ZIP using PowerShell Compress-Archive...');
-const tempDir = path.join(rootDir, '..', `_temp_submission_${Date.now()}`);
+const tempDir = path.join(os.tmpdir(), `_temp_submission_${Date.now()}`);
 const packageDir = path.join(tempDir, zipBaseName);
 
 try {
