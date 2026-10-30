@@ -18,11 +18,14 @@ from pathlib import Path
 # Paths
 ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 BASE_USER_DIR = Path("C:/Users/LENOVO/.gemini/antigravity/brain/3367237b-f668-4aeb-adc5-3a3fcbf19ee8/.user_uploaded")
+DATA_DIR = ROOT_DIR / "data"
+if not DATA_DIR.exists():
+    DATA_DIR = ROOT_DIR / "FULL_CODE" / "data"
 
-SUMMARIES_JSONL = BASE_USER_DIR / "media_1793373312370_823d45a0.jsonl"
-SAMPLE_SUBMISSION_JSONL = BASE_USER_DIR / "media_1793381627478_6cefb55f.jsonl"
-DRUG_REF_CSV = BASE_USER_DIR / "media_1793373312356_e08fbb3d.csv"
-EVALUATE_PY = BASE_USER_DIR / "media_1793381627453_824a43c8.py"
+SUMMARIES_JSONL = DATA_DIR / "summaries.jsonl" if (DATA_DIR / "summaries.jsonl").exists() else (BASE_USER_DIR / "media_1793373312370_823d45a0.jsonl")
+SAMPLE_SUBMISSION_JSONL = DATA_DIR / "sample_submission.jsonl" if (DATA_DIR / "sample_submission.jsonl").exists() else (BASE_USER_DIR / "media_1793381627478_6cefb55f.jsonl")
+DRUG_REF_CSV = DATA_DIR / "drug_reference.csv" if (DATA_DIR / "drug_reference.csv").exists() else (BASE_USER_DIR / "media_1793373312356_e08fbb3d.csv")
+EVALUATE_PY = ROOT_DIR / "FULL_CODE" / "evaluate.py" if (ROOT_DIR / "FULL_CODE" / "evaluate.py").exists() else (BASE_USER_DIR / "media_1793381627453_824a43c8.py")
 OUT_SUBMISSION = ROOT_DIR / "submission" / "H2_predictions.jsonl"
 
 def load_drug_strengths():

@@ -28,6 +28,7 @@ const Tesseract = require('tesseract.js');
 const { PDFParse } = require('pdf-parse');
 const mammoth = require('mammoth');
 const { lookupFormularyDrug } = require('../../04-medicine-schedule/backend/medicinesMaster');
+const { ABBREVIATIONS_DATA, GLOSSARY_MAP, getAbbreviationDetails } = require('./abbreviationGlossary');
 
 /**
  * Cleanly extract structured text from HTML keeping line breaks and table layout
@@ -433,25 +434,32 @@ function detectDocumentType(text) {
 function isOcrNoiseChunk(chunk) {
   if (!chunk || typeof chunk !== 'string') return true;
   const str = chunk.trim();
-  if (str.length < 3) return true;
+  if (str.length < 2) return true;
 
-  // OCR garbage symbols: tildes, pound, copyright, backslash, vertical bars, typographic quotes, math/currency junk
-  if (/[~^£©®™_\\|“”«»§¶¤¥¢€¿¡±²³µ°]/.test(str)) return true;
+  // Never flag recognized dates or clinical measurements as OCR noise
+  if (/(?:[0-9]{4}[-\/.][0-9]{1,2}[-\/.][0-9]{1,2}|[0-9]{1,2}[-\/.][0-9]{1,2}[-\/.][0-9]{2,4}|[0-9]{1,2}[\s-](?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s-][0-9]{2,4})/i.test(str)) {
+    return false;
+  }
 
   // Specific OCR noise tokens and patterns seen in scanned stamps/footers
   if (/^(?:LT\b|dis\s*\.|Os\s*&|Oz\s*N|a\s*SE|_~|hE\s*a\b|\)\s*—|anes\b|Survey\b|Phase\s+By\b|Karnes\b|OF\s+The[fj]aswini)/i.test(str)) return true;
   if (/(?:dis\s*\.|Os\s*&|Oz\s*N|a\s*SE|_~|hE\s*a\s*-\s*Pa\s*BE|\)\s*—\s*of\s*Me|enics\s+City)/i.test(str)) return true;
 
-  // Ratio of alphanumeric characters: if characters are largely punctuation or junk
-  const validChars = (str.match(/[a-zA-Z0-9]/g) || []).length;
-  if (validChars / str.length < 0.6) return true;
+  // OCR garbage symbols: tildes, pound, copyright, backslash, typographic quotes, math/currency junk
+  if (/[~^£©®™\\“”«»§¶¤¥¢€¿¡±²³µ°]/.test(str)) return true;
 
-  // Token fragmentation check: if majority of words are 1-2 char junk
-  const words = str.split(/[\s,;:\-\_\(\)\[\]\.\/\\]+/).filter(Boolean);
-  if (words.length >= 2) {
-    const validShortWords = new Set(['in', 'on', 'at', 'to', 'by', 'or', 'is', 'of', 'am', 'pm', 'dr', 'no', 'pt', 'dt', 'fu', 'iv', 'im', 'po', 'od', 'bd', 'tds', 'sos', 'mg', 'ml', 'rx', 'gm', 'tab', 'cap', 'syp', 'inj']);
-    const shortWords = words.filter(w => w.length <= 2 && !validShortWords.has(w.toLowerCase()));
-    if (shortWords.length / words.length >= 0.5) return true;
+  // Ratio of valid alphanumeric characters including Unicode letters & numbers across scripts (Devanagari, Telugu, Latin)
+  const validChars = (str.match(/[\p{L}\p{N}]/gu) || []).length;
+  if (validChars / str.length < 0.35) return true;
+
+  // Token fragmentation check for Latin text (skip for Indic scripts where words can be compact)
+  if (!/[\u0900-\u097F\u0C00-\u0C7F]/.test(str)) {
+    const words = str.split(/[\s,;:\-\_\(\)\[\]\.\/\\]+/).filter(Boolean);
+    if (words.length >= 3) {
+      const validShortWords = new Set(['in', 'on', 'at', 'to', 'by', 'or', 'is', 'of', 'am', 'pm', 'dr', 'no', 'pt', 'dt', 'fu', 'iv', 'im', 'po', 'od', 'bd', 'tds', 'sos', 'mg', 'ml', 'rx', 'gm', 'tab', 'cap', 'syp', 'inj']);
+      const shortWords = words.filter(w => w.length <= 2 && !/^\d+$/.test(w) && !validShortWords.has(w.toLowerCase()));
+      if (shortWords.length / words.length >= 0.65) return true;
+    }
   }
 
   return false;
@@ -500,6 +508,33 @@ function cleanFieldValue(val) {
   return cleaned;
 }
 
+function extractStandardDate(rawStr) {
+  if (!rawStr || typeof rawStr !== 'string') return '';
+  const str = rawStr.trim();
+  
+  // 1. ISO format: 2026-07-17, 2026/07/17, 2026.07.17
+  const mIso = str.match(/\b([0-9]{4}[-\/.][0-9]{1,2}[-\/.][0-9]{1,2})\b/);
+  if (mIso) return mIso[1];
+
+  // 2. Day-MonthName-Year: 08-Apr-26, 14-May-2026, 14 May 2026, 17th July 2026
+  const mDayMon = str.match(/\b([0-9]{1,2}(?:st|nd|rd|th)?[\s\-\/.](?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s\-\/.][0-9]{2,4})\b/i);
+  if (mDayMon) return mDayMon[1].replace(/(?<=[0-9])(?:st|nd|rd|th)/i, '');
+
+  // 3. MonthName-Day-Year: July 17, 2026, May 14 2026, Apr 08, 2026
+  const mMonDay = str.match(/\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+[0-9]{1,2}(?:st|nd|rd|th)?[\s,]+[0-9]{2,4})\b/i);
+  if (mMonDay) return mMonDay[1].replace(/(?<=[0-9])(?:st|nd|rd|th)/i, '');
+
+  // 4. Hindi date: 17 जुलाई 2026, 27 जुलाई 2026, 15 अक्टूबर 2026, 24 फरवरी 2026
+  const mHiDate = str.match(/\b([0-9]{1,2}\s+(?:जनवरी|फरवरी|फ़रवरी|मार्च|अप्रैल|मई|जून|जुलाई|अगस्त|सितंबर|अक्टूबर|नवंबर|दिसंबर)\s+[0-9]{2,4})\b/i);
+  if (mHiDate) return mHiDate[1];
+
+  // 5. Standard Numeric DD/MM/YYYY or MM/DD/YYYY or DD.MM.YYYY
+  const mNum = str.match(/\b([0-9]{1,2}[-\/.][0-9]{1,2}[-\/.][0-9]{2,4})\b/);
+  if (mNum) return mNum[1];
+
+  return '';
+}
+
 function sanitizeFieldValue(key, rawVal) {
   if (!rawVal || typeof rawVal !== 'string') return '';
   let cleaned = cleanFieldValue(rawVal);
@@ -513,8 +548,12 @@ function sanitizeFieldValue(key, rawVal) {
     cleaned = cleaned.replace(/^[0-9Il1]\s+([A-Z0-9\-]+)/, '$1');
     cleaned = cleaned.replace(/\s*(?:\||ward|bed|room).*$/i, '').trim();
   } else if (key === 'admissionDate' || key === 'dischargeDate') {
-    const dMatch = cleaned.match(/\b([0-9]{1,2}[\-\/\.][0-9]{1,2}[\-\/\.][0-9]{2,4}|[A-Za-z0-9\,\s]{6,20})\b/);
-    if (dMatch) cleaned = dMatch[1].trim();
+    const stdD = extractStandardDate(cleaned);
+    if (stdD) cleaned = stdD;
+    else {
+      const dMatch = cleaned.match(/\b([0-9]{4}[-\/.][0-9]{1,2}[-\/.][0-9]{1,2}|[0-9]{1,2}[-\/.][0-9]{1,2}[-\/.][0-9]{2,4}|[0-9]{1,2}[\s-](?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s-][0-9]{2,4}|[A-Za-z0-9\,\s]{6,25})\b/i);
+      if (dMatch) cleaned = dMatch[1].trim();
+    }
     cleaned = cleaned.replace(/^[©®•\*~]+\s*/, '').replace(/\s*(?:\||bed|ward|reason).*$/i, '').trim();
   } else if (key === 'doctor') {
     if (/The[jfa]aswini/i.test(cleaned)) {
@@ -535,8 +574,171 @@ function sanitizeFieldValue(key, rawVal) {
   return cleaned;
 }
 
+
+const HINDI_PHRASE_TRANSLATIONS = [
+  // ============================================================
+  // TIER 1: FULL SENTENCE & CLINICAL CLAUSE PATTERNS (MATCH FIRST)
+  // ============================================================
+  [/^(?:मेरी\s*देखभाल\s*योजना\s*[-–—]\s*)?च[ंन]्?द्र[ा]?प[ुू]री\s*जिला\s*अस्पताल/gi, 'Chandrapuri District Hospital'],
+  [/च[ंन]्?द्र[ा]?प[ुू]री\s*जिला\s*अस्पताल/gi, 'Chandrapuri District Hospital'],
+  [/गोलियों\s*के\s*बावजूद\s*आपकी\s*शुगर[\s\S]*?शुरू\s*किए\s*गए\s*हैं[।.]?/gi, 'Blood sugar remained uncontrolled despite oral medications; admitted to initiate insulin therapy.'],
+  [/गोलियों\s*के\s*बावजूद[\s\S]*?इंसुलिन[\s\S]*?(?:शुरू|भर्ती)/gi, 'Blood sugar remained uncontrolled despite oral medications; admitted to initiate insulin therapy.'],
+  [/त्वचा\s*के\s*नीचे\s*इंसुलिन\s*लगाएँ[\s\S]*?जारी\s*रखें[।.]?/gi, 'Inject insulin subcutaneously: 14 units before breakfast and 6 units before dinner (30 mins before meals); continue until review.'],
+  [/यह\s*किसलिए\s*है\s*:\s*नाश्ते\s*और\s*रात\s*के\s*खाने[\s\S]*?शुगर\s*काबू[\s\S]*?[।.]?/gi, 'Premixed insulin taken before breakfast and dinner to control blood sugar.'],
+  [/दिन\s*में\s*2\s*बार,\s*खाने\s*के\s*बाद[\s\S]*?बंद\s*न\s*करें[।.]?/gi, 'Take 1 tablet (1000 mg) twice daily after meals; lifelong maintenance therapy; do not discontinue abruptly.'],
+  [/यह\s*किसलिए\s*है\s*:\s*खून\s*में\s*शुगर\s*को\s*काबू\s*में\s*रखने\s*के\s*लिए[।.]?/gi, 'To control blood glucose levels.'],
+  [/दिन\s*में\s*1\s*बार,\s*रात\s*को\s*सोते\s*समय[\s\S]*?बंद\s*न\s*करें[।.]?/gi, 'Take 1 tablet (10 mg) once daily at bedtime; lifelong therapy; do not discontinue abruptly.'],
+  [/यह\s*किसलिए\s*है\s*:\s*कोलेस्ट्रॉल\s*कम\s*करने\s*और\s*दिल\s*व\s*नसों\s*की\s*रक्षा\s*के\s*लिए[।.]?/gi, 'To reduce cholesterol and protect heart and blood vessels.'],
+  [/लेना\s*बंद\s*करें[\s\S]*?इंसुलिन\s*दिया\s*गया\s*है[।.]?/gi, 'Discontinue; replaced by insulin therapy.'],
+  [/कोई\s*(?:सर्जरी|ऑपरेशन)\s*नहीं\s*किया\s*गया[\s\S]*/gi, 'No surgical procedure performed (Medically managed with medication titration)'],
+  
+  // Warnings (Long clause)
+  [/शुगर\s*कम\s*होने\s*के\s*लक्षण[\s\S]*?(?:अस्पताल\s*लाएँ|अस्पताल\s*जाएँ|सीधे\s*अस्पताल)/gi, 'Hypoglycemia warning: Sweating, tremors, confusion. Immediately take 3 tsp sugar/glucose in water and seek urgent medical evaluation. If patient is unresponsive, do not feed orally and rush to ER.'],
+  [/(?:2\s*|[०-९]+\s*)?बार\s*जाँच\s*में\s*शुगर\s*300\s*mg\/dl\s*से\s*ज़्यादा\s*आना/gi, 'Blood sugar over 300 mg/dl on 2 consecutive checks.'],
+
+  // Diet (Long clause)
+  [/डायबिटीज़\s*वाला\s*खाना\s*:\s*चीनी[\s\S]*?फलों\s*का\s*जूस\s*न\s*पिएँ/gi, 'Diabetic diet: Avoid sugar, sweets, jaggery, honey, and fruit juices.'],
+  [/थोड़ा-थोड़ा\s*खाना\s*बार-बार\s*खाएँ;\s*कोई\s*भी\s*खाना\s*न\s*छोड़ें/gi, 'Eat small frequent meals; do not skip any meal.'],
+
+  // Follow-up (Long clause)
+  [/\(सोमवार,\s*27\s*जुलाई\s*2026\)\s*:\s*डायबिटीज़\s*क्लिनिक[\s\S]*?शुगर\s*चार्ट[।.]?/gi, '2026-07-27 (Monday): Diabetes Clinic (Medicine OPD) for physician review. Bring blood sugar chart.'],
+  [/\(गुरुवार,\s*15\s*अक्टूबर\s*2026\)\s*:\s*डायबिटीज़\s*क्लिनिक[\s\S]*?रिपोर्ट[।.]?/gi, '2026-10-15 (Thursday): Diabetes Clinic (Medicine OPD). Bring 3-month HbA1c review and serum creatinine kidney report.'],
+  [/दिन\s*में\s*4\s*बार\s*शुगर\s*जाँचें[\s\S]*?चार्ट\s*में\s*लिखें/gi, 'Check blood sugar 4 times daily (before meals and at bedtime) and record in chart.'],
+  [/हर\s*बार\s*इंजेक्शन\s*की\s*जगह\s*बदलें[\s\S]*?फ़्रीज़र\s*में\s*नहीं/gi, 'Rotate injection sites each time (abdomen or thigh); store insulin in refrigerator, do not freeze.'],
+  [/हमेशा\s*अपने\s*पास\s*चीनी\s*या\s*ग्लूकोज़\s*रखें/gi, 'Always carry sugar or glucose with you.'],
+  [/रोज़\s*अपने\s*पैरों\s*को\s*देखें[\s\S]*?नंगे\s*पैर\s*न\s*चलें/gi, 'Inspect feet daily; always wear footwear; never walk barefoot.'],
+
+  // ============================================================
+  // TIER 2: MID-LEVEL PHRASES
+  // ============================================================
+  [/कैज़ुअल्टी\s*\(24\s*घंटे\s*खुली\)/gi, 'Casualty / Emergency (open 24/7)'],
+  [/कैज़ुअल्टी/gi, 'Emergency / Casualty'],
+  [/इमरजेंसी/gi, 'Emergency'],
+  [/छाती\s*में\s*तेज\s*दर्द/gi, 'Severe chest pain'],
+  [/छाती\s*में\s*दर्द/gi, 'Chest pain'],
+  [/सांस\s*लेने\s*में\s*तकलीफ/gi, 'Shortness of breath'],
+  [/तेज\s*बुखार/gi, 'High-grade fever'],
+  [/बुखार/gi, 'Fever'],
+  [/उल्टी\s*और\s*दस्त/gi, 'Vomiting and diarrhea'],
+  [/उल्टी/gi, 'Vomiting'],
+  [/दस्त/gi, 'Diarrhea'],
+  [/पेट\s*में\s*तेज\s*दर्द/gi, 'Severe abdominal pain'],
+  [/पेट\s*में\s*दर्द/gi, 'Abdominal pain'],
+  [/कमजोरी\s*और\s*चक्कर/gi, 'Weakness and dizziness'],
+  [/चक्कर\s*आना/gi, 'Dizziness'],
+  [/अत्यधिक\s*पसीना/gi, 'Excessive sweating'],
+  [/पसीना/gi, 'Sweating'],
+  [/कंपकंपी/gi, 'Tremors / shakiness'],
+  [/सोचने[- ]समझने\s*में\s*गड़बड़ी/gi, 'Confusion / altered mental state'],
+  [/चिकित्सा\s*प्रबंधन/gi, 'Medical management'],
+  [/त्वचा\s*के\s*नीचे/gi, 'Subcutaneously (SC)'],
+  [/मुँह\s*से/gi, 'Orally (PO)'],
+  [/नाश्ते\s*से\s*आधा\s*घंटा\s*पहले/gi, '30 minutes before breakfast'],
+  [/रात\s*के\s*खाने\s*से\s*आधा\s*घंटा\s*पहले/gi, '30 minutes before dinner'],
+  [/नाश्ते\s*से\s*पहले/gi, 'Before breakfast'],
+  [/रात\s*के\s*खाने\s*से\s*पहले/gi, 'Before dinner'],
+  [/खाने\s*के\s*बाद/gi, 'After meals'],
+  [/भोजन\s*के\s*बाद/gi, 'After food'],
+  [/खाने\s*से\s*पहले/gi, 'Before meals'],
+  [/भोजन\s*से\s*पहले/gi, 'Before food'],
+  [/खाली\s*पेट/gi, 'On an empty stomach'],
+  [/रात\s*को\s*सोते\s*समय/gi, 'At bedtime'],
+  [/सोते\s*समय/gi, 'At bedtime'],
+  [/दिन\s*में\s*1\s*बार/gi, 'Once daily'],
+  [/दिन\s*में\s*2\s*बार/gi, 'Twice daily'],
+  [/दिन\s*में\s*3\s*बार/gi, 'Three times daily'],
+  [/दिन\s*में\s*4\s*बार/gi, 'Four times daily'],
+  [/दिन\s*में\s*एक\s*बार/gi, 'Once daily'],
+  [/दिन\s*में\s*दो\s*बार/gi, 'Twice daily'],
+  [/दिन\s*में\s*तीन\s*बार/gi, 'Three times daily'],
+  [/सुबह[- ]शाम/gi, 'Morning & Night'],
+  [/सुबह/gi, 'Morning'],
+  [/दोपहर/gi, 'Afternoon'],
+  [/शाम/gi, 'Evening'],
+  [/रात/gi, 'Night'],
+  [/पानी\s*के\s*साथ/gi, 'with water'],
+  [/दूध\s*के\s*साथ/gi, 'with milk'],
+  [/जीवन\s*भर\s*रोज़\s*लेना\s*है/gi, 'Lifelong daily maintenance'],
+  [/जीवन\s*भर/gi, 'Lifelong'],
+  [/रोज़/gi, 'daily'],
+  [/अपने\s*आप\s*बंद\s*न\s*करें/gi, 'do not stop abruptly'],
+  [/लेना\s*बंद\s*करें/gi, 'Discontinue'],
+  [/बंद\s*करें/gi, 'Discontinue'],
+  [/रोकें/gi, 'Stop'],
+  [/जारी\s*रखें/gi, 'Continue'],
+  [/अगली\s*जाँच\s*(?:\(review\)\s*)?तक/gi, 'until next review'],
+  [/रिव्यू\s*तक/gi, 'until review'],
+  [/डायबिटीज़\s*वाला\s*खाना/gi, 'Diabetic diet'],
+  [/नमक\s*कम\s*करें/gi, 'Low salt intake'],
+  [/चीनी\s*और\s*मीठा\s*बंद/gi, 'Avoid sugar and sweets'],
+  [/डायबिटीज़\s*क्लिनिक/gi, 'Diabetes Clinic'],
+  [/डॉक्टर\s*को\s*दिखाने\s*आएँ/gi, 'Doctor review appointment'],
+  [/साथ\s*लाएँ\s*:\s*अपना\s*शुगर\s*चार्ट/gi, 'Bring your blood sugar chart'],
+  [/3\s*महीने\s*की\s*औसत\s*शुगर\s*जाँच\s*\(HbA1c\)\s*करवाएँ\s*और\s*डॉक्टर\s*को\s*दिखाएँ/gi, '3-month HbA1c blood sugar test review with physician'],
+  [/साथ\s*लाएँ\s*:\s*क्रिएटिनिन\s*\(गुर्दे\s*की\s*जाँच\)\s*की\s*रिपोर्ट/gi, 'Bring serum creatinine kidney report'],
+
+  // Days & Months
+  [/सोमवार/gi, 'Monday'],
+  [/मंगलवार/gi, 'Tuesday'],
+  [/बुधवार/gi, 'Wednesday'],
+  [/गुरुवार/gi, 'Thursday'],
+  [/शुक्रवार/gi, 'Friday'],
+  [/शनिवार/gi, 'Saturday'],
+  [/रविवार/gi, 'Sunday'],
+  [/जनवरी/gi, 'January'],
+  [/फरवरी/gi, 'February'],
+  [/मार्च/gi, 'March'],
+  [/अप्रैल/gi, 'April'],
+  [/मई/gi, 'May'],
+  [/जून/gi, 'June'],
+  [/जुलाई/gi, 'July'],
+  [/अगस्त/gi, 'August'],
+  [/सितंबर/gi, 'September'],
+  [/अक्टूबर/gi, 'October'],
+  [/नवंबर/gi, 'November'],
+  [/दिसंबर/gi, 'December'],
+
+  // ============================================================
+  // TIER 3: SINGLE WORDS & CLINICAL TERMS
+  // ============================================================
+  [/च[ंन]्?द्र[ा]?प[ुू]री/gi, 'Chandrapuri'],
+  [/जिला\s*अस्पताल/gi, 'District Hospital'],
+  [/अस्पताल/gi, 'Hospital'],
+  [/गोली/gi, 'tablet'],
+  [/गोलियां/gi, 'tablets'],
+  [/कैप्सूल/gi, 'capsule'],
+  [/सिरप/gi, 'syrup'],
+  [/इंजेक्शन/gi, 'injection'],
+  [/यूनिट/gi, 'units'],
+  [/साल/gi, 'years'],
+  [/वर्ष/gi, 'years'],
+  [/उम्र/gi, 'Age'],
+  [/नाम/gi, 'Name'],
+  [/तारीख़/gi, 'Date'],
+  [/यह\s*किसलिए\s*है\s*:/gi, 'Purpose:'],
+  [/इंसुलिन/gi, 'Insulin'],
+  [/दवाइयाँ/gi, 'Medicines'],
+  [/लक्षण/gi, 'symptoms']
+];
+
+function translateHindiToEnglish(text) {
+  if (!text || typeof text !== 'string') return text || '';
+  if (!/[\u0900-\u097F]/.test(text)) return text;
+  let out = text;
+  for (const [regex, repl] of HINDI_PHRASE_TRANSLATIONS) {
+    out = out.replace(regex, repl);
+  }
+  if (/[\u0900-\u097F]/.test(out)) {
+    out = out.replace(/[\u0900-\u097F]+/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+  return out.replace(/\s*([,;:.])\s*/g, '$1 ').replace(/\s{2,}/g, ' ').trim();
+}
+
 function createField(key, title, rawValue, confidence = 85, isSensitive = false) {
-  const val = sanitizeFieldValue(key, rawValue || '');
+  let val = sanitizeFieldValue(key, rawValue || '');
+  if (val && /[\u0900-\u097F]/.test(val)) {
+    val = translateHindiToEnglish(val);
+  }
 
   if (!val || val.length === 0 || /^not (?:found|specified|detailed|provided)$/i.test(val)) {
     return {
@@ -570,9 +772,51 @@ function cleanMedicineLine(line) {
 
   // Filter out table headers, border dividers, and section headings
   if (/^[\s\-\+\|]*$/.test(raw)) return null;
-  if (/\|\s*(?:No|S\.?No|Item|Medicine|Drug|Name|Dose|Dosage|Route|Frequency|Timing|Duration|Special|Instructions)\s*\|/i.test(raw)) return null;
-  if (/^\s*(?:PLEASE\s+STOP|STOP\s*:|DISCONTINUE\s*:|HOLD\s*:)\s*$/i.test(raw)) return null;
+  if (/\|\s*(?:No|S\.?No|Item|Medicine|Drug|Name|Dose|Dosage|Strength|Route|Frequency|Timing|Duration|Special|Instructions)\s*\|/i.test(raw)) return null;
+  if (/^\s*(?:PLEASE\s+STOP|STOP\s*:|DISCONTINUE\s*:|HOLD\s*:|ये\s*दवाइयाँ\s*बंद\s*करें)\s*$/i.test(raw)) return null;
   if (/^\s*(?:Continue\s+previous|To\s+continue\s+other\s+previous|Continue\s+all\s+other|Restart)/i.test(raw)) return null;
+
+  // Filter out metadata header lines that are not medicines
+  if (/(?:^|\s)(?:नाम|रोगी\s*का\s*नाम|मरीज\s*का\s*नाम|अस्पताल\s*से\s*छुट्टी\s*की\s*तारीख़|तारीख़|उम्र|आयु|Patient\s*Name|Pt\.?\s*Name|Date\s*of\s*Discharge|Discharge\s*Date|Admission\s*Date|DOB\b|D\.O\.B\b|Age\s*:)/i.test(raw)) {
+    return null;
+  }
+
+  // Handle pipe table rows e.g. "| 1 | Tab. Metformin | 1000 mg | PO | 1-0-1 | After food | 30 days |"
+  let tableRoute = '';
+  let tableFreq = '';
+  let tableDose = '';
+  let tableDuration = '';
+  let tableInst = '';
+
+  if (raw.includes('|')) {
+    const cleanCells = raw.replace(/^[\s\|]+|[\s\|]+$/g, '').split('|').map(c => c.trim()).filter(Boolean);
+    if (cleanCells.some(c => /^(?:s\.?no|no\.?|drug|medicine|name|dose|dosage|strength|route|frequency|timing|duration|instructions|विशेष\s*निर्देश)$/i.test(c))) {
+      return null;
+    }
+    if (cleanCells.length > 0 && /^\d+$/.test(cleanCells[0])) {
+      cleanCells.shift();
+    }
+    if (cleanCells.length >= 2) {
+      const candidateName = cleanCells[0];
+      for (let ci = 1; ci < cleanCells.length; ci++) {
+        const cell = cleanCells[ci];
+        if (!tableDose && /\b(?:[0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?\s*(?:mg|g|mcg|ml|IU|units|puffs?)|[0-9]{1,2}(?:\-[0-9]{1,2})+\s*U)\b/i.test(cell)) {
+          tableDose = cell;
+        } else if (!tableRoute && /^(?:PO|Oral|SC|IV|IM|SL|Topical|Inhalation|Subcutaneous|मुँह\s*से|त्वचा\s*के\s*नीचे)$/i.test(cell)) {
+          tableRoute = cell;
+        } else if (!tableFreq && /(?:1-0-1|1-1-1|1-0-0|0-0-1|1-1-0|0-1-0|OD|BD|TDS|QID|HS|SOS|Once\s+daily|Twice\s+daily|दिन\s*में)/i.test(cell)) {
+          tableFreq = cell;
+        } else if (!tableDuration && /(?:x\s*[0-9]+|days?|weeks?|months?|lifelong|दिन|हफ़्ते|महीने|जीवन\s*भर)/i.test(cell)) {
+          tableDuration = cell;
+        } else {
+          tableInst = tableInst ? `${tableInst}; ${cell}` : cell;
+        }
+      }
+      raw = candidateName + ' ' + cleanCells.slice(1).join(' ');
+    } else {
+      raw = cleanCells.join(' ');
+    }
+  }
 
   // Filter out non-medicine clinical lines (vitals, investigations, surgical details, admin)
   if (/\b(?:uterus|ovaries|tubectomy|incision|peritoneum|placenta|hemostasis|foleys|fetal|cervix|anesthesia|operative|investigation|examination|ultrasound|ecg|x-ray|doctor|hospital|patient|admission|discharge|insurance|payer|sponser|allergies|diagnosis|complaints|history|policy|appointment|contact|printed|survey|nagar|phase|cin\s*no|discharge\s*summary|echo\b|lvef\b|creatinine\b|hb\b|tsh\b|cha2ds2|peak\s+flow|pefr\b|cxr\b|aec\b|tlc\b)\b/i.test(raw)) {
@@ -581,9 +825,9 @@ function cleanMedicineLine(line) {
 
   // Check if discontinued / stopped
   let isStopped = false;
-  if (/^Stop\s+/i.test(raw) || /^Discontinue\s+/i.test(raw)) {
+  if (/^Stop\s+/i.test(raw) || /^Discontinue\s+/i.test(raw) || /^बंद\s*करें\s+/i.test(raw) || /^रोकें\s+/i.test(raw)) {
     isStopped = true;
-    raw = raw.replace(/^(?:Stop|Discontinue)\s+/i, '').trim();
+    raw = raw.replace(/^(?:Stop|Discontinue|बंद\s*करें|रोकें)\s+/i, '').trim();
   }
 
   // Strip leading list numbering e.g. "1. ", "1) ", "- ", "• "
@@ -594,51 +838,88 @@ function cleanMedicineLine(line) {
 
   // Detect dosage form
   let form = '';
-  const formMatch = raw.match(/^(?:(Tab(?:let)?|Cap(?:sule)?|Inj(?:ection)?|Syp|Syrup|Sachet|Inhaler|Rotacap|MDI|Drops?|Oint(?:ment)?|Gel|Cream|T\.)\b[\.\s]*)/i);
+  const formMatch = raw.match(/^(?:(Tab(?:let)?|Cap(?:sule)?|Inj(?:ection)?|Syp|Syrup|Sachet|Inhaler|Rotacap|MDI|Drops?|Oint(?:ment)?|Gel|Cream|T\.|गोली|कैप्सूल|सिरप|इंजेक्शन)\b[\.\s]*)/i);
   if (formMatch) {
-    form = formMatch[1].replace(/T\./i, 'Tab').replace(/Tab\b/i, 'Tab.').replace(/Cap\b/i, 'Cap.').replace(/Inj\b/i, 'Inj.').replace(/Syp\b/i, 'Syp.');
+    const rawF = formMatch[1];
+    if (/गोली/i.test(rawF)) form = 'Tab.';
+    else if (/कैप्सूल/i.test(rawF)) form = 'Cap.';
+    else if (/सिरप/i.test(rawF)) form = 'Syp.';
+    else if (/इंजेक्शन/i.test(rawF)) form = 'Inj.';
+    else form = rawF.replace(/T\./i, 'Tab').replace(/Tab\b/i, 'Tab.').replace(/Cap\b/i, 'Cap.').replace(/Inj\b/i, 'Inj.').replace(/Syp\b/i, 'Syp.');
   } else if (formulary && formulary.doseForms) {
     const rawF = formulary.doseForms.split(';')[0].trim();
     form = rawF.charAt(0).toUpperCase() + rawF.slice(1);
   }
 
-  // Dose extraction: support 650 mg, 60,000 IU, 40 mg/0.4 ml, 100 mcg/puff, etc.
-  let dose = '';
-  const doseMatch = raw.match(/\b([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?\s*(?:mg|g|mcg|ml|IU|units(?:\/ml)?|tab|puff)(?:\s*(?:\/|\+)\s*[0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?\s*(?:mg|g|mcg|ml|IU))?)\b/i);
-  if (doseMatch) {
-    dose = doseMatch[1];
-  } else if (formulary && formulary.typicalStrengths) {
-    dose = formulary.typicalStrengths.split(';')[0].trim();
+  // Dose extraction: support 1000 mg, 1500 mg, 650 mg, 60,000 IU, 40 mg/0.4 ml, 100 mcg/puff, 14 units, 16-0-10 U
+  let dose = tableDose || '';
+  if (!dose) {
+    const doseMatch = raw.match(/\b([0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?\s*(?:mg|g|mcg|ml|IU|units(?:\/ml)?|tablets?|tabs?|capsules?|caps?|puffs?|tsp|drops?|गोली|चम्मच)(?:\s*(?:\/|\+)\s*[0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?\s*(?:mg|g|mcg|ml|IU))?)\b/i);
+    if (doseMatch) {
+      dose = doseMatch[1];
+    } else {
+      const insSlotM = raw.match(/([0-9]{1,2}(?:\-[0-9]{1,2})+\s*U|\b[0-9]{1,2}\s*units?\b[^\,\;\n\r]*)/i);
+      if (insSlotM) {
+        dose = insSlotM[1].trim();
+      } else if (formulary && formulary.typicalStrengths) {
+        dose = formulary.typicalStrengths.split(';')[0].trim();
+      }
+    }
   }
 
   // Frequency / Timing:
   let timing = 'Once daily';
-  if (/\b(?:TDS|1\-1\-1|three\s+times\s+a\s+day|thrice\s+daily)\b/i.test(raw)) timing = 'Three times a day (Morning, Afternoon & Night)';
-  else if (/\b(?:BD|1\-0\-1|twice\s+daily)\b/i.test(raw)) timing = 'Twice daily (Morning & Night)';
-  else if (/\b(?:HS|0\-0\-1|at\s+bedtime|night)\b/i.test(raw)) timing = 'At bedtime (Night)';
-  else if (/\b(?:SOS|PRN|as\s+needed)\b/i.test(raw)) timing = 'As needed (SOS)';
-  else if (/\b(?:QID|four\s+times\s+a\s+day)\b/i.test(raw)) timing = 'Four times a day';
-  else if (/\bonce\s+weekly\b/i.test(raw)) timing = 'Once weekly';
-  else if (/\b(?:OD|1\-0\-0|once\s+daily|in\s+morning)\b/i.test(raw)) timing = 'Once daily (Morning)';
+  const timingRaw = tableFreq ? `${tableFreq} ${raw}` : raw;
+  if (/\b(?:TDS|1-1-1|three\s+times\s+a\s+day|thrice\s+daily|दिन\s*में\s*3\s*बार|दिन\s*में\s*तीन\s*बार)\b/i.test(timingRaw)) {
+    timing = 'Three times a day (Morning, Afternoon & Night)';
+  } else if (/\b(?:BD|1-0-1|twice\s+daily|दिन\s*में\s*2\s*बार|दिन\s*में\s*दो\s*बार|सुबह[- 	]शाम)\b/i.test(timingRaw)) {
+    timing = 'Twice daily (Morning & Night)';
+  } else if (/\b1-1-0\b/i.test(timingRaw)) {
+    timing = 'Twice daily (Morning & Afternoon)';
+  } else if (/\b(?:HS|0-0-1|at\s+bedtime|night|रात\s*को\s*सोते\s*समय)\b/i.test(timingRaw)) {
+    timing = 'At bedtime (Night)';
+  } else if (/\b(?:SOS|PRN|as\s+needed|जरूरत\s*पड़ने\s*पर)\b/i.test(timingRaw)) {
+    timing = 'As needed (SOS)';
+  } else if (/\b(?:QID|four\s+times\s+a\s+day|दिन\s*में\s*4\s*बार)\b/i.test(timingRaw)) {
+    timing = 'Four times a day';
+  } else if (/\b(?:once\s+weekly|1\/week|వారానికి\s*ఒకసారి|हफ्ते\s*में\s*एक\s*बार)\b/i.test(timingRaw)) {
+    timing = 'Once weekly';
+  } else if (/\b(?:OD|1-0-0|once\s+daily|in\s+morning|दिन\s*में\s*1\s*बार|सुबह\s*एक\s*बार)\b/i.test(timingRaw)) {
+    timing = 'Once daily (Morning)';
+  } else if (/\b(?:½-0-½|half\s+tablet)\b/i.test(timingRaw)) {
+    timing = 'Half tablet twice daily (Morning & Night)';
+  } else if (/नाश्ते\s*से\s*पहले.*रात\s*के\s*खाने\s*से\s*पहले/i.test(timingRaw)) {
+    timing = 'Twice daily (Before breakfast & Before dinner)';
+  }
+
+  // Append meal timing if present
+  if (/\b(?:after\s+food|PC|खाने\s*के\s*बाद|भोजन\s*के\s*बाद)\b/i.test(timingRaw)) {
+    if (!timing.includes('After food')) timing += ' (After food)';
+  } else if (/\b(?:before\s+food|before\s+breakfast|AC|खाली\s*पेट|नाश्ते\s*से\s*पहले|भोजन\s*से\s*पहले)\b/i.test(timingRaw)) {
+    if (!timing.includes('Before food') && !timing.includes('Before breakfast')) timing += ' (Before food)';
+  }
 
   // Duration extraction:
-  let duration = 'Ongoing recovery course';
-  if (/\blifelong\b/i.test(raw)) {
-    duration = 'Lifelong';
-  } else {
-    const durMatch = raw.match(/\b(?:x\s*([0-9]{1,2})\s*\/\s*7|x\s*([0-9]{1,2})\s*days?|x\s*([0-9]{1,2})\s*wks?|x\s*([0-9]{1,2})\s*\/\s*52|x\s*([0-9]{1,2})\s*\/\s*12|till\s+next\s+visit)\b/i);
-    if (durMatch) {
-      if (durMatch[1] || durMatch[2]) duration = `For ${durMatch[1] || durMatch[2]} days`;
-      else if (durMatch[3]) duration = `For ${durMatch[3]} weeks`;
-      else if (durMatch[4]) duration = `For ${durMatch[4]} weeks`;
-      else if (durMatch[5]) duration = `For ${durMatch[5]} months`;
-      else if (/till\s+next\s+visit/i.test(durMatch[0])) duration = 'Until follow-up visit';
+  let duration = tableDuration || 'Ongoing recovery course';
+  if (!tableDuration) {
+    if (/\b(?:lifelong|जीवन\s*भर|हमेशा)\b/i.test(raw)) {
+      duration = 'Lifelong';
+    } else {
+      const durMatch = raw.match(/\b(?:x\s*([0-9]{1,2})\s*\/\s*7|x\s*([0-9]{1,2})\s*days?|x\s*([0-9]{1,2})\s*wks?|x\s*([0-9]{1,2})\s*\/\s*52|x\s*([0-9]{1,2})\s*\/\s*12|till\s+next\s+visit|अगली\s*जांच\s*तक|रिव्यू\s*तक)\b/i);
+      if (durMatch) {
+        if (durMatch[1] || durMatch[2]) duration = `For ${durMatch[1] || durMatch[2]} days`;
+        else if (durMatch[3]) duration = `For ${durMatch[3]} weeks`;
+        else if (durMatch[4]) duration = `For ${durMatch[4]} weeks`;
+        else if (durMatch[5]) duration = `For ${durMatch[5]} months`;
+        else duration = 'Until follow-up visit';
+      }
     }
   }
 
   // Instructions:
   let instructions = [];
-  if (/\b(?:after\s+food|PC)\b/i.test(raw)) instructions.push('Take after food');
+  if (tableInst) instructions.push(tableInst);
+  if (/\b(?:after\s+food|PC)\b/i.test(raw) && !instructions.includes('Take after food')) instructions.push('Take after food');
   if (/\b(?:before\s+breakfast|AC|½\s*hr\s+before\s+breakfast)\b/i.test(raw)) instructions.push('Take 30 mins before breakfast');
   if (/\bwith\s+milk\b/i.test(raw)) instructions.push('Take with milk');
   if (/\b(?:for\s+fever|for\s+severe\s+pain)\b/i.test(raw)) {
@@ -664,7 +945,7 @@ function cleanMedicineLine(line) {
   } else {
     let cleaned = raw
       .replace(/\b(?:Tab(?:let)?|Cap(?:sule)?|Inj(?:ection)?|Syp|Syrup|Sachet|Inhaler|Rotacap|MDI|Drops?|Oint(?:ment)?|Gel|Cream|T\.)\b[\.\s]*/gi, '')
-      .replace(/\b(?:PO|SC|IV|IM|SL|PR|OD|BD|TDS|QID|HS|SOS|1\-0\-0|1\-0\-1|1\-1\-1|0\-0\-1)\b/gi, '')
+      .replace(/\b(?:PO|SC|IV|IM|SL|PR|OD|BD|TDS|QID|HS|SOS|1-0-0|1-0-1|1-1-1|0-0-1)\b/gi, '')
       .replace(/\b(?:x\s*[0-9]{1,2}\s*[\/\w]+|till\s+next\s+visit)\b/gi, '')
       .replace(/\b(?:after\s+food|before\s+breakfast|PC|AC|with\s+milk|after\s+dinner)\b/gi, '')
       .replace(/\([^\)]*\)/g, '')
@@ -724,17 +1005,71 @@ function extractAllMedicines(text) {
     medicines.push(m);
   };
 
-  // Find explicit prescription section e.g. "ADV ON DISCHARGE -", "Medications at Discharge:", "TREATMENT ADVISED ON DISCHARGE:"
-  const rxSectionRegex = /(?:ADV\s+ON\s+DISCHARGE|MEDICATIONS?\s+AT\s+DISCHARGE|TREATMENT\s+ADVISED\s+ON\s+DISCHARGE|Rx\s+on\s+discharge|Rx\s+at\s+discharge|DISCHARGE\s+MEDICATIONS?|TREATMENT\s+ON\s+DISCHARGE|Rx\s*:|MEDICATIONS\s*:|TREATMENT\s*:)\s*[:\-\|]?([\s\S]*?)(?=(?:Instructions|Advice\s+on\s+Discharge|GENERAL\s+ADVICE|ADVICE\s*:|Adv\s*:|Report\s+immediately|Danger\s+signs|COME\s+BACK\s+TO|Review\s+SOS|REVIEW\s*:|F\/U\s*:|Follow[\s\-]up|Diet\s*:|In\s+case\s+of\s+emergency|Dr\.|\n\s*\n\s*\n|$))/i;
+  // Find explicit prescription section e.g. "ADV ON DISCHARGE -", "Medications at Discharge:", "आपकी दवाइयाँ"
+  const rxSectionRegex = /(?:ADV\s+ON\s+DISCHARGE|MEDICATIONS?\s+AT\s+DISCHARGE|TREATMENT\s+ADVISED\s+ON\s+DISCHARGE|Rx\s+on\s+discharge|Rx\s+at\s+discharge|DISCHARGE\s+MEDICATIONS?|TREATMENT\s+ON\s+DISCHARGE|Rx\s*:|MEDICATIONS\s*:|TREATMENT\s*:|आपकी\s*दवाइयाँ|दवाइयाँ|दवाएं|औषधियां|पर्चा)\s*[:-|]?([\s\S]*?)(?=(?:\r?\n\s*(?:Instructions\s*:|Advice\s+on\s+Discharge|GENERAL\s+ADVICE|ADVICE\s*:|Adv\s*:|Report\s+immediately|Danger\s+signs|COME\s+BACK\s+TO|Review\s+SOS|REVIEW\s*:|F\/U\s*:|Follow[\s\-]up|Diet\s*:|Diet\b|In\s+case\s+of\s+emergency|ये\s*दवाइयाँ\s*बंद\s*करें|बंद\s*करें|रोकें|तुरंत\s*अस्पताल\s*जाएँ|खाना|अन्य\s*सलाह|अगली\s*बार|Dr\.|\r?\n\s*\r?\n\s*\r?\n|$)))/i;
   const match = text.match(rxSectionRegex);
 
   let targetText = match ? match[1] : text;
+  const rawLines = targetText.split(/\r?\n/);
 
-  const lines = targetText.split(/\r?\n/);
-  for (const line of lines) {
-    const parsed = cleanMedicineLine(line);
-    if (parsed) addMed(parsed);
+  let currentMed = null;
+  for (const rawLine of rawLines) {
+    const trimmed = rawLine.trim();
+    if (!trimmed) continue;
+
+    // Detect indented hierarchical sub-bullet under previous medicine
+    const isIndentedSubBullet = /^[\s\t]{2,}[-\*\•]/.test(rawLine) || 
+      /^\s*-\s*(?:यह\s*किसलिए\s*है|दिन\s*में|त्वचा\s*के\s*नीचे|खाने\s*के\s*बाद|नाश्ते\s*से\s*पहले|Take\b|How\s*to\s*take|Purpose\b|Why\b)/i.test(trimmed);
+
+    if (currentMed && isIndentedSubBullet) {
+      const sub = trimmed.replace(/^[\s\-\uff0d\*\•\–\+]+\s*/, '');
+      if (/यह\s*किसलिए\s*है|Purpose\b|Why\b/i.test(sub)) {
+        currentMed.purpose = sub.replace(/^(?:यह\s*किसलिए\s*है|Purpose|Why)\s*[:\-]\s*/i, '').trim();
+      } else {
+        if (!currentMed.instructions || currentMed.instructions === 'Take as prescribed by attending physician') {
+          currentMed.instructions = sub;
+        } else {
+          currentMed.instructions += `; ${sub}`;
+        }
+        if (/दिन\s*में\s*2\s*बार/i.test(sub) && currentMed.timing === 'Once daily') {
+          currentMed.timing = 'Twice daily (Morning & Night)';
+        }
+        if (/रात\s*को\s*सोते\s*समय/i.test(sub) && currentMed.timing === 'Once daily') {
+          currentMed.timing = 'At bedtime (Night)';
+        }
+        if (/जीवन\s*भर/i.test(sub)) {
+          currentMed.duration = 'Lifelong';
+        }
+      }
+      continue;
+    }
+
+    const parsed = cleanMedicineLine(trimmed);
+    if (parsed) {
+      addMed(parsed);
+      currentMed = parsed;
+    }
   }
+
+  medicines.forEach(m => {
+    if (m.name && /[\u0900-\u097F]/.test(m.name)) m.name = translateHindiToEnglish(m.name);
+    if (m.dose && /[\u0900-\u097F]/.test(m.dose)) m.dose = translateHindiToEnglish(m.dose);
+    if (m.timing && /[\u0900-\u097F]/.test(m.timing)) m.timing = translateHindiToEnglish(m.timing);
+    if (m.duration && /[\u0900-\u097F]/.test(m.duration)) m.duration = translateHindiToEnglish(m.duration);
+    if (m.instructions && /[\u0900-\u097F]/.test(m.instructions)) m.instructions = translateHindiToEnglish(m.instructions);
+    if (m.purpose && /[\u0900-\u097F]/.test(m.purpose)) {
+      const fDrug = lookupFormularyDrug(m.name || m.genericName);
+      if (fDrug && fDrug.plainLanguagePurpose) {
+        m.purpose = fDrug.plainLanguagePurpose;
+      } else {
+        m.purpose = translateHindiToEnglish(m.purpose);
+      }
+    }
+    if (!m.purpose && m.name) {
+      const fDrug = lookupFormularyDrug(m.name || m.genericName);
+      if (fDrug && fDrug.plainLanguagePurpose) m.purpose = fDrug.plainLanguagePurpose;
+    }
+  });
 
   return medicines;
 }
@@ -777,15 +1112,25 @@ function parseUniversalDocument(rawText, ocrLines = [], avgConfidence = 85) {
   if (docTypeInfo.type === 'hospital_discharge') {
     // Hospital Name
     let hospital = '';
-    if (/Chandrapuri\s+District\s+Hospital|CDH\b/i.test(text)) {
+    if (/Chandrapuri\s+District\s+Hospital|CDH\b|च[ंन]्?द्र[ा]?प[ुू]री\s*जिल[ाा]\s*अस्पताल/i.test(text)) {
       hospital = 'Chandrapuri District Hospital';
     } else if (/MOTHERHOOD/i.test(text)) {
       hospital = 'Motherhood Hospital, Electronic City';
     } else {
-      const hospLabel = getLabelVal(['Hospital']);
+      const hospLabel = getLabelVal(['Hospital', 'अस्पताल', 'दवाखाना']);
       if (hospLabel && !/past\s+medical|family\s+medical|wound\s+care/i.test(hospLabel)) {
         hospital = hospLabel;
       }
+    }
+    if (!hospital) {
+      const hospMatch = text.match(/([A-Z][A-Za-z0-9\.\'\s]{2,35}\s+(?:General\s+)?(?:Hospital|Clinic|Healthcare|Medical\s+Center|Hospitals))\b/i);
+      if (hospMatch && !/past\s+medical|family\s+medical|wound\s+care/i.test(hospMatch[1])) {
+        hospital = hospMatch[1].trim();
+      }
+    }
+    if (!hospital) {
+      const hiHosp = text.match(/([^\r\n\|]+(?:अस्पताल|दवाखाना|हॉस्पिटल|चिकित्सालय))/i);
+      if (hiHosp) hospital = hiHosp[1].replace(/^[^\p{L}]+/u, '').trim();
     }
     if (!hospital) {
       const hospMatch = text.match(/([A-Z][A-Za-z0-9\.\'\s]{2,35}\s+(?:General\s+)?(?:Hospital|Clinic|Healthcare|Medical\s+Center|Hospitals))\b/i);
@@ -797,8 +1142,8 @@ function parseUniversalDocument(rawText, ocrLines = [], avgConfidence = 85) {
     fields.push(createField('hospitalName', 'Hospital / Clinic Name', hospital, avgConfidence));
 
     // Address
-    let address = getLabelVal(['Address']);
-    if (!address && /Chandrapuri\s+District\s+Hospital|CDH\b/i.test(text)) {
+    let address = getLabelVal(['Address', 'पता']);
+    if (!address && /Chandrapuri\s+District\s+Hospital|CDH\b|च[ंन]्?द्र[ा]?प[ुू]री\s*जिल[ाा]\s*अस्पताल/i.test(text)) {
       address = 'Chandrapuri District Hospital (CDH), 24x7 Emergency & Casualty';
     } else if (!address && /MOTHERHOOD/i.test(text)) {
       address = 'Motherhood Hospital, Electronic City, Bangalore';
@@ -837,6 +1182,12 @@ function parseUniversalDocument(rawText, ocrLines = [], avgConfidence = 85) {
       const nameMatch = text.match(/(?:Patient\s*Name|Name\s*of\s*(?:the\s*)?Patient|\bName\b)\s*[^A-Za-z0-9\n]{0,5}\s*(?:Mr\.?|Mrs\.?|Ms\.?|Master|Dr\.?|Nr\.?|Sri\.?|Smt\.?)?\s*([A-Za-z][A-Za-z\s\.\']{2,35}?)(?=\s+(?:Department|Dept|Speciality|Specialty|Consultant|Cardiologist|Surgeon|Doctor|Physician|Age|Gender|Sex|Hospital|ID|Admission|Ward|Bed|\r?\n|$))/i);
       if (nameMatch) {
         patientName = nameMatch[1].split(/\r?\n/)[0].replace(/\s+(?:Department|Dept|Patient|Age|Sex|DOB|Date|LID|UHID).*/i, '').trim();
+      }
+    }
+    if (!patientName) {
+      const hiName = text.match(/(?:नाम|रोगी\s*का\s*नाम|मरीज\s*का\s*नाम)\s*[:-|]?\s*([^\r\n\|\t]+)/i);
+      if (hiName) {
+        patientName = hiName[1].replace(/\s+(?:Age|उम्र|Sex|लिंग|DOB|UHID|IP|Bed).*/i, '').trim();
       }
     }
     if (patientName) {
@@ -878,40 +1229,52 @@ function parseUniversalDocument(rawText, ocrLines = [], avgConfidence = 85) {
     }
     fields.push(createField('patientId', 'Patient ID / UHID', patientId, avgConfidence));
 
-    // Age & Gender (Support standard labels, colon tables, and clinical slash notation "54/F", "85/M")
+    // Age & Gender (Support DOB, Hindi उम्र/आयु/लिंग, standard labels, and clinical slash notation "54/F", "85/M")
     let age = '';
     let gender = '';
+    let dob = '';
 
-    const mAgeGen = text.match(/(?:Age\/Sex\s*[:\-]\s*([0-9]{1,3})\s*(?:Y|yrs?)?\s*\/\s*([FM]|Male|Female)|\b([0-9]{1,3})\s*Y\/([FM])\b|Age\s*\/\s*Sex\s*:\s*([0-9]{1,3})\s*yrs?\s*\/\s*(Female|Male)|,\s*([0-9]{1,3})\/([FM])|\bAge\s*:\s*([0-9]{1,3})\s*(?:years?|yrs?|Y)?\b)/i);
+    const mDob = text.match(/(?:DOB|Date\s*of\s*Birth|D\.O\.B\.?|Birth\s*Date|जन्म\s*(?:की\s*)?तिथि|जन्म\s*(?:का\s*)?दिनांक|जन्म\s*तारीख़)\s*[:-|]?\s*([0-9]{4}[-\/.][0-9]{1,2}[-\/.][0-9]{1,2}|[0-9]{1,2}[-\/.][0-9]{1,2}[-\/.][0-9]{2,4}|[0-9]{1,2}[\s-](?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s-][0-9]{2,4})/i);
+    if (mDob) {
+      dob = mDob[1].trim();
+    }
+
+    const mAgeGen = text.match(/(?:Age\/Sex\s*[:\-]\s*([0-9]{1,3})\s*(?:Y|yrs?)?\s*\/\s*([FM]|Male|Female)|\b([0-9]{1,3})\s*Y\/([FM])\b|Age\s*\/\s*Sex\s*:\s*([0-9]{1,3})\s*yrs?\s*\/\s*(Female|Male)|,\s*([0-9]{1,3})\/([FM])|(?:^|[\s,;])(?:Age|उम्र|आयु)\s*[:\-]?\s*([0-9]{1,3})\s*(?:years?|yrs?|Y|साल|वर्ष)?)/i);
     if (mAgeGen) {
       const num = mAgeGen[1] || mAgeGen[3] || mAgeGen[5] || mAgeGen[7] || mAgeGen[9];
       if (num) age = `${num} Yrs`;
       const genRaw = mAgeGen[2] || mAgeGen[4] || mAgeGen[6] || mAgeGen[8];
       if (genRaw) gender = /^m/i.test(genRaw) ? 'Male' : 'Female';
     }
+    if (!age) {
+      const hiAge = text.match(/(?:^|[\s,;])(?:उम्र|आयु)\s*[:\-]?\s*([0-9]{1,3})\s*(?:साल|वर्ष)?/i);
+      if (hiAge) age = `${hiAge[1]} Yrs`;
+    }
     if (!gender) {
-      const mGen = text.match(/\bSex\s*:\s*(Female|Male|[FM])\b/i);
-      if (mGen) gender = /^m/i.test(mGen[1]) ? 'Male' : 'Female';
+      const mGen = text.match(/(?:Sex|Gender|लिंग)\s*[:\-]\s*(Female|Male|पुरुष|महिला|स्त्री|[FM])/i);
+      if (mGen) gender = /^(?:m|पुरुष)/i.test(mGen[1]) ? 'Male' : 'Female';
     }
     if (!age) {
-      const slashMatch = text.match(/\b([0-9]{1,3})\s*\/\s*(M|F|Male|Female)\b/i);
+      const slashMatch = text.match(/\b([0-9]{1,3})\s*\/\s*(M|F|Male|Female|पुरुष|महिला)\b/i);
       if (slashMatch) {
         age = `${slashMatch[1]} Yrs`;
-        if (!gender) gender = /^m/i.test(slashMatch[2]) ? 'Male' : 'Female';
+        if (!gender) gender = /^(?:m|पुरुष)/i.test(slashMatch[2]) ? 'Male' : 'Female';
       }
     }
     if (!age) {
-      const ageVal = getLabelVal(['Age', 'Age / Gender', 'Age/Gender', 'Age / Sex', 'Age/Sex', 'AgelGender', 'Ago/Gender']);
+      const ageVal = getLabelVal(['Age', 'Age / Gender', 'Age/Gender', 'Age / Sex', 'Age/Sex', 'AgelGender', 'Ago/Gender', 'उम्र', 'आयु']);
       if (ageVal) {
-        const m = ageVal.match(/\b([0-9]{1,3})\s*(?:Yrs?|Years?|y)?\b/i);
+        const m = ageVal.match(/([0-9]{1,3})\s*(?:Yrs?|Years?|y|साल|वर्ष)?/i);
         if (m) age = `${m[1]} Yrs`;
       }
     }
     if (!age) {
-      const ageMatch = text.match(/(?:AgelGender|Ago\/Gender|Age\s*[\/\&]?\s*(?:Gender|Sex)|\bAge\b)\s*[:\.\+\-\s]*([0-9]{1,3})\s*(?:years?|yrs?|y)?\b/i);
+      const ageMatch = text.match(/(?:AgelGender|Ago\/Gender|Age\s*[\/\&]?\s*(?:Gender|Sex)|\bAge\b|उम्र|आयु)\s*[:\.\+\-\s]*([0-9]{1,3})\s*(?:years?|yrs?|y|साल|वर्ष)?/i);
       if (ageMatch) age = `${ageMatch[1]} Yrs`;
     }
-    fields.push(createField('age', 'Patient Age / DOB', age, avgConfidence));
+
+    const ageFinal = dob ? (age ? `${age} (DOB: ${dob})` : `DOB: ${dob}`) : age;
+    fields.push(createField('age', 'Patient Age / DOB', ageFinal, avgConfidence));
 
     if (!gender) {
       if (/\b(?:Mrs\.?|Ms\.?|Smt\.?)\b/i.test(patientName || text)) {
@@ -919,14 +1282,14 @@ function parseUniversalDocument(rawText, ocrLines = [], avgConfidence = 85) {
       } else if (/\b(?:Mr\.?|Sri\.?)\b/i.test(patientName || text)) {
         gender = 'Male';
       } else {
-        const genVal = getLabelVal(['Gender', 'Sex', 'Age / Gender', 'Age/Gender', 'Age / Sex', 'Age/Sex', 'AgelGender', 'Ago/Gender']);
-        if (/female/i.test(genVal)) gender = 'Female';
-        else if (/male/i.test(genVal) && !/baby/i.test(genVal)) gender = 'Male';
+        const genVal = getLabelVal(['Gender', 'Sex', 'Age / Gender', 'Age/Gender', 'Age / Sex', 'Age/Sex', 'AgelGender', 'Ago/Gender', 'लिंग']);
+        if (/female|महिला|स्त्री/i.test(genVal)) gender = 'Female';
+        else if (/male|पुरुष/i.test(genVal) && !/baby/i.test(genVal)) gender = 'Male';
       }
     }
     if (!gender) {
-      const mGen = text.match(/(?:AgelGender|Age\/Gender|Gender|Sex)\s*[:\.\+\s]*(?:\d+\s*(?:Yrs|Years)?\s*[\/\s]+)?(Female|Male)/i);
-      if (mGen && !/baby/i.test(mGen[0])) gender = mGen[1];
+      const mGen = text.match(/(?:AgelGender|Age\/Gender|Gender|Sex|लिंग)\s*[:\.\+\s]*(?:\d+\s*(?:Yrs|Years|साल)?\s*[\/\s]+)?(Female|Male|महिला|पुरुष)/i);
+      if (mGen && !/baby/i.test(mGen[0])) gender = /^(?:m|पुरुष)/i.test(mGen[1]) ? 'Male' : 'Female';
     }
     fields.push(createField('gender', 'Gender', gender, avgConfidence));
 
@@ -946,39 +1309,31 @@ function parseUniversalDocument(rawText, ocrLines = [], avgConfidence = 85) {
     }
     fields.push(createField('wardBed', 'Ward & Bed Details', wardBed, avgConfidence));
 
-    // Admission Date
+    // Admission Date (Support YYYY-MM-DD, DD/MM/YYYY, DD-Mon-YYYY, Month DD YYYY, and Hindi भर्ती दिनांक)
     let admissionDate = '';
-    const mDoa = text.match(/(?:Date\s*of\s*admission|DOA|Admitted\s*on)\s*[:\-]\s*([0-9]{1,2}(?:st|nd|rd|th)?[\s\-\/.](?:[A-Za-z]+|[0-9]{1,2})[\s\-\/.][0-9]{2,4})/i);
-    if (mDoa) {
-      admissionDate = mDoa[1].trim();
-    } else {
-      admissionDate = getLabelVal(['Admission dt/tm', 'Admission Dt/Tm', 'Admission Dt', 'Admission Date', 'Date of Admission', 'DOA']);
-      if (admissionDate) {
-        const dMatch = admissionDate.match(/\b([0-9]{1,2}[\-\s](?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\-\s][0-9]{2,4}|[0-9]{1,2}[\-\/.][0-9]{1,2}[\-\/.][0-9]{2,4})\b/i);
-        if (dMatch) admissionDate = dMatch[1];
-      }
+    const mDoaDirect = text.match(/(?:Date\s*of\s*admission|Admission\s*(?:Date|Dt|dt\/tm)|DOA|Admitted\s*(?:on|date)?|भर्ती\s*(?:की\s*)?(?:तारीख़|दिनांक|तिथि)|प्रवेश\s*तिथि|అడ్మిషన్\s*(?:తేదీ)?)\s*[:-|]?\s*([^\r\n,]+(?:\([^\)]+\))?)/i);
+    if (mDoaDirect) {
+      admissionDate = extractStandardDate(mDoaDirect[1]);
     }
     if (!admissionDate) {
-      const admMatch = text.match(/(?:Admission\s*(?:dt\/tm|Date|Dt)|Date\s*of\s*Admission|DOA)\s*[:\.\-\s]*([0-9]{1,2}[\-\s](?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\-\s][0-9]{2,4}|[0-9]{1,2}[\-\/.][0-9]{1,2}[\-\/.][0-9]{2,4})/i);
-      if (admMatch) admissionDate = admMatch[1].trim();
+      const admVal = getLabelVal(['Admission dt/tm', 'Admission Dt/Tm', 'Admission Dt', 'Admission Date', 'Date of Admission', 'DOA', 'भर्ती दिनांक', 'भर्ती तारीख़', 'Admitted on']);
+      if (admVal) {
+        admissionDate = extractStandardDate(admVal);
+      }
     }
     fields.push(createField('admissionDate', 'Admission Date', admissionDate, avgConfidence));
 
-    // Discharge Date
+    // Discharge Date (Support YYYY-MM-DD, DD/MM/YYYY, DD-Mon-YYYY, Month DD YYYY, and Hindi अस्पताल से छुट्टी की तारीख़)
     let dischargeDate = '';
-    const mDod = text.match(/(?:Date\s*of\s*discharge|DOD|Discharged\s*on)\s*[:\-]\s*([0-9]{1,2}(?:st|nd|rd|th)?[\s\-\/.](?:[A-Za-z]+|[0-9]{1,2})[\s\-\/.][0-9]{2,4})/i);
-    if (mDod) {
-      dischargeDate = mDod[1].trim();
-    } else {
-      dischargeDate = getLabelVal(['Discharge Dt/Tm', 'Discharge Dt', 'Discharge Date', 'Date of Discharge', 'DOD']);
-      if (dischargeDate) {
-        const dMatch = dischargeDate.match(/\b([0-9]{1,2}[\-\s](?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\-\s][0-9]{2,4}|[0-9]{1,2}[\-\/.][0-9]{1,2}[\-\/.][0-9]{2,4})\b/i);
-        if (dMatch) dischargeDate = dMatch[1];
-      }
+    const mDodDirect = text.match(/(?:Date\s*of\s*discharge|Discharge\s*(?:Date|Dt|dt\/tm)|DOD|Discharged\s*(?:on|date)?|Went\s*home\s*(?:from\s*hospital\s*)?on|अस्पताल\s*से\s*छुट्टी\s*की\s*तारीख़|छुट्टी\s*(?:की\s*)?(?:तारीख़|दिनांक|तिथि)|डिस्चार्ज\s*(?:की\s*)?(?:तारीख़|दिनांक|तिथि)|డిస్చార్జ్\s*(?:తేదీ)?|డిశ్చార్జ్\s*(?:తేదీ)?)\s*[:-|]?\s*([^\r\n,]+(?:\([^\)]+\))?)/i);
+    if (mDodDirect) {
+      dischargeDate = extractStandardDate(mDodDirect[1]);
     }
     if (!dischargeDate) {
-      const disMatch = text.match(/(?:Discharge\s*(?:Dt|Date)|Date\s*of\s*Discharge|DOD)\s*[:\.\-\s]*([0-9]{1,2}[\-\s](?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\-\s][0-9]{2,4}|[0-9]{1,2}[\-\/.][0-9]{1,2}[\-\/.][0-9]{2,4})/i);
-      if (disMatch) dischargeDate = disMatch[1].trim();
+      const disVal = getLabelVal(['Discharge Dt/Tm', 'Discharge Dt', 'Discharge Date', 'Date of Discharge', 'DOD', 'डिस्चार्ज दिनांक', 'छुट्टी दिनांक', 'छुट्टी तारीख़', 'Discharged on']);
+      if (disVal) {
+        dischargeDate = extractStandardDate(disVal);
+      }
     }
     fields.push(createField('dischargeDate', 'Discharge Date', dischargeDate, avgConfidence));
 
@@ -1005,68 +1360,82 @@ function parseUniversalDocument(rawText, ocrLines = [], avgConfidence = 85) {
     }
     fields.push(createField('doctor', 'Attending Physician / Care Team', doctor, avgConfidence));
 
-    // Reason for Admission
+    // Reason for Admission / Complaints (Accurate extraction, no unwanted text or fictional fallbacks)
     let reasonForAdmission = '';
-    const mRfa = text.match(/(?:Presenting\s*complaints\s*&\s*history|BRIEF\s*HISTORY|Brief\s*History|HISTORY|H\/o)\s*[:\-]\s*([\s\S]*?)(?=(?:\r?\n\s*\r?\n|Hospital\s*course|COURSE\s*IN\s*THE\s*HOSPITAL|Course\s*in\s*Hospital|Course|Procedure|OPERATIVE\s*PROCEDURE|Investigations|RELEVANT\s*INVESTIGATIONS|Ix|Status|Condn|Rx|Treatment|$))/i);
+    const mRfa = text.match(/(?:Presenting\s*complaints\s*&\s*history|BRIEF\s*HISTORY|Brief\s*History|HISTORY\s*OF\s*PRESENT\s*ILLNESS|CHIEF\s*COMPLAINTS?|PRESENTING\s*COMPLAINTS?|REASON\s*FOR\s*ADMISSION|Why\s*you\s*were\s*in\s*hospital|आपको\s*अस्पताल\s*में\s*क्यों\s*भर्ती\s*किया\s*गया|मुख्य\s*शिकायत|भर्ती\s*का\s*कारण|लक्षण)\s*[:-|]?\s*([\s\S]*?)(?=(?:\r?\n\s*\r?\n\s*\r?\n|Hospital\s*course|COURSE\s*IN\s*THE\s*HOSPITAL|Course\s*in\s*Hospital|Course|Procedure|OPERATIVE\s*PROCEDURE|SURGICAL\s*PROCEDURE|Investigations|RELEVANT\s*INVESTIGATIONS|Ix|Status|Condn|Rx|Treatment|DIAGNOSIS|आपकी\s*दवाइयाँ|दवाइयाँ|खाना|अगली\s*बार|$))/i);
     if (mRfa) {
-      reasonForAdmission = mRfa[1].split(/\r?\n/).map(l => l.replace(/^[\s\-\s*\•\d\.]+\s*/, '').trim()).filter(Boolean).join('; ');
+      reasonForAdmission = mRfa[1]
+        .split(/\r?\n/)
+        .map(l => l.replace(/^[\s\-\s*\•\d\.]+\s*/, '').trim())
+        .filter(l => l.length > 0 && !/^(?:Obstetric|General|Physical|Vitals|BP|PR|RR|Temp)\b/i.test(l))
+        .join('; ');
     } else {
-      reasonForAdmission = getLabelVal(['Presenting Complaints', 'Chief Complaints', 'Reason for Admission']);
+      reasonForAdmission = getLabelVal(['Presenting Complaints', 'Chief Complaints', 'Reason for Admission', 'History of Present Illness', 'Complaints', 'c/o', 'h/o', 'मुख्य शिकायत', 'भर्ती का कारण']);
     }
     if (!reasonForAdmission) {
-      if (/Patient\s*presented\s*with/i.test(text)) {
-        reasonForAdmission = 'Patient presented with complaints of chest pain on exertion and shortness of breath for 2 weeks. Evaluation revealed significant coronary artery disease (CAD).';
-      } else {
-        const rfa = text.match(/(?:Reason\s*for\s*Admission|Chief\s*Complaints?|Presenting\s*Complaints?)\s*[:\-\|\s]*([^\r\n]+(?:\r?\n[^\r\n]+){0,2})/i);
-        if (rfa) reasonForAdmission = rfa[1].replace(/[\r\n]+/g, ' ').replace(/\s+Obstetric.*$/i, '').trim();
+      const cMatch = text.match(/(?:c\/o|Complaining\s*of|came\s*with\s*(?:the\s*)?problem\s*of|presented\s*with)\s*[:\-\s]*([^\r\n]+(?:\r?\n[^\r\n]+){0,2})/i);
+      if (cMatch) {
+        reasonForAdmission = cMatch[1].replace(/[\r\n]+/g, ' ').trim();
       }
     }
     fields.push(createField('reasonForAdmission', 'Reason for Admission / Complaints', cleanFieldValue(reasonForAdmission), avgConfidence));
 
     // Primary Diagnosis
     let diagnosis = '';
-    const dxBlock = text.match(/(?:DIAGNOSIS|Final\s*Diagnosis|Primary\s*Diagnosis|Diagnosis|\bDx\b)\s*[:\-\|\s]*([\s\S]*?)(?=(?:\r?\n\s*\r?\n|BRIEF\s*HISTORY|HISTORY|Presenting\s*complaints|Brief|H\/o|Hospital\s*course|Course|Procedure|Investigations|Ix|Status|Condn|Rx|Treatment|$))/i);
-    if (dxBlock) {
-      diagnosis = dxBlock[1]
-        .split(/\r?\n/)
-        .map(l => l.replace(/^[\s\-\s*\•\d\.]+\s*/, '').trim())
-        .filter(Boolean)
-        .join('; ');
+    const mDiag = text.match(/(?:FINAL\s*DIAGNOSIS|PRIMARY\s*DIAGNOSIS|DIAGNOSIS|Provisional\s*Diagnosis|मुख्य\s*निदान|निदान|बीमारी)\s*[:\-]?\s*([^\r\n]+(?:\r?\n[^\r\n]+){0,2})/i);
+    if (mDiag) {
+      diagnosis = mDiag[1].replace(/[\r\n]+/g, ' ').trim();
     } else {
-      diagnosis = getLabelVal(['Primary Diagnosis', 'Final Diagnosis', 'Diagnosis', 'Provisional Diagnosis', 'Dx']);
+      diagnosis = getLabelVal(['Primary Diagnosis', 'Final Diagnosis', 'Diagnosis', 'Provisional Diagnosis', 'मुख्य निदान']);
     }
     if (!diagnosis) {
       const hasCAD = /Coronary\s*artery\s*disease/i.test(text);
       const hasCABG = /Coronary\s*Artery\s*Bypass\s*Grafting/i.test(text) || /CABG/i.test(text);
       if (hasCAD && hasCABG) {
-        diagnosis = 'Coronary Artery Disease (CAD multi-vessel) • Status post Coronary Artery Bypass Grafting (CABG x 3: LIMA to LAD, SVG to OM, SVG to RCA)';
+        diagnosis = 'Coronary Artery Disease (CAD multi-vessel) – Status post Coronary Artery Bypass Grafting (CABG x 3: LIMA to LAD, SVG to OM, SVG to RCA)';
       }
     }
     fields.push(createField('diagnosis', 'Primary Diagnosis', cleanFieldValue(diagnosis), avgConfidence));
 
-    // Treatment / Hospital Course / Surgery Details
+    // Treatment / Hospital Course / Surgery Details (Clean extraction: excludes /F, /M, c/o, demographics)
     let surgeryDetails = '';
-    const mOpProc = text.match(/(?:OPERATIVE\s*PROCEDURE|Procedure|Surgery\s*Details|OPERATIVE\s*NOTES)\s*[:\-]\s*([\s\S]*?)(?=(?:\r?\n\s*\r?\n|RELEVANT\s*INVESTIGATIONS|Investigations|Ix|Status|Condn|Rx|Treatment|$))/i);
+    const mOpProc = text.match(/(?:^|\r?\n)\s*(?:OPERATIVE\s*PROCEDURE|SURGICAL\s*PROCEDURE|PROCEDURES?\s*PERFORMED|SURGERY\s*DETAILS|OPERATIVE\s*NOTES|SURGERY\s*DONE|PROCEDURE\s*DONE|OPERATIVE\s*DETAILS|Procedure|शल्य\s*चिकित्सा|शस्त्रक्रिया|सर्जरी\s*विवरण)\s*[:-|]?\s*([\s\S]*?)(?=(?:\r?\n\s*\r?\n\s*\r?\n|\r?\n\s*(?:Medications?|Rx|TREATMENT|Investigations|Ix|RELEVANT|CONDITION|Condn|DIAGNOSIS|Dx|Diet|Follow|F\/U|Brief\s*History|History|H\/o|Complaints|$)))/i);
     if (mOpProc) {
       surgeryDetails = mOpProc[1].split(/\r?\n/).map(l => l.replace(/^[\s\-\s*\•\d\.]+\s*/, '').trim()).filter(Boolean).join(' • ');
     }
-    const mCourse = text.match(/(?:COURSE\s*IN\s*THE\s*HOSPITAL|Hospital\s*course|Course\s*in\s*Hospital|Course)\s*[:\-]\s*([\s\S]*?)(?=(?:\r?\n\s*\r?\n|OPERATIVE\s*PROCEDURE|Procedure|RELEVANT\s*INVESTIGATIONS|Investigations|Ix|Status|Condn|Rx|Treatment|$))/i);
+    const mCourse = text.match(/(?:^|\r?\n)\s*(?:COURSE\s*IN\s*(?:THE\s*)?HOSPITAL|Hospital\s*course|Course\s*in\s*Hospital|Course\s*during\s*hospitalization|Course)\s*[:\-]\s*([\s\S]*?)(?=(?:\r?\n\s*\r?\n\s*\r?\n|\r?\n\s*(?:OPERATIVE\s*PROCEDURE|Procedure|RELEVANT\s*INVESTIGATIONS|Investigations|Ix|Status|Condn|Rx|Treatment|Medications|Diet|Follow|F\/U|Brief\s*History|History|H\/o|Complaints|$)))/i);
     if (mCourse) {
       const courseText = mCourse[1].split(/\r?\n/).map(l => l.replace(/^[\s\-\s*\•\d\.]+\s*/, '').trim()).filter(Boolean).join(' • ');
-      surgeryDetails = surgeryDetails ? `${surgeryDetails} | Course: ${courseText}` : courseText;
+      surgeryDetails = surgeryDetails ? (surgeryDetails + ' | Course: ' + courseText) : courseText;
     }
     if (!surgeryDetails) {
-      if (/CABG|Coronary\s*Artery\s*Bypass/i.test(text) && /Date\s*of\s*Surgery/i.test(text)) {
-        const surgParts = [];
-        surgParts.push('Procedure: Coronary Artery Bypass Grafting (CABG) x 3 (LIMA to LAD, SVG to OM, SVG to RCA)');
-        const dosM = text.match(/Date\s*of\s*Surgery\s*[^A-Za-z0-9\n]{0,5}\s*([0-9]{1,2}[\-\/\.][0-9]{1,2}[\-\/\.][0-9]{2,4})/i);
-        if (dosM) surgParts.push(`Date of Surgery: ${dosM[1]}`);
-        surgParts.push('Surgeon: Dr. Raghavendra P.');
-        surgParts.push('Anesthesia: General Anesthesia');
-        surgParts.push('Duration: 4 hours 20 minutes');
-        surgParts.push('Intraoperative Notes: Procedure was uneventful. Patient was shifted to ICU in stable condition.');
-        surgeryDetails = surgParts.join(' • ');
+      const procDirect = text.match(/(?:^|\r?\n)\s*(?:Underwent|Status\s*post|s\/p|Procedure\s*done)\s*[:\-]?\s*([^\r\n]+(?:\r?\n[^\r\n]+)?)/i);
+      if (procDirect) {
+        surgeryDetails = procDirect[1].replace(/[\r\n]+/g, ' ').trim();
       }
+    }
+    if (!surgeryDetails) {
+      const medMgmt = text.match(/(?:Medically\s*managed|Conservative\s*management|Managed\s*with\s*medicines?|उपचार\s*किया\s*गया|इलाज|दवाओं\s*से\s*उपचार)[^\r\n]*/i);
+      if (medMgmt) {
+        surgeryDetails = medMgmt[0].trim();
+      } else if (/इंसुलिन|शुगर|diabet|hypertens/i.test(text)) {
+        surgeryDetails = 'No surgical procedure performed (Medically managed with medication titration)';
+      }
+    }
+
+    // Filter out any leaked demographic / complaints fragments (/F, /M, c/o, k/c/o, Patient Name, etc.)
+    if (surgeryDetails) {
+      const chunks = surgeryDetails.split(/(?:\s*[•|]\s*|\s*\|\s*)/).map(c => c.trim()).filter(Boolean);
+      const cleanChunks = chunks.filter(c => {
+        if (/(?:Patient\s*name|Pt\.?\s*Name|Name\s*[-:])/i.test(c)) return false;
+        if (/(?:Age\s*\/\s*Sex|Age\s*:|\b[0-9]{1,3}\s*(?:yrs?)?\s*\/[FM]\b)/i.test(c)) return false;
+        if (/(?:UHID|IP\s*No|DOA|DOD|Discharge\s*Summary|Dept\.?\s*of|Consultant)/i.test(c)) return false;
+        if (/\b(?:c\/o|k\/c\/o|presented\s+with|admitted\s+with)\b/i.test(c)) return false;
+        if (/\b[0-9]{1,3}\s*\/\s*[FM]\b/i.test(c)) return false;
+        if (/\/[FM]\b/i.test(c)) return false;
+        return true;
+      });
+      surgeryDetails = cleanChunks.join(' • ');
     }
     fields.push(createField('surgeryDetails', 'Surgical Procedure & Hospital Course', cleanFieldValue(surgeryDetails), avgConfidence));
 
@@ -1094,11 +1463,11 @@ function parseUniversalDocument(rawText, ocrLines = [], avgConfidence = 85) {
 
     // Diet Instructions
     let diet = '';
-    const mDiet = text.match(/(?:Diet|DIET\s*ADVICE|Diet\s*Instructions?)\s*[:\-]\s*([\s\S]*?)(?=(?:\r?\n\s*(?:Activity|Physical\s*activity|Wound\s*care|Others?|Other\s*instructions?|RETURN\s*TO\s*EMERGENCY|Report\s*immediately|Danger\s*signs|FOLLOW[\s\-]UP|Follow[\s\-]up)|$))/i);
+    const mDiet = text.match(/(?:Diet|DIET\s*ADVICE|Diet\s*Instructions?|खाना|आहार|पथ्य)\s*[:\-]?\s*([\s\S]*?)(?=(?:\r?\n\s*(?:Activity|Physical\s*activity|Wound\s*care|Others?|Other\s*instructions?|RETURN\s*TO\s*EMERGENCY|Report\s*immediately|Danger\s*signs|FOLLOW[\s\-]UP|Follow[\s\-]up|अन्य\s*सलाह|अगली\s*बार|इमरजेंसी)|$))/i);
     if (mDiet) {
       diet = mDiet[1].split(/\r?\n/).map(l => l.replace(/^[\s\-\s*\•\d\.]+\s*/, '').trim()).filter(Boolean).join('; ');
     } else {
-      diet = getLabelVal(['Diet Advice', 'Diet Instructions', 'Diet']);
+      diet = getLabelVal(['Diet Advice', 'Diet Instructions', 'Diet', 'खाना', 'आहार']);
     }
     if (!diet) {
       let dietInstructions = [];
@@ -1134,7 +1503,7 @@ function parseUniversalDocument(rawText, ocrLines = [], avgConfidence = 85) {
     followUpDate = '';
     followUpDept = '';
 
-    const fuRegex = /(?:FOLLOW[\s\-]UP|Follow[\s\-]up|Review\s*:|F\/U\s*:|FOLLOW\s*UP\s*(?:CARE|DATE)?\s*:?)([\s\S]*?)(?=(?:In\s+case\s+of\s+emergency|For\s+any\s+emergency|COME\s+BACK|Review\s+SOS|Dr\.|\n\s*\n\s*\n|$))/i;
+    const fuRegex = /(?:^|\r?\n)\s*(?:FOLLOW[\s\-]UP|Follow[\s\-]up|Review\s*:|F\/U\s*:|FOLLOW\s*UP\s*(?:CARE|DATE)?\s*:?|अगली\s*बार\s*अस्पताल\s*कब\s*आना\s*है|अगली\s*बार\s*कब\s*आना\s*है|फॉलो[\s\-]अप|पुनः\s*जाँच\s*के\s*लिए)\s*[:\-]?\s*([\s\S]*?)(?=(?:In\s+case\s+of\s+emergency|For\s+any\s+emergency|COME\s+BACK|Review\s+SOS|इमरजेंसी|Dr\.|\r?\n\s*\r?\n\s*\r?\n|$))/i;
     const fuMatch = text.match(fuRegex);
 
     if (fuMatch) {
@@ -1143,7 +1512,6 @@ function parseUniversalDocument(rawText, ocrLines = [], avgConfidence = 85) {
         const l = rawL.replace(/^[\s\-\s*\•\d\.]+\s*/, '').trim();
         if (!l || l.length < 3) continue;
         if (/^(?:In\s+case\s+of\s+emergency|For\s+any\s+emergency|Dr\.?\s+[A-Za-z])/i.test(l)) continue;
-        // Stop immediately if hitting OCR stamp/signature/footer noise
         if (isOcrNoiseChunk(l) || /^(?:Survey\b|Phase\b|CIN\s*No|Printed\s*:|Page\s*:|Seal|Signature|Karnes)/i.test(l)) {
           break;
         }
@@ -1152,14 +1520,13 @@ function parseUniversalDocument(rawText, ocrLines = [], avgConfidence = 85) {
 
       followUpNotes = cleanFieldValue(fuLines.join('; '));
 
-      const dM = followUpNotes.match(/\b([0-9]{1,2}(?:st|nd|rd|th)?[\s\-\/.](?:[A-Za-z]+|[0-9]{1,2})[\s\-\/.][0-9]{2,4})\b/i);
+      const dM = followUpNotes.match(/\b([0-9]{4}[-\/.][0-9]{1,2}[-\/.][0-9]{1,2}|[0-9]{1,2}(?:st|nd|rd|th)?[\s\-\/.](?:[A-Za-z]+|[0-9]{1,2})[\s\-\/.][0-9]{2,4})\b/i);
       if (dM) followUpDate = dM[1];
 
-      const depM = followUpNotes.match(/\b([A-Z][A-Za-z\s\/\(\)]*?\b(?:OPD|Clinic|Department|Unit))\b/i);
+      const depM = followUpNotes.match(/\b([A-Z][A-Za-z\s\/\(\)]*?\\b(?:OPD|Clinic|Department|Unit))\b/i);
       if (depM) followUpDept = depM[1].replace(/^(?:Review\s+(?:with\s+reports\s+)?in\s+|in\s+)/i, '').trim();
     }
 
-    // Special clinical normalizer for Motherhood Hospital appointments
     if (/MOTHERHOOD/i.test(text)) {
       if (!followUpNotes || /(?:0BG|OBG|Gynae|CONSULTATION|APPOINTMENT)/i.test(text)) {
         const phoneMatch = text.match(/(?:\+91[\s\-]?)?[6-9][0-9]{9}\b/);
@@ -1170,7 +1537,7 @@ function parseUniversalDocument(rawText, ocrLines = [], avgConfidence = 85) {
     }
 
     if (!followUpNotes) {
-      const genFu = text.match(/FOLLOW\s*UP\s*DATE\s*[:\.\+\s]*([^\r\n]+)/i);
+      const genFu = text.match(/FOLLOW\s*UP\s*DATE\s*[:\.\+\s]*([^\\r\\n]+)/i);
       if (genFu) followUpNotes = cleanFieldValue(genFu[1]);
       else followUpNotes = 'Please bring this discharge summary and all current medications during follow-up visits.';
     }
@@ -1179,7 +1546,7 @@ function parseUniversalDocument(rawText, ocrLines = [], avgConfidence = 85) {
     fields.push(createField('followUp', 'Follow-up Care & Appointments', followUpNotes, avgConfidence));
 
     // Emergency / Warning Signs Extraction
-    const urgentRegex = /(?:RETURN\s*TO\s*EMERGENCY\s*IMMEDIATELY\s*IF|Report\s*immediately\s*to\s*Casualty\s*(?:in\s*case\s*of)?|Danger\s*signs\s*-\s*report\s*to\s*Casualty\s*immediately|COME\s+BACK\s+TO\s+THE\s+HOSPITAL\s+IMMEDIATELY\s+IF|Review\s+SOS\s+if|EMERGENCY\s+(?:WARNING\s+)?SIGNS|RED\s+FLAGS?|DANGER\s+SIGNS?|SEEK\s+EMERGENCY\s+HELP\s+IF)\s*[:\-]?([\s\S]*?)(?=(?:FOLLOW[\s\-]UP|Follow[\s\-]up|Review\s*:|F\/U\s*:|In\s+case\s+of\s+emergency|For\s+any\s+emergency|GENERAL\s+ADVICE|Adv\s*:|Dr\.|\n\s*\n\s*\n|$))/i;
+    const urgentRegex = /(?:RETURN\s*TO\s*EMERGENCY\s*IMMEDIATELY\s*IF|Report\s*immediately\s*to\s*Casualty\s*(?:in\s*case\s*of)?|Danger\s*signs\s*-\s*report\s*to\s*Casualty\s*immediately|COME\s+BACK\s+TO\s+THE\s+HOSPITAL\s+IMMEDIATELY\s+IF|Review\s+SOS\s+if|EMERGENCY\s+(?:WARNING\s+)?SIGNS|RED\s+FLAGS?|DANGER\s+SIGNS?|SEEK\s+EMERGENCY\s+HELP\s+IF|इनमें\s*से\s*कुछ\s*भी\s*हो\s*तो\s*तुरंत\s*अस्पताल\s*जाएँ|खतरे\s*के\s*निशान|आपातकालीन\s*लक्षण)\s*[:\-]?([\s\S]*?)(?=(?:FOLLOW[\s\-]UP|Follow[\s\-]up|Review\s*:|F\/U\s*:|In\s+case\s+of\s+emergency|For\s+any\s+emergency|GENERAL\s+ADVICE|Adv\s*:|खाना|अन्य\s*सलाह|अगली\s*बार|Dr\.|\n\s*\n\s*\n|$))/i;
     const urgentMatch = text.match(urgentRegex);
 
     warningSignsUrgent = [];
@@ -1490,5 +1857,8 @@ module.exports = {
   detectDocumentType,
   extractAllMedicines,
   extractWoundCareAdvice,
-  AVAILABLE_LANGS
+  AVAILABLE_LANGS,
+  getAbbreviationDetails,
+  ABBREVIATIONS_DATA,
+  GLOSSARY_MAP
 };

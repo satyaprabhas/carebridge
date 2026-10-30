@@ -1,4 +1,4 @@
-# CareBridge · Healthcare Track (H2S): Autonomous Post-Discharge Healthcare Platform
+# CareBridge · Healthcare Track (H2): Autonomous Post-Discharge Healthcare Platform
 Autonomous, multilingual clinical discharge intelligence, prescription safety schedule, and real-time patient recovery platform.
 
 ## What it does

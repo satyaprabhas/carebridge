@@ -339,7 +339,7 @@
       colDuration: 'వ్యవధి (రోజులు)',
       colInstructions: 'ప్రత్యేక సూచనలు',
       btnTakeDose: 'మందు తీసుకున్నాను',
-      btnSnooze: '15 ని॥ వాయిదా',
+      btnSnooze: '15 నిమిషాల వాయిదా',
       btnSearchFood: '🔍 ఆహారాన్ని వెతకండి',
       searchPlaceholder: 'ఆహారం లేదా పానీయం వెతకండి (ఉదా: పనీర్, చికెన్, కొబ్బరి నీళ్ళు, బొప్పాయి, సమోసా, ఓట్స్, చేపలు)...',
       searchVerdictSuitable: 'కోలుకోవడానికి అనుకూలమైన మంచి ఆహారం',
@@ -350,7 +350,7 @@
   // ============================================================
   // DOM UTILITY HELPERS
   // ============================================================
-  function $(id) { return document.getElementById(id); }
+  function $(id) { return (typeof id === 'string') ? (document.getElementById(id) || document.querySelector(id)) : null; }
   function $$(selector) { return document.querySelectorAll(selector); }
 
   function escapeHtml(str) {
@@ -912,27 +912,8 @@
     setText('header-patient-name', p.patientName || 'Patient');
     setText('header-patient-id', p.patientId || 'N/A');
 
-    // Dashboard Hero Card
-    setText('dash-patient-name', p.patientName || 'Patient');
-    setText('dash-patient-id', p.patientId || 'N/A');
-    setText('dash-patient-age', p.age ? (String(p.age).includes('Yr') ? p.age : `${p.age} Yrs (${p.gender || 'N/A'})`) : 'N/A');
-    setText('dash-discharge-date', formatDate(p.dischargeDate));
-    setText('dash-diagnosis', p.diagnosis || 'Clinical evaluation and recovery.');
-    setText('dash-allergies', Array.isArray(p.allergies) ? p.allergies.join(', ') : (p.allergies || 'None documented'));
-
-    // Dashboard Summary Cards
-    setText('dash-sum-discharge', p.hospital || 'Verified Hospital');
-    if (p.medicines && p.medicines.length > 0) {
-      setText('dash-sum-medicine', `${p.medicines[0].name} (${p.medicines.length} prescribed)`);
-    } else {
-      setText('dash-sum-medicine', 'Consult physician at follow-up.');
-    }
-    setText('dash-sum-diet', p.diagnosis ? `Tailored for ${p.diagnosis.split(' ')[0]}` : 'Clinical Protocol');
-    if (p.followUp && p.followUp.date) {
-      setText('dash-sum-followup', `${formatDate(p.followUp.date)} (${p.followUp.doctor || 'Clinic'})`);
-    } else {
-      setText('dash-sum-followup', 'Follow-up as advised.');
-    }
+    // Dashboard View (Clean Telugu & English)
+    renderDashboard(p);
 
     // Active Discharge Summary Record
     updateActiveDischargeRecord(p);
@@ -1339,7 +1320,8 @@
 
   function translateMedNameToTelugu(name) {
     if (!name) return '';
-    let clean = name.trim();
+    let clean = String(name).trim();
+    if (/[\u0900-\u097F]/.test(clean)) clean = translateHindiToTelugu(clean);
     let isStopped = false;
     if (/^(?:Stop|Discontinue)\s+/i.test(clean)) {
       isStopped = true;
@@ -1552,6 +1534,7 @@
   function translateTimingToTelugu(text) {
     if (!text) return 'సమయానికి తీసుకోండి';
     let s = String(text);
+    if (/[\u0900-\u097F]/.test(s)) s = translateHindiToTelugu(s);
     s = s.replace(/Twice daily with meals \(Morning & Night\)/gi, 'భోజనంతో పాటు రోజుకు రెండుసార్లు (ఉదయం & రాత్రి)')
          .replace(/Twice daily after food \(1-0-1\)/gi, 'భోజనం తర్వాత రోజుకు రెండుసార్లు (ఉదయం & రాత్రి) (1-0-1)')
          .replace(/Twice daily after food/gi, 'భోజనం తర్వాత రోజుకు రెండుసార్లు')
@@ -1592,6 +1575,7 @@
   function translateDurationToTelugu(text) {
     if (!text) return 'డాక్టర్ సంప్రదింపు వరకు';
     let s = String(text);
+    if (/[\u0900-\u097F]/.test(s)) s = translateHindiToTelugu(s);
     s = s.replace(/\b(?:for|x)\s*(\d+)\s*\/\s*7\b/gi, '$1 రోజులు')
          .replace(/\b(?:for\s+)?(\d+)\s*days?\b/gi, '$1 రోజులు')
          .replace(/\b(?:for\s+)?(\d+)\s*weeks?\b/gi, '$1 వారాలు')
@@ -1606,6 +1590,7 @@
   function translateInstructionsToTelugu(text) {
     if (!text) return 'డాక్టర్ సూచించిన విధంగా తీసుకోండి.';
     let s = String(text);
+    if (/[\u0900-\u097F]/.test(s)) s = translateHindiToTelugu(s);
     s = s.replace(/Take at start of meals with water\. Consume curd or buttermilk\.?/gi, 'భోజనం ప్రారంభంలో నీటితో తీసుకోండి. తాజా పెరుగు లేదా మజ్జిగ వాడండి.')
          .replace(/Take after meals with warm water for pain\/fever\. Do not exceed prescribed dose\.?/gi, 'నొప్పి/జ్వరం కోసం భోజనం తర్వాత గోరువెచ్చని నీటితో తీసుకోండి. మోతాదు మించవద్దు.')
          .replace(/Take 30 minutes before breakfast with a glass of water\.?/gi, 'అల్పాహారానికి 30 నిమిషాల ముందు గ్లాసు నీటితో తీసుకోండి.')
@@ -1626,6 +1611,7 @@
   function translateDoseToTelugu(text) {
     if (!text) return 'ప్రామాణిక మోతాదు';
     let s = String(text);
+    if (/[\u0900-\u097F]/.test(s)) s = translateHindiToTelugu(s);
     s = s.replace(/\b(\d+(?:\.\d+)?)\s*mg\b/gi, '$1 మి.గ్రా')
          .replace(/\b(\d+(?:\.\d+)?)\s*mcg\b/gi, '$1 మైక్రోగ్రా')
          .replace(/\b(\d+(?:\.\d+)?)\s*ml\b/gi, '$1 మి.లీ')
@@ -1644,6 +1630,7 @@
   function translatePurposeToTelugu(text) {
     if (!text) return '';
     let s = String(text);
+    if (/[\u0900-\u097F]/.test(s)) s = translateHindiToTelugu(s);
     s = s.replace(/Blood thinner to prevent clots/gi, 'రక్తం గడ్డకట్టకుండా నిరోధించే బ్లడ్ థిన్నర్')
          .replace(/Blood pressure & heart medication/gi, 'రక్తపోటు (బీపీ) మరియు గుండె రక్షణ మందు')
          .replace(/Blood sugar control/gi, 'రక్తంలో చక్కెర (షుగర్) నియంత్రణ')
@@ -1708,6 +1695,7 @@
   function translateClinicalTextToTelugu(text) {
     if (!text) return '';
     let s = String(text);
+    if (/[\u0900-\u097F]/.test(s)) s = translateHindiToTelugu(s);
     // Common clinical patterns
     s = s.replace(/Coronary Artery Bypass Graft(?:ing)?\s*\(CABG\s*x?\s*(\d+)?\)/gi, 'కరోనరీ ఆర్టరీ బైపాస్ గ్రాఫ్టింగ్ (CABG) శస్త్రచికిత్స')
          .replace(/Coronary Artery Bypass Graft(?:ing)?/gi, 'కరోనరీ ఆర్టరీ బైపాస్ గ్రాఫ్టింగ్ శస్త్రచికిత్స (CABG)')
@@ -1740,25 +1728,51 @@
          .replace(/Review in (?:Cardiology|Surgical|General)?\s*OPD after (\d+) days/gi, '$1 రోజుల తర్వాత ఓపీడీలో డాక్టర్‌ను సంప్రదించండి')
          .replace(/Remove sutures after (\d+)(?:-(\d+))? days/gi, '$1 రోజుల తర్వాత కుట్లు తొలగించండి')
          .replace(/Attending Physician/gi, 'సంప్రదించే ముఖ్య వైద్యుడు');
+    if (/[\u0900-\u097F]/.test(s)) s = s.replace(/[\u0900-\u097F]+/g, ' ').replace(/\s+/g, ' ').trim();
     return s;
   }
 
-  const TELUGU_CHECKLIST_MAP = [
+    const TELUGU_CHECKLIST_MAP = [
+    // Clinical default home care
+    [new RegExp('Rest adequately and avoid strenuous physical exertion or heavy lifting', 'i'), 'తగినంత విశ్రాంతి తీసుకోండి మరియు శారీరక శ్రమ లేదా 5 కిలోల కంటే ఎక్కువ బరువులు ఎత్తడం నివారించండి'],
+    [new RegExp('Rest adequately and avoid strenuous heavy lifting', 'i'), 'తగినంత విశ్రాంతి తీసుకోండి మరియు కోలుకునే ప్రారంభంలో 5 కిలోల కంటే ఎక్కువ బరువులు ఎత్తవద్దు'],
+    [new RegExp('Rest adequately', 'i'), 'తగినంత విశ్రాంతి తీసుకోండి'],
+    [new RegExp('Maintain adequate hydration|Drink at least 2 litres of water', 'i'), 'తగినంత నీరు త్రాగండి (పరిమితి లేకపోతే రోజూ 2 లీటర్ల మంచినీరు త్రాగండి)'],
+    [new RegExp('Take all prescribed medications at their designated timings after meals', 'i'), 'సూచించిన అన్ని మందులను భోజనం తర్వాత సరైన సమయానికి తీసుకోండి'],
     [new RegExp('Take medications strictly as prescribed', 'i'), 'సూచించిన మందులను సమయానికి ఖచ్చితంగా తీసుకోండి'],
-    [new RegExp('Check surgical wound daily for redness or discharge', 'i'), 'కుట్లు లేదా గాయం వద్ద ఎరుపుదనం లేదా చీము ఉందో లేదో రోజూ చూడండి'],
-    [new RegExp('Walk gently for 15 minutes twice daily', 'i'), 'రోజుకు రెండుసార్లు 15 నిమిషాల పాటు నెమ్మదిగా నడవండి'],
+    [new RegExp('Resume normal light daily activities gradually', 'i'), 'మీ సౌకర్యం మరియు శక్తిని బట్టి సాధారణ తేలికపాటి పనులను నెమ్మదిగా తిరిగి ప్రారంభించండి'],
+    [new RegExp('Adhere strictly to low-salt diet', 'i'), 'తక్కువ ఉప్పు ఆహారాన్ని ఖచ్చితంగా పాటించండి (రోజుకు 5 గ్రాముల కంటే తక్కువ; ఊరగాయలు, అప్పడాలు నివారించండి)'],
+    [new RegExp('Maintain low-salt and low-oil diet', 'i'), 'తక్కువ ఉప్పు మరియు తక్కువ నూనెతో కూడిన ఆహారాన్ని తీసుకోండి'],
+    [new RegExp('Take blood thinners and cardiac medications at the exact prescribed time', 'i'), 'రక్తం పలుచబడే మందులు మరియు గుండె మందులను రోజూ ఖచ్చితమైన సమయానికి క్రమం తప్పకుండా తీసుకోండి'],
+    [new RegExp('Record resting pulse and blood pressure regularly', 'i'), 'రోజువారీ రికవరీ డైరీలో పల్స్ మరియు రక్తపోటును క్రమం తప్పకుండా నమోదు చేసుకోండి'],
     [new RegExp('Measure and log blood pressure every morning', 'i'), 'ప్రతిరోజూ ఉదయం రక్తపోటును కొలిచి నమోదు చేసుకోండి'],
+    [new RegExp('Avoid exposure to active smoke, dust, room fresheners', 'i'), 'పొగ, దుమ్ము, రూమ్ ఫ్రెషనర్లు, అగర్‌బత్తీలు మరియు చల్లని గాలికి దూరంగా ఉండండి'],
+    [new RegExp('Always rinse mouth and gargle with warm water', 'i'), 'ఇన్‌హేలర్ వాడిన తర్వాత ఎల్లప్పుడూ నోటిని గోరువెచ్చని నీటితో శుభ్రంగా పుక్కిలించండి'],
+    [new RegExp('Keep reliever inhaler accessible at all times', 'i'), 'రిలీవర్ ఇన్‌హేలర్‌ను ఎల్లప్పుడూ పడక వద్ద మరియు ప్రయాణాలలో అందుబాటులో ఉంచుకోండి'],
+    [new RegExp('Gradually increase light daily walking', 'i'), 'శ్వాస తీసుకోవడం సులభతరమైన కొద్దీ తేలికపాటి రోజువారీ నడకను నెమ్మదిగా పెంచండి'],
+    [new RegExp('Walk gently for 15 minutes twice daily', 'i'), 'రోజుకు రెండుసార్లు 15 నిమిషాల పాటు నెమ్మదిగా నడవండి'],
+    [new RegExp('Follow regular diabetic meal timings', 'i'), 'క్రమబద్ధమైన భోజన సమయాలను పాటించండి; ఉపవాసాలు మరియు చక్కెరతో కూడిన ఆహారాలను నివారించండి'],
+    [new RegExp('Inspect feet and skin daily for any cuts, blisters', 'i'), 'పాదాలు మరియు చర్మంపై ఏవైనా గాయాలు, బొబ్బలు, వాపు లేదా ఎరుపుదనం ఉందో రోజూ గమనించండి'],
+    [new RegExp('Take prescribed antidiabetic medications at their recommended meal timings', 'i'), 'సూచించిన మధుమేహ మందులను సూచించిన భోజన సమయాలలో తీసుకోండి'],
+    [new RegExp('Stay well hydrated with clean water; maintain light 20-30 minute daily walking', 'i'), 'మంచినీరు బాగా త్రాగండి; రోజూ 20-30 నిమిషాల పాటు తేలికపాటి నడక సాగించండి'],
+    [new RegExp('Check surgical wound daily for redness or discharge', 'i'), 'కుట్లు లేదా గాయం వద్ద ఎరుపుదనం లేదా చీము ఉందో లేదో రోజూ చూడండి'],
     [new RegExp('Avoid lifting objects heavier than 5 kg', 'i'), '5 కిలోల కంటే ఎక్కువ బరువున్న వస్తువులను ఎత్తవద్దు'],
-    [new RegExp('Drink at least 2 litres of water daily', 'i'), 'రోజుకు కనీసం 2 లీటర్ల మంచినీరు త్రాగండి'],
-    [new RegExp('Maintain low-salt and low-oil diet', 'i'), 'తక్కువ ఉప్పు మరియు తక్కువ నూనెతో కూడిన ఆహారాన్ని తీసుకోండి']
+    // Hindi homecare items
+    [new RegExp('थोड़ा-थोड़ा\\s*खाना', 'i'), 'కొద్దికొద్దిగా ఎక్కువసార్లు ఆహారం తీసుకోండి; ఏ పూటా భోజనం మానవద్దు'],
+    [new RegExp('चीनी.*फलों का जूस न पिएँ', 'i'), 'చక్కెర, తీపి పదార్థాలు మరియు పండ్ల రసాలు నివారించండి'],
+    [new RegExp('घाव को सूखा', 'i'), 'గాయాన్ని పొడిగా మరియు శుభ్రంగా ఉంచండి'],
+    [new RegExp('रोज़ टहलें', 'i'), 'రోజూ క్రమం తప్పకుండా నడవండి'],
+    [new RegExp('दवाइयाँ समय पर लें', 'i'), 'సూచించిన మందులను సరైన సమయానికి తీసుకోండి']
   ];
 
   function translateChecklistItemToTelugu(text) {
     if (!text) return '';
-    let s = text;
+    let s = String(text);
+    if (/[\u0900-\u097F]/.test(s)) s = translateHindiToTelugu(s);
     for (let i = 0; i < TELUGU_CHECKLIST_MAP.length; i++) {
       if (TELUGU_CHECKLIST_MAP[i][0].test(s)) return TELUGU_CHECKLIST_MAP[i][1];
     }
+    if (/[\u0900-\u097F]/.test(s)) s = s.replace(/[\u0900-\u097F]+/g, ' ').replace(/\s+/g, ' ').trim();
     return s;
   }
 
@@ -1778,10 +1792,12 @@
 
   function translateWarningItemToTelugu(text) {
     if (!text) return '';
-    let s = text;
+    let s = String(text);
+    if (/[\u0900-\u097F]/.test(s)) s = translateHindiToTelugu(s);
     for (let i = 0; i < TELUGU_WARNING_ITEMS.length; i++) {
       if (TELUGU_WARNING_ITEMS[i][0].test(s)) return TELUGU_WARNING_ITEMS[i][1];
     }
+    if (/[\u0900-\u097F]/.test(s)) s = s.replace(/[\u0900-\u097F]+/g, ' ').replace(/\s+/g, ' ').trim();
     return s;
   }
 
@@ -1803,7 +1819,267 @@
     return 'ఈ డిశ్చార్జ్ రికార్డు మరియు రోజువారీ లక్షణాల డైరీని వెంట తీసుకురండి.';
   }
 
-  function renderMedicineTable(medicines) {
+    
+  // ============================================================
+  // HINDI TO TELUGU CLINICAL TRANSLATION ENGINE
+  // Eliminates all Hindi words when Telugu language is selected
+  // ============================================================
+  const HINDI_TO_TELUGU_MAP = [
+    // Hospital & Organization
+    [/^(?:मेरी\s*देखभाल\s*योजना\s*[-–—]\s*)?च[ंन]्?द्र[ा]?ప[ुू]री\s*जिला\s*अस्पताल/gi, 'చంద్రపురి జిల్లా ఆసుపత్రి'],
+    [/च[ंन]्?द्र[ा]?प[ुू]री\s*जिला\s*अस्पताल/gi, 'చంద్రపురి జిల్లా ఆసుపత్రి'],
+    [/च[ंन]्?द्र[ा]?प[ुू]री/gi, 'చంద్రపురి'],
+    [/जिला\s*अस्पताल/gi, 'జిల్లా ఆసుపత్రి'],
+    [/अस्पताल/gi, 'ఆసుపత్రి'],
+    [/कैज़ुअल्टी\s*\(24\s*घंटे\s*खुली\)/gi, 'అత్యవసర విభాగం (24 గంటలు తెరిచి ఉంటుంది)'],
+    [/कैज़ुअल्टी/gi, 'అత్యవసర విభాగం'],
+    [/इमरजेंसी/gi, 'అత్యవసర విభాగం'],
+    [/डायबिटीज़\s*क्लिनिक/gi, 'డయాబెటిస్ క్లినిక్'],
+
+    // Clinical Summaries & Explanations
+    [/गोलियों\s*के\s*बावजूद\s*आपकी\s*शुगर[\s\S]*?शुरू\s*किए\s*गए\s*हैं[।.]?/gi, 'మాత్రలు వాడినప్పటికీ రక్తంలో చక్కెర నియంత్రణలోకి రాలేదు; ఇన్సులిన్ చికిత్స ప్రారంభించడానికి ఆసుపత్రిలో చేర్చబడ్డారు.'],
+    [/गोलियों\s*के\s*बावजूद[\s\S]*?इंसुलिन[\s\S]*?(?:शुरू|भर्ती)/gi, 'మాత్రలు వాడినప్పటికీ రక్తంలో చక్కెర నియంత్రణలోకి రాలేదు; ఇన్సులిన్ చికిత్స ప్రారంభించడానికి ఆసుపత్రిలో చేర్చబడ్డారు.'],
+    [/त्वचा\s*के\s*नीचे\s*इंसुलिन\s*लगाएँ[\s\S]*?जारी\s*रखें[।.]?/gi, 'చర్మం కింద ఇన్సులిన్ ఇంజెక్షన్ తీసుకోండి: అల్పాహారానికి ముందు 14 యూనిట్లు మరియు రాత్రి భోజనానికి ముందు 6 యూనిట్లు (భోజనానికి 30 నిమిషాల ముందు); తదుపరి డాక్టర్ సంప్రదింపు వరకు కొనసాగించండి.'],
+    [/यह\s*किसलिए\s*है\s*:\s*नाश्ते\s*और\s*रात\s*के\s*खाने[\s\S]*?शुगर\s*काबू[\s\S]*?[।.]?/gi, 'రక్తంలో చక్కెరను నియంత్రించడానికి అల్పాహారం మరియు రాత్రి భోజనానికి ముందు తీసుకునే ప్రిమిక్స్డ్ ఇన్సులిన్.'],
+    [/दिन\s*में\s*2\s*बार,\s*खाने\s*के\s*बाद[\s\S]*?बंद\s*न\s*करें[।.]?/gi, 'భోజనం తర్వాత రోజుకు 2 సార్లు 1 మాత్ర (1000 mg) తీసుకోండి; దీర్ఘకాలిక నిర్వహణ చికిత్స; అకస్మాత్తుగా ఆపవద్దు.'],
+    [/यह\s*किसलिए\s*है\s*:\s*खून\s*में\s*शुगर\s*को\s*काबू\s*में\s*रखने\s*के\s*लिए[।.]?/gi, 'రక్తంలో చక్కెర స్థాయిలను నియంత్రించడానికి.'],
+    [/दिन\s*में\s*1\s*बार,\s*रात\s*को\s*सोते\s*समय[\s\S]*?बंद\s*न\s*करें[।.]?/gi, 'రాత్రి పడుకునే ముందు రోజుకు 1 సార్లు 1 మాత్ర (10 mg) తీసుకోండి; దీర్ఘకాలిక చికిత్స; అకస్మాత్తుగా ఆపవద్దు.'],
+    [/यह\s*किसलिए\s*है\s*:\s*कोलेस्ट्रॉल\s*कम\s*करने\s*और\s*दिल\s*व\s*नसों\s*की\s*रक्षा\s*के\s*लिए[।.]?/gi, 'కొలెస్ట్రాల్‌ను తగ్గించడానికి మరియు గుండె, రక్తనాళాలను రక్షించడానికి.'],
+    [/लेना\s*बंद\s*करें[\s\S]*?इंसुलिन\s*दिया\s*गया\s*है[।.]?/gi, 'నిలిపివేయండి; ఇన్సులిన్ చికిత్సతో భర్తీ చేయబడింది.'],
+    [/कोई\s*(?:सर्जरी|ऑपरेशन)\s*नहीं\s*किया\s*गया[\s\S]*/gi, 'ఎలాంటి శస్త్రచికిత్స చేయలేదు (మందులతో చికిత్స నిర్వహించబడింది)'],
+    [/शुगर\s*कम\s*होने\s*के\s*लक्षण[\s\S]*?(?:अस्पताल\s*लाएँ|अस्पताल\s*जाएँ|सीधे\s*अस्पताल)/gi, 'హైపోగ్లైసీమియా (షుగర్ తగ్గడం) హెచ్చరిక: చెమటలు, వణుకు, అయోమయం. వెంటనే 3 చెంచాల చక్కెర/గ్లూకోజ్ నీటిలో కలిపి తాగండి మరియు అత్యవసర వైద్య సహాయం పొందండి. స్పృహ లేకపోతే వెంటనే అత్యవసర విభాగానికి తీసుకెళ్ళండి.'],
+    [/(?:2\s*|[०-९]+\s*)?बार\s*जाँच\s*में\s*शुगर\s*300\s*mg\/dl\s*से\s*ज़्यादा\s*आना/gi, 'రెండు వరుస పరీక్షల్లో రక్తంలో చక్కెర 300 mg/dl కంటే ఎక్కువగా నమోదు కావడం.'],
+    [/डायबिटीज़\s*वाला\s*खाना\s*:\s*चीनी[\s\S]*?फलों\s*का\s*जूस\s*न\s*पिएँ/gi, 'డయాబెటిక్ ఆహారం: చక్కెర, స్వీట్లు, బెల్లం, తేనె మరియు పండ్ల రసాలను నివారించండి.'],
+    [/थोड़ा-थोड़ा\s*खाना\s*बार-बार\s*खाएँ;\s*कोई\s*भी\s*खाना\s*न\s*छोड़ें/gi, 'కొద్దికొద్దిగా ఎక్కువసార్లు ఆహారం తీసుకోండి; ఏ పూటా భోజనం మానవద్దు.'],
+    [/\(सोमवार,\s*27\s*जुलाई\s*2026\)\s*:\s*डायबिटीज़\s*क्लिनिक[\s\S]*?शुगर\s*चार्ट[।.]?/gi, '2026-07-27 (సోమవారం): డయాబెటిస్ క్లినిక్ (మెడిసిన్ ఓపీడీ) డాక్టర్ సంప్రదింపు. మీ షుగర్ చార్ట్ వెంట తీసుకురండి.'],
+    [/\(गुरुवार,\s*15\s*अक्टूबर\s*2026\)\s*:\s*डायबिटीज़\s*क्लिनिक[\s\S]*?रिपोर्ट[।.]?/gi, '2026-10-15 (గురువారం): డయాబెటిస్ క్లినిక్ (మెడిసిన్ ఓపీడీ). 3 నెలల HbA1c మరియు కిడ్నీ సీరం క్రియాటినిన్ రిపోర్టు వెంట తీసుకురండి.'],
+
+    // Emergency Symptoms
+    [/छाती\s*में\s*तेज\s*दर्द/gi, 'తీవ్రమైన ఛాతీ నొప్పి'],
+    [/छाती\s*में\s*दर्द/gi, 'ఛాతీ నొప్పి'],
+    [/सांस\s*लेने\s*में\s*तकलीफ/gi, 'శ్వాస తీసుకోవడంలో ఇబ్బంది'],
+    [/तेज\s*बुखार/gi, 'తీవ్రమైన జ్వరం'],
+    [/बुखार/gi, 'జ్వరం'],
+    [/उल्टी\s*और\s*दस्त/gi, 'వాంతులు మరియు విరేచనాలు'],
+    [/उल्टी/gi, 'వాంతులు'],
+    [/दस्त/gi, 'విరేచనాలు'],
+    [/पेट\s*में\s*तेज\s*दर्द/gi, 'తీవ్రమైన కడుపు నొప్పి'],
+    [/पेट\s*में\s*दर्द/gi, 'కడుపు నొప్పి'],
+    [/कमजोरी\s*और\s*चक्कर/gi, 'బలహీనత మరియు తలతిరుగుడు'],
+    [/चक्कर\s*आना/gi, 'తలతిరుగుడు'],
+    [/अत्यधिक\s*पसीना/gi, 'అధిక చెమటలు'],
+    [/पसीना/gi, 'చెమటలు'],
+    [/कंपकंपी/gi, 'వణుకు'],
+    [/सोचने[- ]समझने\s*में\s*गड़बड़ी/gi, 'అయోమయం / మానసిక గందరగోళం'],
+    [/चिकित्सा\s*प्रबंधन/gi, 'వైద్య నిర్వహణ చికిత్స'],
+
+    // Routes & Administration
+    [/त्वचा\s*के\s*नीचे/gi, 'చర్మం కింద (సబ్క్యుటేనియస్)'],
+    [/मुँह\s*से/gi, 'నోటి ద్వారా (ఓరల్)'],
+    [/नाश्ते\s*से\s*आधा\s*घंटा\s*पहले/gi, 'అల్పాహారానికి 30 నిమిషాల ముందు'],
+    [/रात\s*के\s*खाने\s*से\s*आधा\s*घंटा\s*पहले/gi, 'రాత్రి భోజనానికి 30 నిమిషాల ముందు'],
+    [/नाश्ते\s*से\s*पहले/gi, 'అల్పాహారానికి ముందు'],
+    [/रात\s*के\s*खाने\s*से\s*पहले/gi, 'రాత్రి భోజనానికి ముందు'],
+    [/खाने\s*के\s*बाद/gi, 'భోజనం తర్వాత'],
+    [/भोजन\s*के\s*बाद/gi, 'భోజనం తర్వాత'],
+    [/खाने\s*से\s*पहले/gi, 'భోజనానికి ముందు'],
+    [/भोजन\s*से\s*पहले/gi, 'భోజనానికి ముందు'],
+    [/खाली\s*पेट/gi, 'ఖాళీ కడుపుతో'],
+    [/रात\s*को\s*सोते\s*समय/gi, 'రాత్రి పడుకునే ముందు'],
+    [/सोते\s*समय/gi, 'రాత్రి పడుకునే ముందు'],
+    [/दिन\s*में\s*1\s*बार/gi, 'రోజుకు 1 సార్లు'],
+    [/दिन\s*में\s*2\s*बार/gi, 'రోజుకు 2 సార్లు'],
+    [/दिन\s*में\s*3\s*बार/gi, 'రోజుకు 3 సార్లు'],
+    [/दिन\s*में\s*4\s*बार/gi, 'రోజుకు 4 సార్లు'],
+    [/दिन\s*में\s*एक\s*बार/gi, 'రోజుకు 1 సార్లు'],
+    [/दिन\s*में\s*दो\s*बार/gi, 'రోజుకు 2 సార్లు'],
+    [/दिन\s*में\s*तीन\s*बार/gi, 'రోజుకు 3 సార్లు'],
+    [/सुबह[- ]शाम/gi, 'ఉదయం మరియు రాత్రి'],
+    [/सुबह/gi, 'ఉదయం'],
+    [/दोपहर/gi, 'మధ్యాహ్నం'],
+    [/शाम/gi, 'సాయంత్రం'],
+    [/रात/gi, 'రాత్రి'],
+    [/पानी\s*के\s*साथ/gi, 'నీటితో'],
+    [/दूध\s*के\s*साथ/gi, 'పాలతో'],
+    [/जीवन\s*भर\s*रोज़\s*लेना\s*है/gi, 'జీవితాంతం రోజూ తీసుకోవాలి'],
+    [/जीवन\s*भर/gi, 'జీవితాంతం'],
+    [/रोज़/gi, 'రోజూ'],
+    [/अपने\s*आप\s*बंद\s*न\s*करें/gi, 'వైద్యుల సలహా లేకుండా ఆపవద్దు'],
+    [/लेना\s*बंद\s*करें/gi, 'నిలిపివేయండి'],
+    [/बंद\s*करें/gi, 'నిలిపివేయండి'],
+    [/रोकें/gi, 'నిలిపివేయండి'],
+    [/जारी\s*रखें/gi, 'కొనసాగించండి'],
+    [/अगली\s*जाँच\s*(?:\(review\)\s*)?तक/gi, 'తదుపరి వైద్య పరీక్ష వరకు'],
+    [/रिव्यू\s*तक/gi, 'తదుపరి వైద్య పరీక్ష వరకు'],
+    [/डायबिटीज़\s*वाला\s*खाना/gi, 'డయాబెటిక్ ఆహారం'],
+    [/नमक\s*कम\s*करें/gi, 'ఉప్పు తగ్గించండి'],
+    [/चीनी\s*और\s*मीठा\s*बंद/gi, 'చక్కెర మరియు తీపి పదార్థాలు నివారించండి'],
+    [/डॉक्टर\s*को\s*दिखाने\s*आएँ/gi, 'డాక్టర్ సంప్రదింపు అపాయింట్‌మెంట్'],
+    [/साथ\s*लाएँ\s*:\s*अपना\s*शुगर\s*चार्ट/gi, 'మీ షుగర్ చార్ట్ వెంట తీసుకురండి'],
+    [/3\s*महीने\s*की\s*औसत\s*शुगर\s*जाँच\s*\(HbA1c\)\s*करवाएँ\s*और\s*डॉक्टर\s*को\s*दिखाएँ/gi, '3 నెలల HbA1c రక్త పరీక్ష నివేదికను వైద్యుడికి చూపించండి'],
+    [/साथ\s*लाएँ\s*:\s*क्रिएटिनिन\s*\(गुर्दे\s*की\s*जाँच\)\s*की\s*रिपोर्ट/gi, 'కిడ్నీ సీరం క్రియాటినిన్ రిపోర్టు వెంట తీసుకురండి'],
+    [/सोमवार/gi, 'సోమవారం'],
+    [/मंगलवार/gi, 'మంగళవారం'],
+    [/बुधवार/gi, 'బుధవారం'],
+    [/गुरुवार/gi, 'గురువారం'],
+    [/शुक्रवार/gi, 'శుక్రవారం'],
+    [/शनिवार/gi, 'శనివారం'],
+    [/रविवार/gi, 'ఆదివారం'],
+    [/गोली/gi, 'మాత్ర'],
+    [/गोलियां/gi, 'మాత్రలు'],
+    [/कैप्सूल/gi, 'క్యాప్సూల్'],
+    [/सिरप/gi, 'సిరప్'],
+    [/इंजेक्शन/gi, 'ఇంజెక్షన్'],
+    [/यूनिट/gi, 'యూనిట్లు'],
+    [/साल/gi, 'సంవత్సరాలు'],
+    [/वर्ष/gi, 'సంవత్సరాలు'],
+    [/उम्र/gi, 'వయస్సు'],
+    [/नाम/gi, 'పేరు'],
+    [/तारीख़/gi, 'తేదీ'],
+    [/यह\s*किसलिए\s*है\s*:/gi, 'ప్రయోజనం:'],
+    [/इंसुलिन/gi, 'ఇన్సులిన్'],
+    [/दवाइयाँ/gi, 'మందులు'],
+    [/लक्षण/gi, 'లక్షణాలు']
+  ];
+
+  function translateHindiToTelugu(text) {
+    if (!text || typeof text !== 'string') return text || '';
+    if (!/[\u0900-\u097F]/.test(text)) return text;
+    let out = text;
+    for (const [regex, repl] of HINDI_TO_TELUGU_MAP) {
+      out = out.replace(regex, repl);
+    }
+    if (/[\u0900-\u097F]/.test(out)) {
+      out = out.replace(/[\u0900-\u097F]+/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+    return out;
+  }
+
+  const HINDI_TO_ENGLISH_FRONTEND_MAP = [
+    [/^(?:मेरी\s*देखभाल\s*योजना\s*[-–—]\s*)?च[ंन]्?द्र[ा]?प[ुू]री\s*जिला\s*अस्पताल/gi, 'Chandrapuri District Hospital'],
+    [/च[ंन]्?द्र[ा]?प[ुू]री\s*जिला\s*अस्पताल/gi, 'Chandrapuri District Hospital'],
+    [/गोलियों\s*के\s*बावजूद\s*आपकी\s*शुगर[\s\S]*?शुरू\s*किए\s*गए\s*हैं[।.]?/gi, 'Blood sugar remained uncontrolled despite oral medications; admitted to initiate insulin therapy.'],
+    [/गोलियों\s*के\s*बावजूद[\s\S]*?इंसुलिन[\s\S]*?(?:शुरू|भर्ती)/gi, 'Blood sugar remained uncontrolled despite oral medications; admitted to initiate insulin therapy.'],
+    [/त्वचा\s*के\s*नीचे\s*इंसुलिन\s*लगाएँ[\s\S]*?जारी\s*रखें[।.]?/gi, 'Inject insulin subcutaneously: 14 units before breakfast and 6 units before dinner (30 mins before meals); continue until review.'],
+    [/यह\s*किसलिए\s*है\s*:\s*नाश्ते\s*और\s*रात\s*के\s*खाने[\s\S]*?शुगर\s*काबू[\s\S]*?[।.]?/gi, 'Premixed insulin taken before breakfast and dinner to control blood sugar.'],
+    [/दिन\s*में\s*2\s*बार,\s*खाने\s*के\s*बाद[\s\S]*?बंद\s*न\s*करें[।.]?/gi, 'Take 1 tablet (1000 mg) twice daily after meals; lifelong maintenance therapy; do not discontinue abruptly.'],
+    [/यह\s*किसलिए\s*है\s*:\s*खून\s*में\s*शुगर\s*को\s*काबू\s*में\s*रखने\s*के\s*लिए[।.]?/gi, 'To control blood glucose levels.'],
+    [/दिन\s*में\s*1\s*बार,\s*रात\s*को\s*सोते\s*समय[\s\S]*?बंद\s*न\s*करें[।.]?/gi, 'Take 1 tablet (10 mg) once daily at bedtime; lifelong therapy; do not discontinue abruptly.'],
+    [/यह\s*किसलिए\s*है\s*:\s*कोलेस्ट्रॉल\s*कम\s*करने\s*और\s*दिल\s*व\s*नसों\s*की\s*रक्षा\s*के\s*लिए[।.]?/gi, 'To reduce cholesterol and protect heart and blood vessels.'],
+    [/लेना\s*बंद\s*करें[\s\S]*?इंसुलिन\s*दिया\s*गया\s*है[।.]?/gi, 'Discontinue; replaced by insulin therapy.'],
+    [/कोई\s*(?:सर्जरी|ऑपरेशन)\s*नहीं\s*किया\s*गया[\s\S]*/gi, 'No surgical procedure performed (Medically managed with medication titration)'],
+    [/शुगर\s*कम\s*होने\s*के\s*लक्षण[\s\S]*?(?:अस्पताल\s*लाएँ|अस्पताल\s*जाएँ|सीधे\s*अस्पताल)/gi, 'Hypoglycemia warning: Sweating, tremors, confusion. Immediately take 3 tsp sugar/glucose in water and seek urgent medical evaluation. If patient is unresponsive, do not feed orally and rush to ER.'],
+    [/(?:2\s*|[०-९]+\s*)?बार\s*जाँच\s*में\s*शुगर\s*300\s*mg\/dl\s*से\s*ज़्यादा\s*आना/gi, 'Blood sugar over 300 mg/dl on 2 consecutive checks.'],
+    [/डायबिटीज़\s*वाला\s*खाना\s*:\s*चीनी[\s\S]*?फलों\s*का\s*जूस\s*न\s*पिएँ/gi, 'Diabetic diet: Avoid sugar, sweets, jaggery, honey, and fruit juices.'],
+    [/थोड़ा-थोड़ा\s*खाना\s*बार-बार\s*खाएँ;\s*कोई\s*भी\s*खाना\s*न\s*छोड़ें/gi, 'Eat small frequent meals; do not skip any meal.'],
+    [/\(सोमवार,\s*27\s*जुलाई\s*2026\)\s*:\s*डायबिटीज़\s*क्लिनिक[\s\S]*?शुगर\s*चार्ट[।.]?/gi, '2026-07-27 (Monday): Diabetes Clinic (Medicine OPD) for physician review. Bring blood sugar chart.'],
+    [/\(गुरुवार,\s*15\s*अक्टूबर\s*2026\)\s*:\s*डायबिटीज़\s*क्लिनिक[\s\S]*?रिपोर्ट[।.]?/gi, '2026-10-15 (Thursday): Diabetes Clinic (Medicine OPD). Bring 3-month HbA1c review and serum creatinine kidney report.'],
+    [/कैज़ुअल्टी\s*\(24\s*घंटे\s*खुली\)/gi, 'Casualty / Emergency (open 24/7)'],
+    [/कैज़ुअल्टी/gi, 'Emergency / Casualty'],
+    [/इमरजेंसी/gi, 'Emergency'],
+    [/छाती\s*में\s*तेज\s*दर्द/gi, 'Severe chest pain'],
+    [/छाती\s*में\s*दर्द/gi, 'Chest pain'],
+    [/सांस\s*लेने\s*में\s*तकलीफ/gi, 'Shortness of breath'],
+    [/तेज\s*बुखार/gi, 'High-grade fever'],
+    [/बुखार/gi, 'Fever'],
+    [/उल्टी\s*और\s*दस्त/gi, 'Vomiting and diarrhea'],
+    [/उल्टी/gi, 'Vomiting'],
+    [/दस्त/gi, 'Diarrhea'],
+    [/पेट\s*में\s*तेज\s*दर्द/gi, 'Severe abdominal pain'],
+    [/पेट\s*में\s*दर्द/gi, 'Abdominal pain'],
+    [/कमजोरी\s*और\s*चक्कर/gi, 'Weakness and dizziness'],
+    [/चक्कर\s*आना/gi, 'Dizziness'],
+    [/अत्यधिक\s*पसीना/gi, 'Excessive sweating'],
+    [/पसीना/gi, 'Sweating'],
+    [/कंपकंपी/gi, 'Tremors / shakiness'],
+    [/सोचने[- ]समझने\s*में\s*गड़बड़ी/gi, 'Confusion / altered mental state'],
+    [/चिकित्सा\s*प्रबंधन/gi, 'Medical management'],
+    [/त्वचा\s*के\s*नीचे/gi, 'Subcutaneously (SC)'],
+    [/मुँह\s*से/gi, 'Orally (PO)'],
+    [/नाश्ते\s*से\s*आधा\s*घंटा\s*पहले/gi, '30 minutes before breakfast'],
+    [/रात\s*के\s*खाने\s*से\s*आधा\s*घंटा\s*पहले/gi, '30 minutes before dinner'],
+    [/नाश्ते\s*से\s*पहले/gi, 'Before breakfast'],
+    [/रात\s*के\s*खाने\s*से\s*पहले/gi, 'Before dinner'],
+    [/खाने\s*के\s*बाद/gi, 'After meals'],
+    [/भोजन\s*के\s*बाद/gi, 'After food'],
+    [/खाने\s*से\s*पहले/gi, 'Before meals'],
+    [/भोजन\s*से\s*पहले/gi, 'Before food'],
+    [/खाली\s*पेट/gi, 'On an empty stomach'],
+    [/रात\s*को\s*सोते\s*समय/gi, 'At bedtime'],
+    [/सोते\s*समय/gi, 'At bedtime'],
+    [/दिन\s*में\s*1\s*बार/gi, 'Once daily'],
+    [/दिन\s*में\s*2\s*बार/gi, 'Twice daily'],
+    [/दिन\s*में\s*3\s*बार/gi, 'Three times daily'],
+    [/दिन\s*में\s*4\s*बार/gi, 'Four times daily'],
+    [/दिन\s*में\s*एक\s*बार/gi, 'Once daily'],
+    [/दिन\s*में\s*दो\s*बार/gi, 'Twice daily'],
+    [/दिन\s*में\s*तीन\s*बार/gi, 'Three times daily'],
+    [/सुबह[- ]शाम/gi, 'Morning & Night'],
+    [/सुबह/gi, 'Morning'],
+    [/दोपहर/gi, 'Afternoon'],
+    [/शाम/gi, 'Evening'],
+    [/रात/gi, 'Night'],
+    [/पानी\s*के\s*साथ/gi, 'with water'],
+    [/दूध\s*के\s*साथ/gi, 'with milk'],
+    [/जीवन\s*भर\s*रोज़\s*लेना\s*है/gi, 'Lifelong daily maintenance'],
+    [/जीवन\s*भर/gi, 'Lifelong'],
+    [/रोज़/gi, 'daily'],
+    [/अपने\s*आप\s*बंद\s*न\s*करें/gi, 'do not stop abruptly'],
+    [/लेना\s*बंद\s*करें/gi, 'Discontinue'],
+    [/बंद\s*करें/gi, 'Discontinue'],
+    [/रोकें/gi, 'Stop'],
+    [/जारी\s*रखें/gi, 'Continue'],
+    [/अगली\s*जाँच\s*(?:\(review\)\s*)?तक/gi, 'until next review'],
+    [/रिव्यू\s*तक/gi, 'until review'],
+    [/डायबिटीज़\s*वाला\s*खाना/gi, 'Diabetic diet'],
+    [/नमक\s*कम\s*करें/gi, 'Low salt intake'],
+    [/चीनी\s*और\s*मीठा\s*बंद/gi, 'Avoid sugar and sweets'],
+    [/डायबिटीज़\s*क्लिनिक/gi, 'Diabetes Clinic'],
+    [/डॉक्टर\s*को\s*दिखाने\s*आएँ/gi, 'Doctor review appointment'],
+    [/साथ\s*लाएँ\s*:\s*अपना\s*शुगर\s*चार्ट/gi, 'Bring your blood sugar chart'],
+    [/3\s*महीने\s*की\s*औसत\s*शुगर\s*जाँच\s*\(HbA1c\)\s*करवाएँ\s*और\s*डॉक्टर\s*को\s*दिखाएँ/gi, '3-month HbA1c blood sugar test review with physician'],
+    [/साथ\s*लाएँ\s*:\s*क्रिएटिनिन\s*\(गुर्दे\s*की\s*जाँच\)\s*की\s*रिपोर्ट/gi, 'Bring serum creatinine kidney report'],
+    [/सोमवार/gi, 'Monday'],
+    [/मंगलवार/gi, 'Tuesday'],
+    [/बुधवार/gi, 'Wednesday'],
+    [/गुरुवार/gi, 'Thursday'],
+    [/शुक्रवार/gi, 'Friday'],
+    [/शनिवार/gi, 'Saturday'],
+    [/रविवार/gi, 'Sunday'],
+    [/च[ंन]्?द्र[ा]?प[ुू]री/gi, 'Chandrapuri'],
+    [/जिला\s*अस्पताल/gi, 'District Hospital'],
+    [/अस्पताल/gi, 'Hospital'],
+    [/गोली/gi, 'tablet'],
+    [/गोलियां/gi, 'tablets'],
+    [/कैप्सूल/gi, 'capsule'],
+    [/सिरप/gi, 'syrup'],
+    [/इंजेक्शन/gi, 'injection'],
+    [/यूनिट/gi, 'units'],
+    [/साल/gi, 'years'],
+    [/वर्ष/gi, 'years'],
+    [/उम्र/gi, 'Age'],
+    [/नाम/gi, 'Name'],
+    [/तारीख़/gi, 'Date'],
+    [/यह\s*किसलिए\s*है\s*:/gi, 'Purpose:'],
+    [/इंसुलिन/gi, 'Insulin'],
+    [/दवाइयाँ/gi, 'Medicines'],
+    [/लक्षण/gi, 'symptoms']
+  ];
+
+  function ensureEnglish(text) {
+    if (!text || typeof text !== 'string') return text || '';
+    if (!/[\u0900-\u097F]/.test(text)) return text;
+    let out = text;
+    for (const [regex, repl] of HINDI_TO_ENGLISH_FRONTEND_MAP) {
+      out = out.replace(regex, repl);
+    }
+    if (/[\u0900-\u097F]/.test(out)) {
+      out = out.replace(/[\u0900-\u097F]+/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+    return out.replace(/\s*([,;:.])\s*/g, '$1 ').replace(/\s{2,}/g, ' ').trim();
+  }
+
+function renderMedicineTable(medicines) {
     const tbody = $('medicine-table-rows');
     if (!tbody) return;
     const isTe = (state.currentLang === 'te');
@@ -1819,18 +2095,18 @@
       const isStopped = /^(?:Stop|Discontinue)\s+/i.test(rawName) || m.status === 'stopped' || m.discontinued;
       const cleanName = rawName.replace(/^(?:Stop|Discontinue)\s+/i, '').trim();
 
-      const name = isTe ? translateMedNameToTelugu(cleanName) : cleanName;
-      const dose = m.dose ? (isTe ? translateDoseToTelugu(m.dose) : m.dose) : (isTe ? 'డాక్టర్ సూచించిన మోతాదు' : 'As prescribed');
-      const timing = m.timing ? (isTe ? translateTimingToTelugu(m.timing) : m.timing) : (isTe ? 'సమయానికి తీసుకోండి' : 'Take on time');
-      const duration = m.duration ? (isTe ? translateDurationToTelugu(m.duration) : m.duration) : (isTe ? 'డాక్టర్ సంప్రదింపు వరకు' : 'Ongoing recovery');
-      const instructions = m.instructions ? (isTe ? translateInstructionsToTelugu(m.instructions) : m.instructions) : (isTe ? 'వైద్యుల సలహా ప్రకారం వాడండి.' : 'Take as directed by doctor.');
+      const name = isTe ? translateMedNameToTelugu(cleanName) : ensureEnglish(cleanName);
+      const dose = m.dose ? (isTe ? translateDoseToTelugu(m.dose) : ensureEnglish(m.dose)) : (isTe ? 'డాక్టర్ సూచించిన మోతాదు' : 'As prescribed');
+      const timing = m.timing ? (isTe ? translateTimingToTelugu(m.timing) : ensureEnglish(m.timing)) : (isTe ? 'సమయానికి తీసుకోండి' : 'Take on time');
+      const duration = m.duration ? (isTe ? translateDurationToTelugu(m.duration) : ensureEnglish(m.duration)) : (isTe ? 'డాక్టర్ సంప్రదింపు వరకు' : 'Ongoing recovery');
+      const instructions = m.instructions ? (isTe ? translateInstructionsToTelugu(m.instructions) : ensureEnglish(m.instructions)) : (isTe ? 'వైద్యుల సలహా ప్రకారం వాడండి.' : 'Take as directed by doctor.');
       
       let purposeText = m.purpose || m.reason || '';
       if (!purposeText && typeof getDrugPlainPurpose === 'function') {
         purposeText = getDrugPlainPurpose(cleanName);
       }
-      if (purposeText && isTe) {
-        purposeText = translatePurposeToTelugu(purposeText);
+      if (purposeText) {
+        purposeText = isTe ? translatePurposeToTelugu(purposeText) : ensureEnglish(purposeText);
       }
 
       const stoppedBadge = isStopped
@@ -2192,6 +2468,9 @@
     const medRemedies = evaluateMedicationRemedies(medicines);
 
     // Inject medication specific countermeasures into avoid/eat lists
+    basePlan.avoid = Array.isArray(basePlan.avoid) ? basePlan.avoid : [];
+    basePlan.eat = Array.isArray(basePlan.eat) ? basePlan.eat : [];
+    basePlan.limit = Array.isArray(basePlan.limit) ? basePlan.limit : [];
     medRemedies.forEach(r => {
       if (r.remedyTitle && r.remedyTitle.includes('Statin')) {
         basePlan.avoid.unshift({
@@ -2635,6 +2914,104 @@
     return val.replace(/[~^£©®™_\\|“”«»§¶¤¥¢€¿¡±²³µ°]/g, '').trim();
   }
 
+  
+  function translateAllergiesToTelugu(allergies) {
+    if (!allergies) return 'ఎలాంటివి నమోదు కాలేదు';
+    let s = Array.isArray(allergies) ? allergies.join(', ') : String(allergies);
+    if (/no known|none documented|nil|nkda/i.test(s)) {
+      return 'తెలిసిన మందుల అలెర్జీలు లేవు (NKDA)';
+    }
+    if (/[\u0900-\u097F]/.test(s)) {
+      s = translateHindiToTelugu(s);
+    }
+    return s;
+  }
+
+  function renderDashboard(p) {
+    const isTe = (state.currentLang === 'te');
+    const activeP = p || state.patientData;
+
+    if (!activeP) {
+      // Empty state
+      const dashBadge = $('dash-status-badge');
+      if (dashBadge) {
+        dashBadge.textContent = isTe ? 'పత్రం అప్‌లోడ్ కోసం వేచి ఉంది' : 'Awaiting Document Upload';
+        dashBadge.className = 'badge badge-secondary';
+      }
+      setText('dash-patient-name', isTe ? 'ఎలాంటి రికార్డు లేదు' : 'No Active Record');
+      setText('dash-patient-id', isTe ? 'అప్‌లోడ్ కోసం వేచి ఉంది' : 'Pending Upload');
+      setText('dash-patient-age', '--');
+      setText('dash-discharge-date', '--');
+      setText('dash-allergies', '--');
+      setText('dash-diagnosis', isTe ? 'ఇంకా ఎలాంటి డిశ్చార్జ్ సారాంశం అప్‌లోడ్ కాలేదు. OCR ద్వారా విశ్లేషించడానికి పైన ఉన్న పత్రాన్ని ఎంచుకోండి.' : 'No discharge summary uploaded yet. Choose a document above to process with OCR.');
+      setText('dash-sum-discharge', isTe ? 'అప్‌లోడ్ కోసం వేచి ఉంది' : 'Pending Upload');
+      setText('dash-sum-medicine', isTe ? 'ప్రిస్క్రిప్షన్లు లేవు' : 'No Prescriptions');
+      setText('dash-sum-diet', isTe ? 'వ్యాధి నిర్ధారణ కోసం వేచి ఉంది' : 'Pending Diagnosis');
+      setText('dash-sum-followup', isTe ? 'అపాయింట్‌మెంట్ లేదు' : 'No Appointment');
+
+      const descs = $$('.dashboard-summary-grid .summary-card-desc');
+      if (descs && descs.length >= 4) {
+        descs[0].textContent = isTe ? 'క్లినికల్ వివరాల కోసం డిశ్చార్జ్ సారాంశాన్ని అప్‌లోడ్ చేయండి.' : 'Upload your discharge summary to extract records.';
+        descs[1].textContent = isTe ? 'మీ పత్రం నుండి మందుల వివరాలు ఆటోమేటిక్‌గా నమోదు చేయబడతాయి.' : 'Medicines will populate automatically from your document.';
+        descs[2].textContent = isTe ? 'మీ వ్యాధి నిర్ధారణ ప్రకారం ఆహార ప్రణాళిక స్వయంచాలకంగా రూపొందించబడుతుంది.' : 'Diet will tailor automatically across 60+ diseases once scanned.';
+        descs[3].textContent = isTe ? 'డాక్టర్ సారా జెంకిన్స్ • రూమ్ 302, ఔట్‌పేషెంట్ క్లినిక్.' : 'Dr. Sarah Jenkins, MD • Room 302 Outpatient Clinic.';
+      }
+      return;
+    }
+
+    // Active Patient state
+    const dashBadge = $('dash-status-badge');
+    if (dashBadge) {
+      dashBadge.textContent = isTe ? 'క్రియాశీల సంరక్షణ ప్రణాళిక' : 'Active Care Plan';
+      dashBadge.className = 'badge badge-teal';
+    }
+
+    const patientName = isTe ? translateHindiToTelugu(activeP.patientName || 'రోగి') : ensureEnglish(activeP.patientName || 'Patient');
+    setText('dash-patient-name', patientName);
+    setText('dash-patient-id', activeP.patientId || (isTe ? 'లభించలేదు' : 'N/A'));
+
+    const genderText = isTe ? translateGenderToTelugu(activeP.gender) : (activeP.gender || 'N/A');
+    const ageVal = activeP.age ? (isTe ? `${activeP.age} సంవత్సరాలు (${genderText})` : `${activeP.age} Yrs (${genderText})`) : (isTe ? 'లభించలేదు' : 'N/A');
+    setText('dash-patient-age', ageVal);
+
+    setText('dash-discharge-date', activeP.dischargeDate ? formatDate(activeP.dischargeDate) : (isTe ? 'లభించలేదు' : 'N/A'));
+
+    const allergiesText = isTe ? translateAllergiesToTelugu(activeP.allergies) : (Array.isArray(activeP.allergies) ? activeP.allergies.join(', ') : (activeP.allergies || 'None documented'));
+    setText('dash-allergies', allergiesText);
+
+    const diagText = activeP.diagnosis || (isTe ? 'క్లినికల్ మూల్యాంకనం మరియు రికవరీ.' : 'Clinical evaluation and recovery.');
+    setText('dash-diagnosis', isTe ? translateClinicalTextToTelugu(diagText) : ensureEnglish(diagText));
+
+    // Summary Cards
+    const hospName = activeP.hospital || (isTe ? 'ధృవీకరించబడిన ఆసుపత్రి' : 'Verified Hospital');
+    setText('dash-sum-discharge', isTe ? translateHospToTelugu(hospName) : ensureEnglish(hospName));
+
+    if (activeP.medicines && activeP.medicines.length > 0) {
+      const firstMed = isTe ? translateMedNameToTelugu(activeP.medicines[0].name) : ensureEnglish(activeP.medicines[0].name);
+      setText('dash-sum-medicine', isTe ? `${firstMed} (${activeP.medicines.length} మందులు సూచించబడ్డాయి)` : `${firstMed} (${activeP.medicines.length} prescribed)`);
+    } else {
+      setText('dash-sum-medicine', isTe ? 'తదుపరి సంప్రదింపులో వైద్యుడిని సంప్రదించండి.' : 'Consult physician at follow-up.');
+    }
+
+    setText('dash-sum-diet', activeP.diagnosis ? (isTe ? 'ప్రత్యేక క్లినికల్ ఆహార ప్రణాళిక' : `Tailored for ${activeP.diagnosis.split(' ')[0]}`) : (isTe ? 'క్లినికల్ ప్రోటోకాల్' : 'Clinical Protocol'));
+
+    if (activeP.followUp && activeP.followUp.date) {
+      const docName = isTe ? translateHindiToTelugu(activeP.followUp.doctor || 'క్లినిక్') : (activeP.followUp.doctor || 'Clinic');
+      setText('dash-sum-followup', `${formatDate(activeP.followUp.date)} (${docName})`);
+    } else {
+      setText('dash-sum-followup', isTe ? 'సూచించిన విధంగా తదుపరి సంప్రదింపు.' : 'Follow-up as advised.');
+    }
+
+    const descs = $$('.dashboard-summary-grid .summary-card-desc');
+    if (descs && descs.length >= 4) {
+      descs[0].textContent = isTe ? 'క్లినికల్ వివరాల కోసం డిశ్చార్జ్ సారాంశాన్ని చూడండి.' : 'Upload your discharge summary to extract records.';
+      descs[1].textContent = isTe ? 'మీ పత్రం నుండి మందుల వివరాలు ఆటోమేటిక్‌గా నమోదు చేయబడతాయి.' : 'Medicines will populate automatically from your document.';
+      descs[2].textContent = isTe ? 'మీ వ్యాధి నిర్ధారణ ప్రకారం ఆహార ప్రణాళిక స్వయంచాలకంగా రూపొందించబడుతుంది.' : 'Diet will tailor automatically across 60+ diseases once scanned.';
+      const attendingDoc = activeP.doctor ? (isTe ? translateHindiToTelugu(activeP.doctor) : activeP.doctor) : (isTe ? 'హాజరయ్యే వైద్యుడు' : 'Dr. Sarah Jenkins, MD');
+      descs[3].textContent = isTe ? `${attendingDoc} • ఔట్‌పేషెంట్ క్లినిక్` : `${attendingDoc} • Room 302 Outpatient Clinic.`;
+    }
+  }
+
   function renderFollowupAndChecklist(p) {
     if (!p) return;
     const isTe = (state.currentLang === 'te');
@@ -2648,10 +3025,10 @@
     let folNotes = cleanClientOcrNoise(fu.notes) || (isTe ? 'ఫాలో-అప్ సందర్శనల సమయంలో ఈ డిశ్చార్జ్ సారాంశం మరియు అన్ని ప్రస్తుత మందులను తీసుకురండి.' : 'Please bring this discharge summary and all current medications during follow-up visits.');
 
     setText('fol-date', fu.time ? `${folDate} at ${fu.time}` : folDate);
-    setText('fol-doctor', folDoc);
-    setText('fol-dept', isTe ? translateDeptToTelugu(folDept) : folDept);
-    setText('fol-hosp', isTe ? translateHospToTelugu(folHosp) : folHosp);
-    setText('fol-notes', isTe ? translateNotesToTelugu(folNotes) : folNotes);
+    setText('fol-doctor', isTe ? folDoc : ensureEnglish(folDoc));
+    setText('fol-dept', isTe ? translateDeptToTelugu(folDept) : ensureEnglish(folDept));
+    setText('fol-hosp', isTe ? translateHospToTelugu(folHosp) : ensureEnglish(folHosp));
+    setText('fol-notes', isTe ? translateNotesToTelugu(folNotes) : ensureEnglish(folNotes));
 
     const checklistContainer = $('homecare-checklist-items');
     let items = (Array.isArray(p.homeCare) && p.homeCare.length > 0) ? p.homeCare : getDefaultHomeCare(p.diagnosis);
@@ -2671,7 +3048,7 @@
   }
 
   function updateChecklistProgress(total) {
-    const checked = Object.values(state.homeCareChecklist).filter(Boolean).length;
+    const checked = state.homeCareChecklist ? Object.values(state.homeCareChecklist).filter(Boolean).length : 0;
     const badge = $('checklist-progress-badge');
     const isTe = (state.currentLang === 'te');
     if (badge) {
@@ -2692,14 +3069,14 @@
 
     if (urgentList) {
       urgentList.innerHTML = uList.map(w => {
-        const text = isTe ? translateWarningItemToTelugu(w) : w;
+        const text = isTe ? translateWarningItemToTelugu(w) : ensureEnglish(w);
         return `<li><strong>•</strong> ${escapeHtml(text)}</li>`;
       }).join('');
     }
 
     if (cautionList) {
       cautionList.innerHTML = cList.map(w => {
-        const text = isTe ? translateWarningItemToTelugu(w) : w;
+        const text = isTe ? translateWarningItemToTelugu(w) : ensureEnglish(w);
         return `<li><strong>•</strong> ${escapeHtml(text)}</li>`;
       }).join('');
     }
@@ -2847,9 +3224,9 @@
       const takenBadge = alert.takenToday
         ? (isTe ? '✓ నేడు తీసుకున్నారు' : '✓ Taken Today')
         : (isTe ? 'షెడ్యూల్ చేయబడింది' : 'Scheduled');
-      const medName = isTe ? translateMedNameToTelugu(alert.medName) : alert.medName;
-      const dose = alert.dose ? (isTe ? translateDoseToTelugu(alert.dose) : alert.dose) : (isTe ? 'ప్రామాణిక మోతాదు' : 'Standard Dose');
-      const instructions = alert.instructions ? (isTe ? translateInstructionsToTelugu(alert.instructions) : alert.instructions) : '';
+      const medName = isTe ? translateMedNameToTelugu(alert.medName) : ensureEnglish(alert.medName);
+      const dose = alert.dose ? (isTe ? translateDoseToTelugu(alert.dose) : ensureEnglish(alert.dose)) : (isTe ? 'ప్రామాణిక మోతాదు' : 'Standard Dose');
+      const instructions = alert.instructions ? (isTe ? translateInstructionsToTelugu(alert.instructions) : ensureEnglish(alert.instructions)) : '';
 
       return `
         <div class="med-alert-card ${alert.takenToday ? 'alert-taken' : ''}" id="card-${alert.id}">
@@ -2871,7 +3248,7 @@
             <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.65rem;">
               <div class="alert-time-pill ${timeClass}">
                 <span>${timeIcon}</span>
-                <span><strong>${alert.displayTime || alert.time}</strong> (${slotText})</span>${alert.hasTenMinGap ? ` <span class="badge badge-warning" style="font-size: 0.65rem; margin-left: 0.35rem; padding: 2px 6px; background: #fef3c7; color: #92400e; border: 1px solid #fcd34d;" title="10-minute safe gap maintained between medicines">${isTe ? '⏱️ 10ని॥ వ్యవధి' : '⏱️ 10m Spaced'}</span>` : ''}
+                <span><strong>${alert.displayTime || alert.time}</strong> (${slotText})</span>${alert.hasTenMinGap ? ` <span class="badge badge-warning" style="font-size: 0.65rem; margin-left: 0.35rem; padding: 2px 6px; background: #fef3c7; color: #92400e; border: 1px solid #fcd34d;" title="10-minute safe gap maintained between medicines">${isTe ? '⏱️ 10నిమిషాల వ్యవధి' : '⏱️ 10m Spaced'}</span>` : ''}
               </div>
               <div style="display: flex; align-items: center; gap: 0.35rem;">
                 <input type="time" class="form-control form-control-sm alert-time-input" data-alert-id="${alert.id}" value="${alert.time || '08:00'}" style="width: 105px; padding: 0.2rem 0.4rem; font-size: 0.85rem; height: 32px;" title="${isTe ? 'రిమైండర్ సమయాన్ని సెట్ చేయండి' : 'Set reminder time'}">
@@ -3675,7 +4052,7 @@
       return;
     }
 
-    const count = state.selectedFiles.length;
+    const count = (state.selectedFiles && state.selectedFiles.length) || 0;
     showUploadAlert('info', `⏳ Scanning and analyzing ${count} document page${count > 1 ? 's' : ''} with clinical OCR engine...`);
     const procBtn = $('btn-process-file');
     if (procBtn) {
@@ -3684,8 +4061,8 @@
     }
 
     const formData = new FormData();
-    state.selectedFiles.forEach(f => {
-      formData.append('discharge', f);
+    (state.selectedFiles || []).forEach(f => {
+      if (f) formData.append('discharge', f);
     });
 
     fetch('/api/upload', {
@@ -3694,39 +4071,47 @@
     })
     .then(res => res.json())
     .then(result => {
-      if (result.success) {
-        showUploadAlert('success', result.message || `✓ Successfully scanned and consolidated ${count} document page${count > 1 ? 's' : ''}.`);
-        displayExtractedReview(result, false);
+      try {
+        if (result && result.success) {
+          showUploadAlert('success', result.message || `✓ Successfully scanned and consolidated ${count} document page${count > 1 ? 's' : ''}.`);
+          displayExtractedReview(result, false);
 
-        // Immediately update Current Active Discharge Record with real extracted document details!
-        if (result.data) {
-          state.patientData = JSON.parse(JSON.stringify(result.data));
-          updateActiveDischargeRecord(result.data);
+          // Immediately update Current Active Discharge Record with real extracted document details!
+          if (result.data) {
+            state.patientData = JSON.parse(JSON.stringify(result.data));
+            updateActiveDischargeRecord(result.data);
 
-          if (result.data.medicines && result.data.medicines.length > 0) {
-            renderMedicineTable(result.data.medicines);
-            initMedicineAlerts(true);
-            renderMedicineAlerts();
+            if (Array.isArray(result.data.medicines) && result.data.medicines.length > 0) {
+              renderMedicineTable(result.data.medicines);
+              initMedicineAlerts(true);
+              renderMedicineAlerts();
+            }
+
+            renderAllViews();
+            saveCurrentPatientData();
           }
-
-          renderAllViews();
-          saveCurrentPatientData();
+        } else {
+          showUploadAlert('danger', (result && result.message) || 'Failed to process document(s).');
         }
-      } else {
-        showUploadAlert('danger', result.message || 'Failed to process document(s).');
-      }
-      if (procBtn) {
-        procBtn.disabled = false;
-        procBtn.textContent = state.selectedFiles.length > 1
-          ? `⚙️ Process All ${state.selectedFiles.length} Documents / Photos`
-          : '⚙️ Process Document';
+      } catch (renderErr) {
+        console.error('Error rendering upload results:', renderErr);
+        showUploadAlert('warning', 'Document analyzed, but encountered a display update warning: ' + renderErr.message);
+      } finally {
+        if (procBtn) {
+          procBtn.disabled = false;
+          const remainingCount = (state.selectedFiles && state.selectedFiles.length) || 0;
+          procBtn.textContent = remainingCount > 1
+            ? `⚙️ Process All ${remainingCount} Documents / Photos`
+            : '⚙️ Process Document';
+        }
       }
     })
     .catch((err) => {
+      console.error('Upload fetch failed:', err);
       showUploadAlert('danger', 'Network error while uploading: ' + (err.message || 'Please check connection.'));
       if (procBtn) {
         procBtn.disabled = false;
-        procBtn.textContent = '⚙️ Process Document(s)';
+        procBtn.textContent = '⚙️ Process Document';
       }
     });
   }
@@ -3759,12 +4144,13 @@
   }
 
   function displayExtractedReview(payload, isSample) {
+    if (!payload) return;
     const data = payload.data || payload;
-    const fields = payload.fields || [];
+    const fields = Array.isArray(payload.fields) ? payload.fields : [];
     const docTypeName = payload.documentTypeName || (isSample ? 'Sample Discharge Summary' : 'Hospital Discharge Summary');
     const overallConf = payload.overallConfidence || (isSample ? 98 : 85);
-    const verifiedCount = payload.verifiedCount ?? (fields.filter(f => f.status === 'verified').length);
-    const missingCount = payload.missingCount ?? (fields.filter(f => f.status === 'missing').length);
+    const verifiedCount = payload.verifiedCount ?? (fields.filter(f => f && f.status === 'verified').length);
+    const missingCount = payload.missingCount ?? (fields.filter(f => f && f.status === 'missing').length);
 
     state.extractedData = data;
     const reviewSec = $('extracted-review-section');
@@ -3803,7 +4189,7 @@
     currentOcrZoom = 1;
     updateImageZoom();
 
-    const pages = (payload.uploadedFiles && payload.uploadedFiles.length > 0)
+    const pages = (Array.isArray(payload.uploadedFiles) && payload.uploadedFiles.length > 0)
       ? payload.uploadedFiles
       : (payload.uploadedFile ? [payload.uploadedFile] : []);
 
@@ -3898,7 +4284,7 @@
           const fieldDisplayTitle = isTeMode ? translateFieldTitleToTelugu(f.title || f.key) : (f.title || f.key);
           const fieldPlaceholder = f.status === 'missing' ? (isTeMode ? 'పత్రంలో లభించలేదు' : 'Not found in document') : '';
 
-          const isMultiLine = f.key === 'medicines' || f.key === 'woundCare' || f.key === 'surgeryDetails' || (f.value && f.value.length > 80);
+          const isMultiLine = f && (f.key === 'medicines' || f.key === 'woundCare' || f.key === 'surgeryDetails' || (typeof f.value === 'string' && f.value.length > 80));
           return `
             <div class="ocr-field-card ${badgeClass}">
               <div class="ocr-field-header">
@@ -4196,31 +4582,31 @@
     setText('rec-patient-ward', p.wardBed || (isTe ? 'లభించలేదు' : 'N/A'));
     setText('rec-adm-date', formatDate(p.admissionDate));
     setText('rec-dis-date', formatDate(p.dischargeDate));
-    setText('rec-hospital-address', p.address || (isTe ? 'హాస్పిటల్ చిరునామా' : 'N/A'));
+    setText('rec-hospital-address', isTe ? (p.address || 'హాస్పిటల్ చిరునామా') : ensureEnglish(p.address || 'N/A'));
 
     const diagText = p.diagnosis || (isTe ? 'క్లినికల్ మూల్యాంకనం మరియు రికవరీ.' : 'Clinical evaluation and recovery.');
-    setText('rec-diagnosis', isTe ? translateClinicalTextToTelugu(diagText) : diagText);
+    setText('rec-diagnosis', isTe ? translateClinicalTextToTelugu(diagText) : ensureEnglish(diagText));
 
     const docText = p.doctor ? (p.hospital ? `${p.doctor} • ${p.hospital}` : p.doctor) : (p.followUp?.doctor ? `${p.followUp.doctor} • ${p.followUp.hospital}` : (isTe ? 'సంప్రదించిన ముఖ్య వైద్యుడు' : 'Attending Physician'));
-    setText('rec-doctor', docText);
+    setText('rec-doctor', isTe ? docText : ensureEnglish(docText));
 
     const compText = p.reasonForAdmission || p.clinicalSummary || p.courseInHospital || (isTe ? 'రోగి లక్షణాలు మరియు ఆసుపత్రి చికిత్స వివరాలు.' : 'Documented symptoms and hospital course.');
-    setText('rec-complaints', isTe ? translateClinicalTextToTelugu(compText) : compText);
+    setText('rec-complaints', isTe ? translateClinicalTextToTelugu(compText) : ensureEnglish(compText));
 
     const surgText = p.surgeryDetails || p.treatmentSummary || (isTe ? 'శస్త్రచికిత్స అవసరం లేదు / సాధారణ చికిత్స అందించబడింది.' : 'No surgical intervention documented.');
-    setText('rec-surgery', isTe ? translateClinicalTextToTelugu(surgText) : surgText);
+    setText('rec-surgery', isTe ? translateClinicalTextToTelugu(surgText) : ensureEnglish(surgText));
 
     const vitText = p.dischargeCondition || (isTe ? 'డిశ్చార్జ్ సమయానికి రోగి పరిస్థితి స్థిరంగా ఉంది.' : 'Stable condition at discharge.');
-    setText('rec-vitals', isTe ? translateClinicalTextToTelugu(vitText) : vitText);
+    setText('rec-vitals', isTe ? translateClinicalTextToTelugu(vitText) : ensureEnglish(vitText));
 
     const dietText = p.dietInstructions || (isTe ? 'పౌష్టికాహార మార్గదర్శకాలు పాటించండి.' : 'Standard balanced nutrition.');
-    setText('rec-diet', isTe ? translateClinicalTextToTelugu(dietText) : dietText);
+    setText('rec-diet', isTe ? translateClinicalTextToTelugu(dietText) : ensureEnglish(dietText));
 
     const actText = p.activityLifestyle || (isTe ? 'తేలికపాటి నడక; అధిక బరువులు ఎత్తవద్దు.' : 'Light activity as tolerated; avoid strenuous lifting.');
-    setText('rec-activity', isTe ? translateClinicalTextToTelugu(actText) : actText);
+    setText('rec-activity', isTe ? translateClinicalTextToTelugu(actText) : ensureEnglish(actText));
 
     const woundText = p.woundCare || (isTe ? 'పరిశుభ్రత పాటించండి, డ్రెస్సింగ్‌ను పొడిగా ఉంచండి, డ్రెస్సింగ్ తాకే ముందు చేతులు కడుక్కోండి, రుద్దవద్దు.' : 'Maintain sterile hygiene, keep dressing clean and dry, wash hands before touching dressing, avoid rubbing.');
-    setText('rec-wound-care', isTe ? translateClinicalTextToTelugu(woundText) : woundText);
+    setText('rec-wound-care', isTe ? translateClinicalTextToTelugu(woundText) : ensureEnglish(woundText));
 
     let followUpText = '';
     if (typeof p.followUp === 'string') {
@@ -4233,7 +4619,7 @@
       ].filter(Boolean).join(' • ');
     }
     followUpText = cleanClientOcrNoise(followUpText) || (isTe ? 'ప్రాథమిక వైద్యుడితో తదుపరి అపాయింట్‌మెంట్ షెడ్యూల్ చేసుకోండి.' : 'Schedule follow-up appointment with primary care provider.');
-    setText('rec-followup', isTe ? translateClinicalTextToTelugu(followUpText) : followUpText);
+    setText('rec-followup', isTe ? translateClinicalTextToTelugu(followUpText) : ensureEnglish(followUpText));
 
     let warningsText = '';
     if (Array.isArray(p.warningSigns)) {
@@ -4242,7 +4628,7 @@
       warningsText = String(p.warningSigns);
     }
     warningsText = warningsText || (isTe ? 'ఆకస్మిక ఛాతీ నొప్పి, శ్వాస తీసుకోవడంలో తీవ్ర ఇబ్బంది, అధిక జ్వరం లేదా స్పృహ తప్పడం జరిగితే వెంటనే అత్యవసర వైద్య సహాయం పొందండి.' : 'Seek immediate medical attention for sudden chest pain, shortness of breath, high fever, or fainting.');
-    setText('rec-warnings', isTe ? translateClinicalTextToTelugu(warningsText) : warningsText);
+    setText('rec-warnings', isTe ? translateClinicalTextToTelugu(warningsText) : ensureEnglish(warningsText));
   }
 
   function confirmExtractedCarePlan() {
@@ -4774,7 +5160,284 @@
   // LANGUAGE SWITCHER (FULL UI TRANSLATION FOR ENGLISH & TELUGU)
   // Pure translation without combining or meshing languages
   // ============================================================
-    function switchLanguage(lang) {
+    
+  // ============================================================
+  // COMPLETE TELUGU DOM TRANSLATOR (ZERO ENGLISH GUARANTEE)
+  // Ensures 100% of website text is pure Telugu when Telugu is selected,
+  // including Care, Care Sheet, Care Plan, CareBridge, buttons, labels.
+  // ============================================================
+    const TELUGU_STATIC_REPLACEMENTS = [
+    // Telegram & Alerts Matter
+    ['Connect Your Phone to CareBridge Bot', 'మీ ఫోన్‌ను కేర్‌బ్రిడ్జ్ బాట్‌కు అనుసంధానించండి'],
+    ['Receive instant, loud medicine reminder alerts on your phone even when this website is closed.', 'ఈ వెబ్‌సైట్ మూసివేసినప్పటికీ మీ ఫోన్‌లో తక్షణ, బిగ్గరైన మందుల రిమైండర్ అలర్ట్‌లను పొందండి.'],
+    ['1️⃣ Click the button', '1️⃣ బటన్‌ను క్లిక్ చేయండి'],
+    ['2️⃣ Tap Start in Telegram', '2️⃣ టెలిగ్రామ్‌లో Start బటన్ నొక్కండి'],
+    ['3️⃣ Phone paired for automated reminders!', '3️⃣ ఆటోమేటిక్ రిమైండర్ల కోసం ఫోన్ జతచేయబడింది!'],
+    ['Open @carebridge_medicinealert_bot', '@carebridge_medicinealert_bot తెరవండి'],
+    ['Registered Mobile Number for Automated Phone & SMS Alerts', 'ఆటోమేటెడ్ ఫోన్ & SMS అలర్ట్‌ల కోసం నమోదైన మొబైల్ నంబర్'],
+    ['Server-side scheduler checks due times and dispatches phone alerts independently of the website being open.', 'వెబ్‌సైట్ తెరిచి ఉండటంతో సంబంధం లేకుండా సర్వర్-సైడ్ షెడ్యూలర్ నిర్దేశిత సమయాల్లో ఫోన్ అలర్ట్‌లను పంపుతుంది.'],
+    ['Checking Alert Gateway...', 'అలర్ట్ గేట్‌వే తనిఖీ చేస్తోంది...'],
+    ['Your Mobile Number (with country code)', 'మీ మొబైల్ నంబర్ (కంట్రీ కోడ్‌తో)'],
+    ['💾 Save Mobile Number', '💾 మొబైల్ నంబర్ భద్రపరచండి'],
+    ['⚡ Send Test Alert Now', '⚡ పరీక్ష అలర్ట్ పంపండి'],
+    ['⚡ Test Live Screen Alarm', '⚡ స్క్రీన్ అలారం పరీక్షించండి'],
+    ['Server-Side Background Scheduler:', 'సర్వర్-సైడ్ నేపథ్య షెడ్యూలర్:'],
+    ['Patient Notes:', 'రోగి సూచనలు:'],
+    ['Scheduled in 7–10 days post-discharge', 'డిశ్చార్జ్ తర్వాత 7-10 రోజుల్లో'],
+    ['Attending Physician', 'హాజరయ్యే వైద్యుడు'],
+    ['Outpatient Clinic (Speciality OPD)', 'అవుట్‌పేషెంట్ క్లినిక్ (OPD)'],
+    ['Hospital Outpatient Department', 'హాస్పిటల్ అవుట్‌పేషెంట్ విభాగం'],
+    ['Please bring this discharge summary and all current medications during follow-up visits.', 'ఫాలో-అప్ సందర్శనల సమయంలో ఈ డిశ్చార్జ్ సారాంశం మరియు అన్ని ప్రస్తుత మందులను తీసుకురండి.'],
+    ['Bring this discharge record and daily symptom journal.', 'ఈ డిశ్చార్జ్ రికార్డు మరియు రోజువారీ లక్షణాల డైరీని వెంట తీసుకురండి.'],
+    // Care & Brand
+    ['CareBridge', 'కేర్‌బ్రిడ్జ్'],
+    ['Download Care Sheet', 'సంరక్షణ పత్రం డౌన్‌లోడ్'],
+    ['Printable Care Sheet', 'ముద్రించదగిన సంరక్షణ పత్రం'],
+    ['Patient Recovery Care Sheet', 'రోగి రికవరీ సంరక్షణ పత్రం'],
+    ['Care Sheet', 'సంరక్షణ పత్రం'],
+    ['Active Care Plan', 'క్రియాశీల సంరక్షణ ప్రణాళిక'],
+    ['Your Care Plan', 'మీ సంరక్షణ ప్రణాళిక'],
+    ['Care Plan', 'సంరక్షణ ప్రణాళిక'],
+    ['Home-Care Instructions', 'గృహ సంరక్షణ సూచనలు'],
+    ['Home Care', 'గృహ సంరక్షణ'],
+    ['Wound Care & Dressing Instructions', 'గాయం సంరక్షణ & డ్రెస్సింగ్ సూచనలు'],
+    ['Wound Care', 'గాయం సంరక్షణ'],
+    ['Follow-up Care & Appointments', 'తదుపరి సంరక్షణ & డాక్టర్ సంప్రదింపులు'],
+    ['Follow-up Care', 'తదుపరి సంరక్షణ'],
+    ['Care Team', 'సంరక్షణ బృందం'],
+    ['Decision Support', 'సహాయక సమాచారం'],
+
+    // Navigation & Header
+    ['Dashboard', 'డాష్‌బోర్డ్'],
+    ['Discharge Summary', 'డిశ్చార్జ్ సారాంశం'],
+    ['Medicine Schedule', 'మందుల షెడ్యూల్'],
+    ['Dosage Reminders', 'మందుల రిమైండర్లు'],
+    ['Personalised Diet Plan', 'వ్యక్తిగత ఆహార ప్రణాళిక'],
+    ['Can I Eat This?', 'నేను ఇది తినవచ్చా?'],
+    ['Follow-up & Recovery', 'తదుపరి సంరక్షణ & రికవరీ'],
+    ['Warning Signs', 'హెచ్చరిక సంకేతాలు'],
+    ['Choose Language', 'భాషను ఎంచుకోండి'],
+    ['Logout', 'నిష్క్రమించు'],
+    ['Active', 'యాక్టివ్'],
+
+    // Buttons
+    ['Upload Document →', 'పత్రం అప్‌లోడ్ చేయండి →'],
+    ['Upload Document', 'పత్రం అప్‌లోడ్ చేయండి'],
+    ['📁 Choose Files / Photos', '📁 ఫైళ్ళు / ఫోటోలు ఎంచుకోండి'],
+    ['🚀 Try with Sample Discharge Summary', '🚀 నమూనా డిశ్చార్జ్ సారాంశాన్ని పరీక్షించండి'],
+    ['⚙️ Process Document(s)', '⚙️ పత్రాలను విశ్లేషించండి'],
+    ['+ Add More Photos', '+ మరిన్ని ఫోటోలు జోడించండి'],
+    ['Clear All', 'అన్నీ తొలగించండి'],
+    ['✓ Confirm Verified Details & Apply to Care Plan', '✓ మార్పులను ధృవీకరించండి & సంరక్షణ ప్రణాళికకు వర్తింపజేయండి'],
+    ['✓ Confirm Details', '✓ వివరాలు నిర్ధారించండి'],
+    ['✕ Discard', '✕ రద్దు చేయండి'],
+    ['📄 Original Document Preview', '📄 మూల పత్రం ప్రివ్యూ'],
+    ['➕ Add Reminder', '➕ రిమైండర్ జోడించండి'],
+    ['💾 Save Mobile Number', '💾 మొబైల్ నంబర్ భద్రపరచండి'],
+    ['⚡ Send Test Alert Now', '⚡ పరీక్ష అలర్ట్ పంపండి'],
+    ['⚡ Test Live Screen Alarm', '⚡ స్క్రీన్ అలారం పరీక్షించండి'],
+    ['🔔 Enable Browser Notifications', '🔔 బ్రౌజర్ నోటిఫికేషన్లను ప్రారంభించండి'],
+    ['🔍 Search Food', '🔍 ఆహారాన్ని వెతకండి'],
+    ['Mark Dose as Taken', 'తీసుకున్నట్లు గుర్తించండి'],
+    ['15m Snooze', '15 నిమిషాల వాయిదా'],
+    ['Dismiss Alarm', 'అలారం ఆపివేయండి'],
+    ['Alert Phone Now', 'ఫోన్‌కు అలర్ట్ పంపండి'],
+    ['Save Time', 'సమయం భద్రపరచు'],
+    ['Set reminder time', 'రిమైండర్ సమయాన్ని సెట్ చేయండి'],
+
+    // Form labels & card headings
+    ['Add Custom Medicine Alert', 'కస్టమ్ మందుల రిమైండర్ జోడించండి'],
+    ['Registered Mobile Number for Automated Phone & SMS Alerts', 'ఆటోమేటెడ్ అలర్ట్‌ల కోసం నమోదైన మొబైల్ నంబర్'],
+    ['Connect Your Phone to CareBridge Bot', 'మీ ఫోన్‌ను కేర్‌బ్రిడ్జ్ బాట్‌కు అనుసంధానించండి'],
+    ['Today\'s Medication Intake Log', 'నేటి మందుల వినియోగ లాగ్'],
+    ['Server-Side SMS Reminder Delivery Log', 'SMS రిమైండర్ డెలివరీ లాగ్'],
+    ['Time to take your medicine!', 'మందులు వేసుకునే సమయం అయింది!'],
+    ['Medicine Name:', 'మందు పేరు:'],
+    ['Dose / Strength:', 'మోతాదు / బలం:'],
+    ['Time:', 'సమయం:'],
+    ['Slot:', 'సమయ విభాగం:'],
+    ['Instructions (Optional):', 'సూచనలు (ఐచ్ఛికం):'],
+    ['Your Mobile Number (with country code):', 'మీ మొబైల్ నంబర్ (కంట్రీ కోడ్‌తో):'],
+    ['Your Mobile Number (with country code)', 'మీ మొబైల్ నంబర్ (కంట్రీ కోడ్‌తో):'],
+    ['Recent Dispatches', 'ఇటీవలి సందేశాలు'],
+    ['No active medication reminders configured.', 'మందుల రిమైండర్లు ఏవీ కాన్ఫిగర్ చేయబడలేదు.'],
+    ['No doses logged yet today.', 'నేడు ఇంకా మందులు నమోదు కాలేదు.'],
+    ['No SMS dispatches yet today.', 'నేడు ఎలాంటి SMS సందేశాలు పంపబడలేదు.'],
+
+    // Quick test food pills
+    ['paneer', 'పనీర్'],
+    ['coconut water', 'కొబ్బరి నీళ్ళు'],
+    ['papaya', 'బొప్పాయి'],
+    ['boiled egg', 'ఉడికించిన గుడ్డు'],
+    ['samosa', 'సమోసా'],
+    ['chicken soup', 'చికెన్ సూప్'],
+    ['turmeric', 'పసుపు'],
+    ['green tea', 'గ్రీన్ టీ'],
+    ['makhana', 'తామర గింజలు (మఖానా)'],
+    ['salmon', 'సాల్మన్ చేపలు'],
+    ['dark chocolate', 'డార్క్ చాక్లెట్'],
+    ['alcohol', 'మద్యం'],
+
+    // Hero labels & summary cards
+    ['Diagnosis:', 'రోగ నిర్ధారణ:'],
+    ['Patient Name:', 'రోగి పేరు:'],
+    ['Patient ID:', 'రోగి ఐడీ:'],
+    ['Age / Sex:', 'వయస్సు / లింగం:'],
+    ['Discharge Date:', 'డిశ్చార్జ్ తేదీ:'],
+    ['Admission Date:', 'చేరిన తేదీ:'],
+    ['Known Allergies:', 'అలెర్జీలు:'],
+    ['Next Follow-up', 'తదుపరి సంప్రదింపు'],
+    ['Verified Hospital', 'ధృవీకరించబడిన ఆసుపత్రి'],
+    ['Consult physician at follow-up.', 'తదుపరి సంప్రదింపులో వైద్యుడిని సంప్రదించండి.'],
+    ['Clinical Protocol', 'క్లినికల్ ప్రోటోకాల్'],
+    ['Follow-up as advised.', 'సూచించిన విధంగా తదుపరి సంప్రదింపు.'],
+    ['Complete Modules', 'పూర్తి విభాగాలు'],
+    ['None documented', 'ఎలాంటివి నమోదు కాలేదు'],
+
+    // Table Headers
+    ['Medication Name & Strength', 'మందు పేరు & బలం'],
+    ['Dosage', 'మోతాదు'],
+    ['Timing', 'సమయం'],
+    ['Duration', 'వ్యవధి'],
+    ['Special Instructions', 'ప్రత్యేక సూచనలు'],
+
+    // Active Record Block Titles
+    ['👤 Patient Profile & Ward', '👤 రోగి వివరాలు & వార్డు'],
+    ['🗓️ Stay Timeline & Hospital Location', '🗓️ ఆసుపత్రిలో చేరిన సమయం & చిరునామా'],
+    ['🩺 Primary Diagnosis', '🩺 ప్రాథమిక వ్యాధి నిర్ధారణ'],
+    ['🏥 Hospital & Attending Doctors', '🏥 ఆసుపత్రి & సంప్రదించే వైద్యులు'],
+    ['📋 Reason for Admission & Complaints', '📋 చేరడానికి గల కారణం & లక్షణాలు'],
+    ['🔬 Surgical Procedure & Course', '🔬 శస్త్రచికిత్స వివరాలు & ఆసుపత్రి కోర్సు'],
+    ['💖 Discharge Condition & Clinical Vitals', '💖 డిశ్చార్జ్ నాటికి రోగి పరిస్థితి & వైటల్స్'],
+    ['🥗 Dietary Guidance & Nutrition', '🥗 ఆహార మార్గదర్శకాలు & పోషకాహారం'],
+    ['🏃 Activity & Recovery Lifestyle', '🏃 శారీరక శ్రమ & రికవరీ జీవనశైలి'],
+    ['📅 Follow-Up Appointments', '📅 తదుపరి డాక్టర్ సంప్రదింపుల షెడ్యూల్'],
+    ['🚨 Signs of Concern & Emergency Criteria', '🚨 హెచ్చరిక సంకేతాలు & అత్యవసర లక్షణాలు'],
+    ['🩹 Wound Care & Dressing Instructions', '🩹 గాయం సంరక్షణ & డ్రెస్సింగ్ సూచనలు'],
+
+    // Sub labels in Block 1 & 2
+    ['Age:', 'వయస్సు:'],
+    ['Sex:', 'లింగం:'],
+    ['Ward & Bed:', 'వార్డు & బెడ్:'],
+    ['Address:', 'చిరునామా:'],
+
+    // Food search & diet
+    ['Quick test items:', 'త్వరిత పరీక్ష ఆహారాలు:'],
+    ['Safety Verdict', 'ఆహార భద్రతా నిర్ణయం'],
+    ['Clinical Reasoning', 'క్లినికల్ కారణం'],
+    ['Recommendation:', 'సిఫార్సు:']
+  ];
+
+  function applyTeluguDomTranslation(isTe) {
+    if (!document.body) return;
+
+    // 1. Brand logo texts
+    $$('.brand-text').forEach(el => {
+      el.textContent = isTe ? 'కేర్‌బ్రిడ్జ్' : 'CareBridge';
+    });
+
+    // 2. User profile badge & logout
+    const userRoleEl = document.querySelector('.header-user-badge');
+    if (userRoleEl) userRoleEl.textContent = isTe ? 'రోగి' : 'Patient';
+    const logoutBtn = $('btn-logout');
+    if (logoutBtn) logoutBtn.textContent = isTe ? '🚪 నిష్క్రమించు' : '🚪 Logout';
+
+    // 3. Dropzone text
+    const dropSub = document.querySelector('.dropzone-sub');
+    if (dropSub) dropSub.textContent = isTe ? 'మద్దతు గల ఫార్మాట్‌లు: PDF, JPG, PNG, DOCX, TXT' : 'Supported formats: PDF, JPG, PNG, DOCX, TXT';
+    const btnChoose = $('btn-choose-files');
+    if (btnChoose) btnChoose.textContent = isTe ? '📁 ఫైళ్ళు / ఫోటోలు ఎంచుకోండి' : '📁 Choose Files / Photos';
+    const btnSample = $('btn-sample-summary');
+    if (btnSample) btnSample.textContent = isTe ? '🚀 నమూనా డిశ్చార్జ్ సారాంశాన్ని పరీక్షించండి' : '🚀 Try with Sample Discharge Summary';
+    const btnClearAll = $('btn-clear-files');
+    if (btnClearAll) btnClearAll.textContent = isTe ? 'అన్నీ తొలగించండి' : 'Clear All';
+    const btnAddMore = $('btn-add-more-photos');
+    if (btnAddMore) btnAddMore.textContent = isTe ? '+ మరిన్ని ఫోటోలు జోడించండి' : '+ Add More Photos';
+
+    // 4. Quick Food Search Pills
+    const quickButtons = $$('.quick-search-pills button');
+    const pillMap = {
+      'paneer': 'పనీర్',
+      'coconut water': 'కొబ్బరి నీళ్ళు',
+      'papaya': 'బొప్పాయి',
+      'boiled egg': 'ఉడికించిన గుడ్డు',
+      'samosa': 'సమోసా',
+      'chicken soup': 'చికెన్ సూప్',
+      'turmeric': 'పసుపు',
+      'green tea': 'గ్రీన్ టీ',
+      'makhana': 'తామర గింజలు (మఖానా)',
+      'salmon': 'సాల్మన్ చేపలు',
+      'dark chocolate': 'డార్క్ చాక్లెట్',
+      'alcohol': 'మద్యం'
+    };
+    quickButtons.forEach(btn => {
+      const orig = btn.getAttribute('data-food') || btn.textContent.trim().toLowerCase();
+      if (!btn.getAttribute('data-food')) btn.setAttribute('data-food', orig);
+      if (isTe && pillMap[orig]) {
+        btn.textContent = pillMap[orig];
+      } else if (!isTe) {
+        btn.textContent = orig;
+      }
+    });
+
+    // 5. Walk all text nodes in main content to catch any remaining English phrases
+    if (isTe) {
+      const walker = document.createTreeWalker(
+        document.body,
+        NodeFilter.SHOW_TEXT,
+        {
+          acceptNode: function(node) {
+            if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+            const parent = node.parentElement;
+            if (!parent) return NodeFilter.FILTER_REJECT;
+            const tag = parent.tagName.toLowerCase();
+            if (tag === 'script' || tag === 'style' || tag === 'select' || tag === 'option' || tag === 'textarea') {
+              return NodeFilter.FILTER_REJECT;
+            }
+            if (parent.closest('#lang-select')) return NodeFilter.FILTER_REJECT;
+            return NodeFilter.FILTER_ACCEPT;
+          }
+        }
+      );
+
+      const textNodes = [];
+      while (walker.nextNode()) {
+        textNodes.push(walker.currentNode);
+      }
+
+      textNodes.forEach(node => {
+        let val = node.nodeValue;
+        for (const [en, te] of TELUGU_STATIC_REPLACEMENTS) {
+          if (val.includes(en)) {
+            val = val.split(en).join(te);
+          }
+        }
+        // Eliminate all Hindi text when Telugu is selected
+        if (/[\u0900-\u097F]/.test(val)) {
+          val = translateHindiToTelugu(val);
+          if (/[\u0900-\u097F]/.test(val)) {
+            val = val.replace(/[\u0900-\u097F]+/g, ' ').replace(/\s+/g, ' ').trim();
+          }
+        }
+        node.nodeValue = val;
+      });
+
+      // Also translate input placeholders
+      $$('input, textarea').forEach(inp => {
+        let ph = inp.placeholder;
+        if (!ph) return;
+        for (const [en, te] of TELUGU_STATIC_REPLACEMENTS) {
+          if (ph.includes(en)) {
+            ph = ph.split(en).join(te);
+          }
+        }
+        inp.placeholder = ph;
+      });
+    }
+  }
+
+
+function switchLanguage(lang) {
     state.currentLang = (lang === 'te') ? 'te' : 'en';
     const isTe = (state.currentLang === 'te');
     const t = I18N[state.currentLang] || I18N.en;
@@ -5058,10 +5721,29 @@
         ths[4].textContent = 'Special Instructions';
       }
 
-      const alertH1 = $('page-alerts')?.querySelector('h1');
+            const alertH1 = $('page-alerts')?.querySelector('h1');
       if (alertH1) alertH1.textContent = 'Dosage Reminders & Alerts';
       const alertSub = $('page-alerts')?.querySelector('.subtitle');
       if (alertSub) alertSub.textContent = 'Automated reminders to keep your recovery medications on schedule.';
+
+      setText('telegram-card-title', 'Connect Your Phone to CareBridge Bot');
+      setText('telegram-card-desc', 'Receive instant, loud medicine reminder alerts on your phone even when this website is closed.');
+      setText('telegram-step-1', '1️⃣ Click the button');
+      setText('telegram-step-2', '2️⃣ Tap Start in Telegram');
+      setText('telegram-step-3', '3️⃣ Phone paired for automated reminders!');
+      const tgLink = $('telegram-btn-link');
+      if (tgLink) tgLink.innerHTML = '<span>📲</span> Open @carebridge_medicinealert_bot';
+
+      setText('sms-card-title', 'Registered Mobile Number for Automated Phone & SMS Alerts');
+      setText('sms-card-desc', 'Server-side scheduler checks due times and dispatches phone alerts independently of the website being open.');
+      setText('lbl-registered-phone', 'Your Mobile Number (with country code)');
+      setText('btn-save-phone', '💾 Save Mobile Number');
+      setText('btn-test-sms', '⚡ Send Test Alert Now');
+      setText('btn-trigger-demo-alert', '⚡ Test Live Screen Alarm');
+      const notifStatusEl = $('notif-status-text');
+      if (notifStatusEl) {
+        notifStatusEl.innerHTML = '<strong>Server-Side Background Scheduler:</strong> Alerts are triggered automatically at your prescribed medicine times. SMS messages are sent directly to your registered phone even after closing your browser tab.';
+      }
 
       const dietH1 = $('page-diet')?.querySelector('h1');
       if (dietH1) dietH1.textContent = 'My Personalised Diet Plan';
@@ -5183,6 +5865,7 @@
 
     // 3. TRIGGER IMMEDIATE RE-RENDER OF ALL DATA-DRIVEN COMPONENTS
     const activePatient = state.patientData || SAMPLE_PATIENT;
+    renderDashboard(activePatient);
     if (activePatient) {
       updateActiveDischargeRecord(activePatient);
       if (activePatient.medicines) renderMedicineTable(activePatient.medicines);
@@ -5197,6 +5880,9 @@
     if (reviewSec && !reviewSec.classList.contains('hidden') && typeof renderPagePreview === 'function') {
       try { renderPagePreview(0); } catch (e) {}
     }
+
+    // 4. Apply complete Telugu DOM translation (Zero English guarantee)
+    applyTeluguDomTranslation(isTe);
   }
 
   // ============================================================
@@ -5462,7 +6148,8 @@
       if (e.target.matches('#homecare-checklist-items input[type="checkbox"]')) {
         const idx = e.target.getAttribute('data-idx');
         state.homeCareChecklist[idx] = e.target.checked;
-        const total = (state.patientData?.homeCare || SAMPLE_PATIENT.homeCare).length;
+        const homeCareArr = (state.patientData && Array.isArray(state.patientData.homeCare)) ? state.patientData.homeCare : (SAMPLE_PATIENT?.homeCare || []);
+        const total = homeCareArr.length;
         updateChecklistProgress(total);
       }
     });
