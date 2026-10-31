@@ -824,7 +824,7 @@ function cleanMedicineLine(line) {
   }
 
   // Filter out non-medicine clinical lines (vitals, investigations, surgical details, admin)
-  if (/\b(?:uterus|ovaries|tubectomy|incision|peritoneum|placenta|hemostasis|foleys|fetal|cervix|anesthesia|operative|investigation|examination|ultrasound|ecg|x-ray|doctor|hospital|patient|admission|discharge|insurance|payer|sponser|allergies|diagnosis|complaints|history|policy|appointment|contact|printed|survey|nagar|phase|cin\s*no|discharge\s*summary|echo\b|lvef\b|creatinine\b|hb\b|tsh\b|cha2ds2|peak\s+flow|pefr\b|cxr\b|aec\b|tlc\b)\b/i.test(raw)) {
+  if (/\b(?:uterus|ovaries|tubectomy|incision|peritoneum|placenta|hemostasis|foleys|fetal|cervix|anesthesia|operative|investigation|examination|ultrasound|ecg|x-ray|doctor|hospital|patient|admission|discharge|insurance|payer|sponser|allergies|diagnosis|complaints|history|policy|appointment|contact|printed|survey|nagar|phase|cin\s*no|discharge\s*summary|echo\b|lvef\b|creatinine\b|hb\b|tsh\b|cha2ds2|peak\s+flow|pefr\b|cxr\b|aec\b|tlc\b|exclusive\s*breastfeeding|avoid\s*lifting|plenty\s*of\s*fluids|wound\s*care|avoid\s*constipation|pending\s*diagnostic|follow\s*up|bring\s*them|baby\s*details|condition\s*at\s*discharge)\b/i.test(raw)) {
     return null;
   }
 
@@ -910,7 +910,7 @@ function cleanMedicineLine(line) {
     if (/\b(?:lifelong|जीवन\s*भर|हमेशा)\b/i.test(raw)) {
       duration = 'Lifelong';
     } else {
-      const durMatch = raw.match(/\b(?:x\s*([0-9]{1,2})\s*\/\s*7|x\s*([0-9]{1,2})\s*days?|x\s*([0-9]{1,2})\s*wks?|x\s*([0-9]{1,2})\s*\/\s*52|x\s*([0-9]{1,2})\s*\/\s*12|till\s+next\s+visit|अगली\s*जांच\s*तक|रिव्यू\s*तक)\b/i);
+      const durMatch = raw.match(/\b(?:for\s*([0-9]{1,2})\s*days?|x\s*([0-9]{1,2})\s*\/\s*7|x\s*([0-9]{1,2})\s*days?|x\s*([0-9]{1,2})\s*wks?|x\s*([0-9]{1,2})\s*\/\s*52|x\s*([0-9]{1,2})\s*\/\s*12|till\s+next\s+visit|अगली\s*जांच\s*तक|रिव्यू\s*तक)\b/i);
       if (durMatch) {
         if (durMatch[1] || durMatch[2]) duration = `For ${durMatch[1] || durMatch[2]} days`;
         else if (durMatch[3]) duration = `For ${durMatch[3]} weeks`;
@@ -948,17 +948,25 @@ function cleanMedicineLine(line) {
       medName = `${form || 'Tab.'} ${formulary.genericName}`;
     }
   } else {
+    // Strict validation: non-formulary lines MUST have a medicine form prefix OR both clinical dose & timing/frequency
+    const hasDose = Boolean(tableDose || (dose && dose !== 'Standard dose') || raw.match(/\b([0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?\s*(?:mg|g|mcg|ml|IU|units|puffs?))\b/i));
+    const hasFreq = Boolean(tableFreq || raw.match(/\b(?:1-0-1|1-1-1|1-0-0|0-0-1|1-1-0|0-1-0|OD|BD|TDS|QID|HS|SOS|Once\s+daily|Twice\s+daily|Three\s+times|at\s+bed\s*time|before\s+food|after\s+food|दिन\s*में)\b/i));
+
+    if (!form && !(hasDose && hasFreq)) {
+      return null;
+    }
+
     let cleaned = raw
       .replace(/\b(?:Tab(?:let)?|Cap(?:sule)?|Inj(?:ection)?|Syp|Syrup|Sachet|Inhaler|Rotacap|MDI|Drops?|Oint(?:ment)?|Gel|Cream|T\.)\b[\.\s]*/gi, '')
       .replace(/\b(?:PO|SC|IV|IM|SL|PR|OD|BD|TDS|QID|HS|SOS|1-0-0|1-0-1|1-1-1|0-0-1)\b/gi, '')
-      .replace(/\b(?:x\s*[0-9]{1,2}\s*[\/\w]+|till\s+next\s+visit)\b/gi, '')
-      .replace(/\b(?:after\s+food|before\s+breakfast|PC|AC|with\s+milk|after\s+dinner)\b/gi, '')
+      .replace(/\b(?:x\s*[0-9]{1,2}\s*[\/\w]+|till\s+next\s+visit|for\s+[0-9]{1,2}\s*days?)\b/gi, '')
+      .replace(/\b(?:after\s+food|before\s+breakfast|before\s+food|PC|AC|with\s+milk|after\s+dinner)\b/gi, '')
       .replace(/\([^\)]*\)/g, '')
       .replace(/[\(\)\,\;\:\-\–\—\.]+/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
     if (cleaned.length < 2) return null;
-    medName = `${form || 'Tab.'} ${cleaned}`;
+    medName = form ? `${form} ${cleaned}` : `Tab. ${cleaned}`;
   }
 
   return {
@@ -1011,7 +1019,7 @@ function extractAllMedicines(text) {
   };
 
   // Find explicit prescription section e.g. "ADV ON DISCHARGE -", "Medications at Discharge:", "आपकी दवाइयाँ"
-  const rxSectionRegex = /(?:ADV\s+ON\s+DISCHARGE|MEDICATIONS?\s+AT\s+DISCHARGE|TREATMENT\s+ADVISED\s+ON\s+DISCHARGE|Rx\s+on\s+discharge|Rx\s+at\s+discharge|DISCHARGE\s+MEDICATIONS?|TREATMENT\s+ON\s+DISCHARGE|Rx\s*:|MEDICATIONS\s*:|TREATMENT\s*:|आपकी\s*दवाइयाँ|दवाइयाँ|दवाएं|औषधियां|पर्चा)\s*[:-|]?([\s\S]*?)(?=(?:\r?\n\s*(?:Instructions\s*:|Advice\s+on\s+Discharge|GENERAL\s+ADVICE|ADVICE\s*:|Adv\s*:|Report\s+immediately|Danger\s+signs|COME\s+BACK\s+TO|Review\s+SOS|REVIEW\s*:|F\/U\s*:|Follow[\s\-]up|Diet\s*:|Diet\b|In\s+case\s+of\s+emergency|ये\s*दवाइयाँ\s*बंद\s*करें|बंद\s*करें|रोकें|तुरंत\s*अस्पताल\s*जाएँ|खाना|अन्य\s*सलाह|अगली\s*बार|Dr\.|\r?\n\s*\r?\n\s*\r?\n|$)))/i;
+  const rxSectionRegex = /(?:ADVICE\s+ON\s+DISCHARGE|ADV(?:ICE)?\s+ON\s+DISCHARGE|DISCHARGE\s+ADVICE|ADVICE\s+AT\s+DISCHARGE|MEDICATIONS?\s+AT\s+DISCHARGE|TREATMENT\s+ADVISED\s+ON\s+DISCHARGE|Rx\s+on\s+discharge|Rx\s+at\s+discharge|DISCHARGE\s+MEDICATIONS?|TREATMENT\s+ON\s+DISCHARGE|Rx\s*:|MEDICATIONS\s*:|TREATMENT\s*:|आपकी\s*दवाइयाँ|दवाइयाँ|दवाएं|औषधियां|పర్చా)\s*[:-|]?([\s\S]*?)(?=(?:\r?\n\s*(?:Instructions\s*:|GENERAL\s+ADVICE|Report\s+immediately|Danger\s+signs|COME\s+BACK\s+TO|Review\s+SOS|REVIEW\s*:|F\/U\s*:|Follow[\s\-]up|Diet\s*:|Diet\b|DIET\s+ADVICE|WOUND\s+CARE|WOUND\s+CARE\s+ADVICE|BABY\s+DETAILS|In\s+case\s+of\s+emergency|ये\s*दवाइयाँ\s*बंद\s*करें|बंद\s*करें|रोकें|तुरंत\s*अस्पताल\s*जाएँ|खाना|अन्य\s*सलाह|अगली\s*बार|Dr\.|\r?\n\s*\r?\n\s*\r?\n|$)))/i;
   const match = text.match(rxSectionRegex);
 
   let targetText = match ? match[1] : text;
