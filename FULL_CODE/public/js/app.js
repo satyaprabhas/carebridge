@@ -1535,32 +1535,38 @@
     if (!text) return 'సమయానికి తీసుకోండి';
     let s = String(text);
     if (/[\u0900-\u097F]/.test(s)) s = translateHindiToTelugu(s);
-    s = s.replace(/Twice daily with meals \(Morning & Night\)/gi, 'భోజనంతో పాటు రోజుకు రెండుసార్లు (ఉదయం & రాత్రి)')
-         .replace(/Twice daily after food \(1-0-1\)/gi, 'భోజనం తర్వాత రోజుకు రెండుసార్లు (ఉదయం & రాత్రి) (1-0-1)')
-         .replace(/Twice daily after food/gi, 'భోజనం తర్వాత రోజుకు రెండుసార్లు')
-         .replace(/Twice daily before food/gi, 'భోజనానికి ముందు రోజుకు రెండుసార్లు')
-         .replace(/Twice daily \(Morning & Night\)/gi, 'రోజుకు రెండుసార్లు (ఉదయం & రాత్రి)')
-         .replace(/Twice daily/gi, 'రోజుకు రెండుసార్లు')
-         .replace(/Three times a day as needed/gi, 'అవసరమైనప్పుడు రోజుకు మూడుసార్లు')
-         .replace(/Three times daily after food/gi, 'భోజనం తర్వాత రోజుకు మూడుసార్లు')
-         .replace(/Three times a day \(Morning, Afternoon & Night\)/gi, 'రోజుకు మూడుసార్లు (ఉదయం, మధ్యాహ్నం & రాత్రి)')
-         .replace(/Three times a day/gi, 'రోజుకు మూడుసార్లు')
-         .replace(/Three times daily/gi, 'రోజుకు మూడుసార్లు')
-         .replace(/Four times a day/gi, 'రోజుకు నాలుగుసార్లు')
-         .replace(/Once daily in morning \(Empty Stomach\)/gi, 'ఉదయం ఖాళీ కడుపుతో ఒకసారి')
-         .replace(/Once daily before breakfast \(1-0-0\)/gi, 'అల్పాహారానికి ముందు ఉదయం ఒకసారి (1-0-0)')
-         .replace(/Once daily before breakfast/gi, 'అల్పాహారానికి ముందు ఒకసారి')
-         .replace(/Once daily after breakfast/gi, 'అల్పాహారం తర్వాత ఒకసారి')
-         .replace(/Once daily in morning/gi, 'ఉదయం పూట రోజుకు ఒకసారి')
-         .replace(/Once daily at bedtime \(Night\)/gi, 'రాత్రి పడుకునే ముందు ఒకసారి (0-0-1)')
-         .replace(/Once daily at bedtime/gi, 'రాత్రి పడుకునే ముందు ఒకసారి')
-         .replace(/Once daily at night/gi, 'రాత్రి వేళ రోజుకు ఒకసారి')
-         .replace(/Once daily/gi, 'రోజుకు ఒకసారి')
-         .replace(/At bedtime \(Night\)/gi, 'రాత్రి పడుకునే ముందు')
-         .replace(/At bedtime/gi, 'పడుకునే ముందు')
+    s = s.replace(/Twice daily with meals \(Morning & Night\)/gi, 'భోజనంతో పాటు రోజుకు 2 సార్లు (ఉదయం & రాత్రి)')
+         .replace(/Twice daily after food \(1-0-1\)/gi, 'భోజనం తర్వాత రోజుకు 2 సార్లు (ఉదయం & రాత్రి) (1-0-1)')
+         .replace(/Twice daily after food/gi, 'భోజనం తర్వాత రోజుకు 2 సార్లు')
+         .replace(/Twice daily before food/gi, 'భోజనానికి ముందు రోజుకు 2 సార్లు')
+         .replace(/Twice daily \(Morning & Night\)|Twice daily \(Morning and Night\)|Twice daily \(Morning, Night\)/gi, 'రోజుకు 2 సార్లు (ఉదయం & రాత్రి)')
+         .replace(/Twice daily/gi, 'రోజుకు 2 సార్లు')
+         .replace(/Three times a day as needed/gi, 'అవసరమైనప్పుడు రోజుకు 3 సార్లు')
+         .replace(/Three times daily after food/gi, 'భోజనం తర్వాత రోజుకు 3 సార్లు')
+         .replace(/Three times a day \(Morning, Afternoon & Night\)/gi, 'రోజుకు 3 సార్లు (ఉదయం, మధ్యాహ్నం & రాత్రి)')
+         .replace(/Three times a day|Three times daily/gi, 'రోజుకు 3 సార్లు')
+         .replace(/Four times a day/gi, 'రోజుకు 4 సార్లు')
+         .replace(/Once daily in morning \(Empty Stomach\)/gi, 'ఉదయం ఖాళీ కడుపుతో 1 సారి')
+         .replace(/Once daily before breakfast \(1-0-0\)/gi, 'అల్పాహారానికి ముందు 1 సారి (1-0-0)')
+         .replace(/Once daily before breakfast/gi, 'అల్పాహారానికి ముందు 1 సారి')
+         .replace(/Once daily after breakfast/gi, 'అల్పాహారం తర్వాత 1 సారి')
+         .replace(/Once daily \(Morning\)|Once daily in morning/gi, 'ఉదయం పూట రోజుకు 1 సారి')
+         .replace(/Once daily at bedtime \(Night\)/gi, 'రాత్రి పడుకునే ముందు 1 సారి (0-0-1)')
+         .replace(/Once daily at bedtime|Once daily at night/gi, 'రాత్రి వేళ రోజుకు 1 సారి')
+         .replace(/Once daily \(Night\)/gi, 'రాత్రి వేళ రోజుకు 1 సారి')
+         .replace(/Once daily \(Bedtime\)/gi, 'రాత్రి పడుకునే ముందు 1 సారి')
+         .replace(/Once daily/gi, 'రోజుకు 1 సారి')
+         .replace(/\bOD\s*\(1-0-0\)/gi, 'రోజుకు 1 సారి (1-0-0)')
+         .replace(/\bBD\s*\(1-0-1\)/gi, 'రోజుకు 2 సార్లు (1-0-1)')
+         .replace(/\bTDS\s*\(1-1-1\)/gi, 'రోజుకు 3 సార్లు (1-1-1)')
+         .replace(/\bQID\b/gi, 'రోజుకు 4 సార్లు (QID)')
+         .replace(/\bHS\s*\(0-0-1\)/gi, 'రాత్రి పడుకునే ముందు (0-0-1)')
+         .replace(/\bPO\b/gi, 'నోటి ద్వారా (PO)')
+         .replace(/At bedtime \(Night\)|At bedtime/gi, 'రాత్రి పడుకునే ముందు')
          .replace(/At night/gi, 'రాత్రి వేళ')
          .replace(/In morning/gi, 'ఉదయం పూట')
          .replace(/In afternoon/gi, 'మధ్యాహ్నం వేళ')
+         .replace(/In evening/gi, 'సాయంత్రం వేళ')
          .replace(/As needed \(SOS\)/gi, 'అవసరమైనప్పుడు మాత్రమే (SOS)')
          .replace(/As needed for pain/gi, 'నొప్పి ఉన్నప్పుడు మాత్రమే (SOS)')
          .replace(/As needed/gi, 'అవసరమైనప్పుడు మాత్రమే')
@@ -1568,8 +1574,38 @@
          .replace(/Every 12 hours/gi, 'ప్రతి 12 గంటలకు ఒకసారి')
          .replace(/Every 24 hours/gi, 'ప్రతి 24 గంటలకు ఒకసారి')
          .replace(/Before food|Empty stomach/gi, 'ఖాళీ కడుపుతో / భోజనానికి ముందు')
-         .replace(/After food|With meals/gi, 'భోజనం తర్వాత');
+         .replace(/After food|With meals/gi, 'భోజనం తర్వాత')
+         .replace(/Before breakfast/gi, 'అల్పాహారానికి ముందు')
+         .replace(/After breakfast/gi, 'అల్పాహారం తర్వాత')
+         .replace(/Before lunch/gi, 'మధ్యాహ్న భోజనానికి ముందు')
+         .replace(/After lunch/gi, 'మధ్యాహ్న భోజనం తర్వాత')
+         .replace(/Before dinner/gi, 'రాత్రి భోజనానికి ముందు')
+         .replace(/After dinner/gi, 'రాత్రి భోజనం తర్వాత')
+         .replace(/\(Morning\)/gi, '(ఉదయం)')
+         .replace(/\(Night\)/gi, '(రాత్రి)')
+         .replace(/\(Afternoon\)/gi, '(మధ్యాహ్నం)')
+         .replace(/\(Evening\)/gi, '(సాయంత్రం)');
     return s;
+  }
+
+  function translateTimeToTelugu(timeStr) {
+    if (!timeStr) return '';
+    let s = String(timeStr).trim();
+    const m = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i);
+    if (m) {
+      const h = parseInt(m[1], 10);
+      const min = m[2];
+      const period = (m[3] || '').toUpperCase();
+      if (period === 'AM') {
+        const prefix = (h < 12 && h >= 4) ? 'ఉదయం' : 'రాత్రి';
+        return `${prefix} ${String(h).padStart(2, '0')}:${min}`;
+      } else if (period === 'PM') {
+        const prefix = (h === 12 || h < 4) ? 'మధ్యాహ్నం' : ((h < 8) ? 'సాయంత్రం' : 'రాత్రి');
+        return `${prefix} ${String(h).padStart(2, '0')}:${min}`;
+      }
+      return `${h}:${min}`;
+    }
+    return s.replace(/\bAM\b/gi, 'ఉదయం').replace(/\bPM\b/gi, 'రాత్రి');
   }
 
   function translateDurationToTelugu(text) {
@@ -1696,8 +1732,32 @@
     if (!text) return '';
     let s = String(text);
     if (/[\u0900-\u097F]/.test(s)) s = translateHindiToTelugu(s);
-    // Common clinical patterns
-    s = s.replace(/Coronary Artery Bypass Graft(?:ing)?\s*\(CABG\s*x?\s*(\d+)?\)/gi, 'కరోనరీ ఆర్టరీ బైపాస్ గ్రాఫ్టింగ్ (CABG) శస్త్రచికిత్స')
+
+    // Common clinical symptoms, presentations & history
+    s = s.replace(/\/F,\s*c\/o|\/M,\s*c\/o|c\/o|\/F,|\/M,/gi, '')
+         .replace(/progressive breathlessness \(NYHA III-IV\)/gi, 'క్రమంగా పెరుగుతున్న తీవ్ర శ్వాస ఇబ్బంది (NYHA III-IV)')
+         .replace(/progressive breathlessness/gi, 'క్రమంగా పెరుగుతున్న శ్వాస ఇబ్బంది')
+         .replace(/shortness of breath|breathlessness|difficulty in breathing/gi, 'శ్వాస ఆడకపోవడం')
+         .replace(/orthopnoea|orthopnea/gi, 'పడుకున్నప్పుడు శ్వాస ఆడకపోవడం (ఆర్థోప్నియా)')
+         .replace(/\bPND\b/g, 'రాత్రివేళ ఆకస్మిక శ్వాస ఇబ్బంది (PND)')
+         .replace(/swelling of both legs|swelling of legs|pedal oedema|pedal edema/gi, 'రెండు కాళ్ల వాపు')
+         .replace(/chest pain|heaviness in chest/gi, 'ఛాతీ నొప్పి')
+         .replace(/palpitations/gi, 'గుండె దడ')
+         .replace(/burning micturition|dysuria/gi, 'మూత్రంలో మంట')
+         .replace(/fever with chills|high fever/gi, 'చలితో కూడిన జ్వరం')
+         .replace(/fever/gi, 'జ్వరం')
+         .replace(/giddiness|dizziness/gi, 'తలతిరుగుడు')
+         .replace(/syncope|loss of consciousness|\bLOC\b/gi, 'స్పృహ తప్పడం')
+         .replace(/generalised weakness|weakness/gi, 'సాధారణ బలహీనత')
+         .replace(/vomiting/gi, 'వాంతులు')
+         .replace(/nausea/gi, 'వికారం')
+         .replace(/abdominal pain/gi, 'కడుపు నొప్పి')
+         .replace(/diarrhoea|diarrhea/gi, 'విరేచనాలు')
+         .replace(/cough with expectoration|cough/gi, 'దగ్గు')
+         .replace(/headache/gi, 'తలనొప్పి')
+         .replace(/Acute decompensated heart failure \(HFrEF\)/gi, 'తీవ్రమైన గుండె వైఫల్యం (HFrEF)')
+         .replace(/Dilated cardiomyopathy, LVEF (\d+)%/gi, 'డైలేటెడ్ కార్డియోమయోపతి (LVEF $1%)')
+         .replace(/Coronary Artery Bypass Graft(?:ing)?\s*\(CABG\s*x?\s*(\d+)?\)/gi, 'కరోనరీ ఆర్టరీ బైపాస్ గ్రాఫ్టింగ్ (CABG) శస్త్రచికిత్స')
          .replace(/Coronary Artery Bypass Graft(?:ing)?/gi, 'కరోనరీ ఆర్టరీ బైపాస్ గ్రాఫ్టింగ్ శస్త్రచికిత్స (CABG)')
          .replace(/Coronary Artery Disease\s*\(CAD\)/gi, 'గుండె రక్తనాళాల వ్యాధి (CAD)')
          .replace(/Severe Triple Vessel Disease\s*\(TVD\)/gi, 'తీవ్రమైన మూడు రక్తనాళాల వ్యాధి (TVD)')
@@ -1777,26 +1837,135 @@
   }
 
   const TELUGU_WARNING_ITEMS = [
+    // Cardiac & Vascular
     [new RegExp('Severe or sudden chest pain radiating to left arm or jaw', 'i'), 'ఎడమ చేయి లేదా దవడకు వ్యాపించే తీవ్రమైన లేదా ఆకస్మిక ఛాతీ నొప్పి'],
-    [new RegExp('Shortness of breath at rest or when lying flat', 'i'), 'విశ్రాంతి సమయంలో లేదా పడుకున్నప్పుడు శ్వాస తీసుకోవడంలో తీవ్ర ఇబ్బంది'],
-    [new RegExp('Sudden weakness, numbness, or facial drooping', 'i'), 'ఆకస్మిక బలహీనత, తిమ్మిరి లేదా ముఖం ఒకవైపు వంకరపోవడం'],
-    [new RegExp('High fever over 101°F \\(38\\.3°C\\) with severe shaking chills', 'i'), 'వణుకుతో కూడిన 101°F (38.3°C) కంటే ఎక్కువ తీవ్రమైన జ్వరం'],
-    [new RegExp('Heavy wound bleeding, separation, or foul-smelling discharge', 'i'), 'గాయం నుండి అధిక రక్తస్రావం, కుట్లు ఊడిపోవడం లేదా దుర్వాసనతో కూడిన చీము'],
-    [new RegExp('Coughing up blood or vomiting bright red blood', 'i'), 'దగ్గులో రక్తం పడటం లేదా ఎర్రటి రక్తం వాంతి కావడం'],
-    [new RegExp('Persistent mild nausea, loss of appetite, or dizziness upon standing', 'i'), 'నిలబడినప్పుడు తలతిరుగుడు, నిరంతర వికారం లేదా ఆకలి లేకపోవడం'],
-    [new RegExp('Mild swelling around ankles or feet that improves with elevation', 'i'), 'కాళ్ళు పైకి పెట్టినప్పుడు తగ్గే చీలమండల వద్ద తేలికపాటి వాపు'],
-    [new RegExp('Constipation lasting more than 3 days despite hydration', 'i'), 'మంచినీరు తాగినప్పటికీ 3 రోజులకు పైగా మలబద్ధకం ఉండటం'],
+    [new RegExp('Chest pain not relieved after 3 SL tablets|Chest pain persisting after 3 doses of SL tablet', 'i'), '5 నిమిషాల వ్యవధిలో 3 నాలుక కింద మాత్రలు (సబ్లింగ్యువల్) తీసుకున్నప్పటికీ ఛాతీ నొప్పి తగ్గకపోవడం'],
+    [new RegExp('Chest pain \\/ heaviness \\/ sweating|Chest pain, heaviness or sweating', 'i'), 'ఛాతీ నొప్పి, గుండెలో బరువుగా ఉండటం లేదా విపరీతమైన చెమటలు'],
+    [new RegExp('Palpitations \\(fast or irregular heartbeat\\)|Palpitations - fast \\/ irregular heart beat', 'i'), 'గుండె దడ (వేగంగా లేదా క్రమం లేని గుండె కొట్టుకోవడం)'],
+    [new RegExp('Blood pressure reading consistently higher than 140\\/90|Home BP >= 150\\/100|BP 150\\/100 mmHg or higher on home check', 'i'), 'ఇంట్లో తనిఖీ చేసినప్పుడు రక్తపోటు 150/100 mmHg లేదా అంతకంటే ఎక్కువ ఉండటం'],
+    [new RegExp('Calf pain \\/ leg swelling - \\? DVT|Pain in the calf or swelling of the leg', 'i'), 'పిక్క నొప్పి లేదా కాలు వాపు (రక్తనాళంలో రక్తం గడ్డకట్టే సంకేతం - DVT)'],
+
+    // Respiratory & Heart Failure
+    [new RegExp('Shortness of breath at rest or when lying flat|Breathlessness at rest \\/ on lying down flat|Breathlessness at rest or on lying flat', 'i'), 'విశ్రాంతి సమయంలో లేదా నేరుగా పడుకున్నప్పుడు శ్వాస ఆడకపోవడం'],
+    [new RegExp('Breathlessness \\/ difficulty in breathing|Breathlessness or difficulty in breathing', 'i'), 'శ్వాస తీసుకోవడంలో తీవ్ర ఇబ్బంది లేదా ఊపిరి ఆడకపోవడం'],
+    [new RegExp('Too breathless to complete sentences|Unable to speak full sentences due to breathlessness', 'i'), 'శ్వాస అందక పూర్తి వాక్యాలు మాట్లాడలేకపోవడం'],
+    [new RegExp('Wheeze \\/ breathlessness not settling with reliever|Wheeze or breathlessness not relieved by the reliever inhaler', 'i'), 'రిలీవర్ ఇన్‌హేలర్ వాడినప్పటికీ పిల్లికూతలు లేదా శ్వాస ఇబ్బంది తగ్గకపోవడం'],
+    [new RegExp('Increasing pedal oedema|Increasing swelling of feet or legs', 'i'), 'పాదాలు లేదా కాళ్లలో వాపు క్రమంగా పెరగడం'],
+    [new RegExp('Mild swelling around ankles or feet that improves with elevation|Mild swelling in feet, ankles, or lower legs towards evening', 'i'), 'సాయంత్రం వేళ పాదాలు లేదా చీలమండల వద్ద తేలికపాటి వాపు'],
+    [new RegExp('Weight gain of more than 2 kg in 3 days|Wt gain > 2 kg in 3 days', 'i'), '3 రోజుల్లో 2 కిలోల కంటే ఎక్కువ బరువు పెరగడం'],
+    [new RegExp('Increase in sputum quantity or change to yellow\\/green|Increased sputum \\/ sputum turning yellow or green', 'i'), 'కఫం పరిమాణం పెరగడం లేదా పసుపు/ఆకుపచ్చ రంగులోకి మారడం'],
+    [new RegExp('Coughing up blood or vomiting bright red blood|Coughing up blood|Haemoptysis', 'i'), 'దగ్గులో రక్తం పడటం లేదా వాంతిలో రక్తం'],
+
+    // Neurological & Emergency
+    [new RegExp('Sudden weakness, numbness, or facial drooping|Sudden weakness of face \\/ arm \\/ leg|Sudden weakness of face, arm or leg', 'i'), 'ముఖం, చేయి లేదా కాలులో ఆకస్మిక బలహీనత, తిమ్మిరి లేదా మాట తడబడటం'],
+    [new RegExp('Giddiness \\/ fainting \\/ LOC|Giddiness, fainting or loss of consciousness', 'i'), 'తలతిరుగుడు, స్పృహ తప్పడం లేదా మూర్ఛపోవడం'],
+    [new RegExp('Persistent mild nausea, loss of appetite, or dizziness upon standing|Mild persistent dizziness when standing up from bed or chair', 'i'), 'మంచం లేదా కుర్చీ నుండి లేచి నిలబడినప్పుడు తలతిరుగుడు'],
+    [new RegExp('Convulsions \\/ seizures|Fits \\(convulsions\\)', 'i'), 'ఫిట్స్ లేదా మూర్ఛ రావడం'],
+    [new RegExp('Bluish lips \\/ fingertips, drowsiness or confusion|Bluish lips or fingertips', 'i'), 'పెదవులు లేదా వేళ్లు నీలిరంగులోకి మారడం, మగత లేదా అయోమయం'],
+    [new RegExp('Blurred vision \\/ difficulty in distinguishing colours|Blurring of vision', 'i'), 'కంటిచూపు మసకబారడం లేదా రంగులను గుర్తించడంలో ఇబ్బంది'],
+    [new RegExp('Severe headache \\/ blurred vision \\/ epigastric pain|Severe headache, blurring of vision or pain in upper abdomen', 'i'), 'తీవ్రమైన తలనొప్పి, కంటిచూపు మసకబారడం లేదా ఎగువ కడుపులో నొప్పి'],
+
+    // Infection & Fever
+    [new RegExp('High fever over 101°F|High fever with chills|High grade fever with chills|Fever > 100\\.4|Fever above 100\\.4', 'i'), 'చలి మరియు వణుకుతో కూడిన తీవ్రమైన జ్వరం (100.4°F కంటే ఎక్కువ)'],
+    [new RegExp('Fever recurring, or persisting for more than 3 days after discharge|Recurrence of fever', 'i'), 'డిశ్చార్జ్ తర్వాత 3 రోజులకు మించి జ్వరం తగ్గకపోవడం లేదా మళ్లీ రావడం'],
+
+    // Bleeding & Wound Care
+    [new RegExp('Heavy wound bleeding, separation, or foul-smelling discharge|Bleeding from the wound or soakage of dressing|Bleeding from wound \\/ dressing soakage', 'i'), 'గాయం నుండి రక్తస్రావం, కుట్లు ఊడిపోవడం లేదా డ్రెస్సింగ్ రక్తంతో తడిసిపోవడం'],
+    [new RegExp('Redness, swelling, pus or discharge from the wound|Wound site redness \\/ swelling \\/ pus or discharge', 'i'), 'గాయం వద్ద ఎరుపుదనం, వాపు, చీము లేదా దుర్వాసనతో కూడిన స్రావాలు'],
+    [new RegExp('Any bleeding - gums, urine, black or red stools, vomiting blood|Bleeding from any site', 'i'), 'చిగుళ్ళు, మూత్రం, నల్లటి లేదా ఎర్రటి మలం, వాంతిలో రక్తం లేదా ఏ శరీర భాగం నుండైనా రక్తస్రావం'],
     [new RegExp('Mild redness or itchiness around the incision site', 'i'), 'కుట్ల వద్ద తేలికపాటి ఎరుపు లేదా దురద'],
+
+    // Diabetes & Endocrine
+    [new RegExp('Blood sugar above 300 mg\\/dl on two readings|Sugar > 300 mg\\/dl on 2 readings', 'i'), 'రెండు వరుస పరీక్షల్లో రక్తంలో చక్కెర 300 mg/dl కంటే ఎక్కువగా ఉండటం'],
+    [new RegExp('Hypoglycaemia - sweating \\/ tremors \\/ confusion|Low sugar symptoms \\(sweating, shakiness, confusion\\)', 'i'), 'హైపోగ్లైసీమియా (షుగర్ తగ్గడం) - చెమటలు, వణుకు, అయోమయం: వెంటనే 3 చెంచాల గ్లూకోజ్/చక్కెర నీటిలో కలిపి తాగించండి; స్పృహ లేకపోతే నోటి ద్వారా ఏమీ ఇవ్వకండి, వెంటనే ఆసుపత్రికి తీసుకురండి'],
+
+    // Gastrointestinal & Renal
+    [new RegExp('Abdominal distension, not passing stools \\/ flatus|Distension of abdomen with no passage of stool or gas', 'i'), 'కడుపు ఉబ్బరం, మలవిసర్జన లేదా గ్యాస్ విడుదల కాకపోవడం'],
+    [new RegExp('Severe \\/ increasing abdominal pain|Severe or increasing pain in abdomen', 'i'), 'తీవ్రమైన లేదా క్రమంగా పెరుగుతున్న కడుపు నొప్పి'],
+    [new RegExp('Persistent vomiting \\/ not able to take orally|Persistent vomiting or unable to take food and fluids orally', 'i'), 'నిరంతర వాంతులు లేదా ఆహారం, ద్రవాలు తీసుకోలేకపోవడం'],
+    [new RegExp('Urine output markedly reduced|Marked decrease in urine output', 'i'), 'మూత్ర విసర్జన పరిమాణం గణనీయంగా తగ్గిపోవడం'],
+    [new RegExp('Burning micturition \\/ pain while passing urine|Burning or pain while passing urine', 'i'), 'మూత్ర విసర్జన సమయంలో మంట లేదా నొప్పి'],
+    [new RegExp('Inability to pass urine|Unable to pass urine', 'i'), 'మూత్ర విసర్జన కాకపోవడం'],
+    [new RegExp('Vomiting \\/ pain abdomen \\/ rapid breathing \\/ drowsiness|Vomiting, pain in abdomen, fast breathing or drowsiness', 'i'), 'వాంతులు, కడుపు నొప్పి, వేగంగా శ్వాస తీసుకోవడం లేదా మగత'],
+    [new RegExp('Yellow discolouration of eyes or urine|Yellow eyes or urine|Yellowish eyes \\/ urine', 'i'), 'కళ్ళు లేదా మూత్రం పసుపు రంగులోకి మారడం (పచ్చకామెర్లు)'],
+    [new RegExp('Constipation lasting more than 3 days despite hydration', 'i'), 'మంచినీరు తాగినప్పటికీ 3 రోజులకు పైగా మలబద్ధకం ఉండటం'],
+
+    // Maternal, Neonatal & Post-op
+    [new RegExp('Baby not feeding well, very sleepy, has fever, or yellow skin|Baby: poor feeding \\/ lethargy \\/ fever \\/ yellowish skin', 'i'), 'శిశువు పాలు సరిగ్గా తాగకపోవడం, నీరసంగా నిద్రపోవడం, జ్వరం లేదా పసుపు రంగు చర్మం'],
+    [new RegExp('Excessive PV bleeding|Heavy bleeding per vaginum', 'i'), 'తీవ్రమైన యోని రక్తస్రావం (గంటకు ఒక ప్యాడ్ కంటే ఎక్కువ తడిసిపోవడం) లేదా రక్తం గడ్డలు పడటం'],
+    [new RegExp('Foul smelling lochia \\/ vaginal discharge|Foul-smelling vaginal discharge', 'i'), 'దుర్వాసనతో కూడిన యోని స్రావాలు'],
+    [new RegExp('Breast - painful red hard swelling with fever|Painful, red, hard swelling of the breast', 'i'), 'రొమ్ము వద్ద ఎర్రగా గట్టిపడిన నొప్పిగల వాపు మరియు జ్వరం'],
+    [new RegExp('Operated hand - numbness \\/ tingling|Operated hand', 'i'), 'శస్త్రచికిత్స చేసిన చేయి - తిమ్మిరి, మొద్దుబారడం, నీలిరంగులోకి మారడం లేదా తీవ్రమైన వాపు'],
+    [new RegExp('Operated leg - numbness \\/ tingling|Operated leg', 'i'), 'శస్త్రచికిత్స చేసిన కాలు - తిమ్మిరి, మొద్దుబారడం, నీలిరంగులోకి మారడం లేదా తీవ్రమైన వాపు'],
+    [new RegExp('Scrotal swelling \\/ severe scrotal pain|Swelling or severe pain in the scrotum', 'i'), 'వృషణాల వాపు లేదా తీవ్రమైన నొప్పి'],
+    [new RegExp('Generalised skin rash \\/ itching|Skin rash or itching all over the body', 'i'), 'శరీరమంతా దద్దుర్లు లేదా తీవ్రమైన దురద'],
+    [new RegExp('Feeling low or hopeless most of the time|Persistent low mood \\/ hopelessness', 'i'), 'తీవ్ర నిరాశ, నిద్రలేమి లేదా తనకు లేదా శిశువుకు హాని చేసుకునే ఆలోచనలు రావడం'],
     [new RegExp('Dry hacking cough developed after starting medication', 'i'), 'కొత్త మందులు ప్రారంభించిన తర్వాత వచ్చే పొడి దగ్గు']
   ];
 
   function translateWarningItemToTelugu(text) {
     if (!text) return '';
-    let s = String(text);
+    let s = String(text).trim();
     if (/[\u0900-\u097F]/.test(s)) s = translateHindiToTelugu(s);
+
+    // 1. Direct Regex Phrase Match
     for (let i = 0; i < TELUGU_WARNING_ITEMS.length; i++) {
       if (TELUGU_WARNING_ITEMS[i][0].test(s)) return TELUGU_WARNING_ITEMS[i][1];
     }
+
+    // 2. Comprehensive Symptom-by-Symptom Telugu Replacement
+    const symptomMap = [
+      [/progressive breathlessness/gi, 'క్రమంగా పెరుగుతున్న శ్వాస ఇబ్బంది'],
+      [/shortness of breath|difficulty in breathing|breathlessness/gi, 'శ్వాస ఆడకపోవడం'],
+      [/orthopnoea|orthopnea/gi, 'పడుకున్నప్పుడు శ్వాస ఇబ్బంది (ఆర్థోప్నియా)'],
+      [/\bPND\b/g, 'రాత్రివేళ ఆకస్మిక శ్వాస ఇబ్బంది (PND)'],
+      [/pedal oedema|pedal edema|swelling of feet|swelling of legs/gi, 'పాదాలు/కాళ్ల వాపు'],
+      [/swelling of both legs/gi, 'రెండు కాళ్ల వాపు'],
+      [/chest pain|heaviness in chest/gi, 'ఛాతీ నొప్పి / గుండెలో బరువు'],
+      [/palpitations/gi, 'గుండె దడ'],
+      [/high fever|high grade fever/gi, 'అధిక జ్వరం'],
+      [/fever/gi, 'జ్వరం'],
+      [/chills|shivering/gi, 'చలి మరియు వణుకు'],
+      [/vomiting/gi, 'వాంతులు'],
+      [/nausea/gi, 'వికారం'],
+      [/abdominal pain|pain in abdomen/gi, 'కడుపు నొప్పి'],
+      [/diarrhoea|diarrhea/gi, 'విరేచనాలు'],
+      [/giddiness|dizziness/gi, 'తలతిరుగుడు'],
+      [/fainting|syncope|\bLOC\b|loss of consciousness/gi, 'స్పృహ తప్పడం'],
+      [/generalised weakness|weakness/gi, 'సాధారణ బలహీనత'],
+      [/fatigue/gi, 'అలసట'],
+      [/burning micturition|pain while passing urine/gi, 'మూత్రంలో మంట'],
+      [/reduced urine output|decrease in urine output/gi, 'మూత్ర విసర్జన తగ్గడం'],
+      [/unable to pass urine|inability to pass urine/gi, 'మూత్ర విసర్జన కాకపోవడం'],
+      [/hematuria|blood in urine/gi, 'మూత్రంలో రక్తం'],
+      [/jaundice/gi, 'పచ్చకామెర్లు'],
+      [/sweating/gi, 'విపరీతమైన చెమటలు'],
+      [/slurred speech|slurring of speech/gi, 'మాట తడబడటం'],
+      [/blurred vision|blurring of vision/gi, 'కంటిచూపు మసకబారడం'],
+      [/convulsions|seizures|fits/gi, 'మూర్ఛ / ఫిట్స్'],
+      [/wound bleeding|bleeding from wound/gi, 'గాయం నుండి రక్తస్రావం'],
+      [/bleeding/gi, 'రక్తస్రావం'],
+      [/wound/gi, 'గాయం'],
+      [/pus|discharge/gi, 'చీము / స్రావాలు'],
+      [/weight gain/gi, 'బరువు పెరగడం'],
+      [/at rest/gi, 'విశ్రాంతి సమయంలో'],
+      [/on lying down flat|when lying flat/gi, 'పడుకున్నప్పుడు'],
+      [/immediately|urgently/gi, 'వెంటనే'],
+      [/severe/gi, 'తీవ్రమైన'],
+      [/mild/gi, 'తేలికపాటి'],
+      [/sudden/gi, 'ఆకస్మిక'],
+      [/persistent/gi, 'నిరంతర'],
+      [/increasing/gi, 'పెరుగుతున్న'],
+      [/days/gi, 'రోజులు'],
+      [/hours/gi, 'గంటలు'],
+      [/weeks/gi, 'వారాలు'],
+      [/months/gi, 'నెలలు']
+    ];
+
+    for (const [re, te] of symptomMap) {
+      s = s.replace(re, te);
+    }
+
     if (/[\u0900-\u097F]/.test(s)) s = s.replace(/[\u0900-\u097F]+/g, ' ').replace(/\s+/g, ' ').trim();
     return s;
   }
@@ -3220,7 +3389,14 @@ function renderMedicineTable(medicines) {
     container.innerHTML = state.medicineAlerts.map(alert => {
       const timeClass = alert.slotType === 'morning' ? 'time-morning' : (alert.slotType === 'afternoon' ? 'time-afternoon' : 'time-night');
       const timeIcon = alert.slotType === 'morning' ? '☀️' : (alert.slotType === 'afternoon' ? '⛅' : '🌙');
-      const slotText = isTe ? (alert.slotType === 'morning' ? 'ఉదయం' : (alert.slotType === 'afternoon' ? 'మధ్యాహ్నం' : 'రాత్రి')) : (alert.slot || 'Dose');
+      let slotText = alert.slot || 'Dose';
+      if (isTe) {
+        if (alert.slotType === 'morning') slotText = alert.slot?.includes('&') ? 'ఉదయం & సాయంత్రం మోతాదు' : 'ఉదయం మోతాదు';
+        else if (alert.slotType === 'afternoon') slotText = 'మధ్యాహ్నం మోతాదు';
+        else if (alert.slotType === 'night') slotText = alert.slot?.includes('Bedtime') ? 'రాత్రి పడుకునే ముందు మోతాదు' : 'రాత్రి మోతాదు';
+        else slotText = 'మోతాదు';
+      }
+      const displayTimeVal = isTe ? translateTimeToTelugu(alert.displayTime || alert.time) : (alert.displayTime || alert.time);
       const takenBadge = alert.takenToday
         ? (isTe ? '✓ నేడు తీసుకున్నారు' : '✓ Taken Today')
         : (isTe ? 'షెడ్యూల్ చేయబడింది' : 'Scheduled');
@@ -3248,7 +3424,7 @@ function renderMedicineTable(medicines) {
             <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.65rem;">
               <div class="alert-time-pill ${timeClass}">
                 <span>${timeIcon}</span>
-                <span><strong>${alert.displayTime || alert.time}</strong> (${slotText})</span>${alert.hasTenMinGap ? ` <span class="badge badge-warning" style="font-size: 0.65rem; margin-left: 0.35rem; padding: 2px 6px; background: #fef3c7; color: #92400e; border: 1px solid #fcd34d;" title="10-minute safe gap maintained between medicines">${isTe ? '⏱️ 10నిమిషాల వ్యవధి' : '⏱️ 10m Spaced'}</span>` : ''}
+                <span><strong>${displayTimeVal}</strong> (${slotText})</span>${alert.hasTenMinGap ? ` <span class="badge badge-warning" style="font-size: 0.65rem; margin-left: 0.35rem; padding: 2px 6px; background: #fef3c7; color: #92400e; border: 1px solid #fcd34d;" title="10-minute safe gap maintained between medicines">${isTe ? '⏱️ 10నిమిషాల వ్యవధి' : '⏱️ 10m Spaced'}</span>` : ''}
               </div>
               <div style="display: flex; align-items: center; gap: 0.35rem;">
                 <input type="time" class="form-control form-control-sm alert-time-input" data-alert-id="${alert.id}" value="${alert.time || '08:00'}" style="width: 105px; padding: 0.2rem 0.4rem; font-size: 0.85rem; height: 32px;" title="${isTe ? 'రిమైండర్ సమయాన్ని సెట్ చేయండి' : 'Set reminder time'}">
@@ -5127,10 +5303,34 @@ function renderMedicineTable(medicines) {
     if (btn1) { btn1.textContent = '⏳ Generating PDF...'; btn1.disabled = true; }
     if (btn2) { btn2.textContent = '⏳ Generating PDF...'; btn2.disabled = true; }
 
+    const caresheetPayload = Object.assign({}, p, { lang: state.currentLang });
+    if (state.currentLang === 'te') {
+      caresheetPayload.diagnosis = translateClinicalTextToTelugu(p.diagnosis);
+      caresheetPayload.dietInstructions = translateClinicalTextToTelugu(p.dietInstructions);
+      if (Array.isArray(p.medicines)) {
+        caresheetPayload.medicines = p.medicines.map(m => Object.assign({}, m, {
+          name: translateMedNameToTelugu(m.name),
+          dose: translateDoseToTelugu(m.dose),
+          timing: translateTimingToTelugu(m.timing),
+          duration: translateDurationToTelugu(m.duration),
+          instructions: translateInstructionsToTelugu(m.instructions)
+        }));
+      }
+      if (Array.isArray(p.homeCare)) {
+        caresheetPayload.homeCare = p.homeCare.map(translateChecklistItemToTelugu);
+      }
+      if (Array.isArray(p.warningSignsUrgent)) {
+        caresheetPayload.warningSignsUrgent = p.warningSignsUrgent.map(translateWarningItemToTelugu);
+      }
+      if (Array.isArray(p.warningSigns)) {
+        caresheetPayload.warningSigns = p.warningSigns.map(translateWarningItemToTelugu);
+      }
+    }
+
     fetch('/api/generate-caresheet', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(Object.assign({}, p, { lang: state.currentLang }))
+      body: JSON.stringify(caresheetPayload)
     })
     .then(res => {
       if (!res.ok) throw new Error('PDF Generation failed');
