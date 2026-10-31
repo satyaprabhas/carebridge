@@ -92,10 +92,15 @@ async function getFastWorker(lang = 'eng') {
     cachedWorker = null;
   }
   
-  cachedWorker = await Tesseract.createWorker(lang, 1, {
-    langPath: fs.existsSync(TESSDATA_DIR) ? TESSDATA_DIR : undefined,
-    cacheMethod: 'readOnly'
-  });
+  try {
+    cachedWorker = await Tesseract.createWorker(lang, 1, {
+      langPath: fs.existsSync(TESSDATA_DIR) ? TESSDATA_DIR : undefined,
+      cacheMethod: fs.existsSync(TESSDATA_DIR) ? 'readOnly' : 'refresh'
+    });
+  } catch (initErr) {
+    console.warn('[CareBridge OCR] Local tessdata init failed, falling back to default worker:', initErr.message);
+    cachedWorker = await Tesseract.createWorker(lang, 1);
+  }
   currentWorkerLang = lang;
   return cachedWorker;
 }
