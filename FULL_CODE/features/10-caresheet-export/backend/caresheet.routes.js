@@ -317,7 +317,8 @@ router.post('/generate-caresheet', (req, res) => {
       }
     }
 
-    const filename = `CareSheet-${isTelugu ? 'TE-' : ''}${(patientData.patientName || 'Patient').replace(/\s+/g, '_')}.pdf`;
+    const rawName = (patientData.patientName || 'Patient').replace(/[^a-zA-Z0-9_\-]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '') || 'Patient';
+    const filename = `CareSheet-${isTelugu ? 'TE-' : ''}${rawName}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
