@@ -943,7 +943,7 @@ function cleanMedicineLine(line) {
   if (formulary) {
     const matchedBrand = formulary.commonBrands.find(b => new RegExp('\\b' + b + '\\b', 'i').test(raw));
     if (matchedBrand) {
-      medName = `${form || 'Tab.'} ${matchedBrand} (${formulary.genericName})`;
+      medName = `${form || 'Tab.'} ${matchedBrand}`;
     } else {
       medName = `${form || 'Tab.'} ${formulary.genericName}`;
     }
@@ -959,8 +959,9 @@ function cleanMedicineLine(line) {
     let cleaned = raw
       .replace(/\b(?:Tab(?:let)?|Cap(?:sule)?|Inj(?:ection)?|Syp|Syrup|Sachet|Inhaler|Rotacap|MDI|Drops?|Oint(?:ment)?|Gel|Cream|T\.)\b[\.\s]*/gi, '')
       .replace(/\b(?:PO|SC|IV|IM|SL|PR|OD|BD|TDS|QID|HS|SOS|1-0-0|1-0-1|1-1-1|0-0-1)\b/gi, '')
-      .replace(/\b(?:x\s*[0-9]{1,2}\s*[\/\w]+|till\s+next\s+visit|for\s+[0-9]{1,2}\s*days?)\b/gi, '')
-      .replace(/\b(?:after\s+food|before\s+breakfast|before\s+food|PC|AC|with\s+milk|after\s+dinner)\b/gi, '')
+      .replace(/\b[0-9]+(?:,[0-9]{3})*(?:\.[0-9]+)?\s*(?:mg|g|mcg|ml|IU|units|tablets?|tabs?|capsules?|caps?|puffs?)\b/gi, '')
+      .replace(/\b(?:x\s*[0-9]{1,2}\s*[\/\w]+|till\s+next\s+visit|for\s+[0-9]{1,2}\s*days?|lifelong|long\s*term)\b/gi, '')
+      .replace(/\b(?:after\s+food|before\s+breakfast|before\s+food|PC|AC|with\s+milk|after\s+dinner|at\s+bed\s*time|in\s+morning|at\s+night|in\s+afternoon|once\s+daily|twice\s+daily|thrice\s+daily)\b/gi, '')
       .replace(/\([^\)]*\)/g, '')
       .replace(/[\(\)\,\;\:\-\–\—\.]+/g, ' ')
       .replace(/\s+/g, ' ')

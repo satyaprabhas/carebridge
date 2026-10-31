@@ -2291,14 +2291,13 @@ function renderMedicineTable(medicines) {
         <tr style="${isStopped ? 'background-color: #fef2f2; opacity: 0.88;' : ''}">
           <td class="med-name-cell">
             <strong>${escapeHtml(name)}</strong> ${stoppedBadge}
-            <span class="tag" style="${isStopped ? 'background:#fca5a5; color:#7f1d1d;' : ''}">${doseTag}</span>
-            ${purposeText ? `<div style="font-size:0.8rem; color:#0d9488; margin-top:3px; font-weight:500;">🛡️ ${escapeHtml(purposeText)}</div>` : ''}
           </td>
           <td><strong>${escapeHtml(dose)}</strong></td>
           <td>${escapeHtml(timing)}</td>
           <td>${escapeHtml(duration)}</td>
           <td class="instructions-cell">
             <span class="caution">${escapeHtml(instructions)}</span>
+            ${purposeText ? `<div style="font-size:0.78rem; color:#0d9488; margin-top:3px; font-weight:500;">🛡️ ${escapeHtml(purposeText)}</div>` : ''}
           </td>
         </tr>
       `;
